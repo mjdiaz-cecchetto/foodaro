@@ -2,8 +2,8 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
-import { rutas } from './app.rutas';
-import { autenticacionInterceptor } from './nucleo/interceptores/autenticacion.interceptor';
+import { rutas } from './app.routes';
+import { autenticacionInterceptor } from './core/interceptors/autenticacion.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
