@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es-AR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Foodaro • Catálogo Digital y Plataforma de Ventas para tu Comercio</title>
+  <meta name="description" content="Digitalizá tu catálogo en minutos. Sin comisiones abusivas por venta, con código QR, pedidos directos por WhatsApp y panel de control en vivo.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#FFF1F0',
+              100: '#FFE1DF',
+              200: '#FFC7C3',
+              500: '#FF3B30',
+              600: '#E0261B',
+              700: '#BA170D',
+            },
+            surface: {
+              light: '#FFFFFF',
+              lightMuted: '#F8F9FA',
+              dark: '#0B0F17',
+              darkCard: '#131926',
+              darkBorder: '#1F293D'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            caveat: ['"Caveat"', 'cursive'],
+          },
+          boxShadow: {
+            'soft': '0 10px 30px -10px rgba(0, 0, 0, 0.05)',
+            'coral': '0 12px 30px -8px rgba(255, 59, 48, 0.35)',
+            'coral-lg': '0 20px 45px -10px rgba(255, 59, 48, 0.45)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Caveat & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    * {
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .tap-scale {
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tap-scale:active {
+      transform: scale(0.97);
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 24px;
+      width: 24px;
+      border-radius: 9999px;
+      background: #FF3B30;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(255, 59, 48, 0.45);
+      border: 3px solid #ffffff;
+      margin-top: -8px;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 8px;
+      cursor: pointer;
+      background: #E5E7EB;
+      border-radius: 9999px;
+    }
+    .dark input[type=range]::-webkit-slider-runnable-track {
+      background: #1F293D;
+    }
+
+    @keyframes floatPhone {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .animate-float {
+      animation: floatPhone 4s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body class="bg-surface-lightMuted dark:bg-surface-dark text-zinc-900 dark:text-zinc-100 font-sans antialiased min-h-screen selection:bg-brand-500/20 selection:text-brand-600">
+
+  <!-- ==================== FLOATING NAVBAR ==================== -->
+  <header class="fixed top-2 sm:top-4 inset-x-0 z-50 px-3 sm:px-6">
+    <div class="max-w-6xl mx-auto bg-white/95 dark:bg-surface-darkCard/90 backdrop-blur-xl border border-zinc-200/90 dark:border-surface-darkBorder rounded-2xl sm:rounded-3xl px-3.5 sm:px-6 py-2.5 sm:py-3 shadow-soft flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="#" class="flex items-center gap-2 group">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-500 flex items-center justify-center text-white shadow-md shadow-brand-500/30 group-hover:scale-105 transition-transform">
+          <span class="font-caveat text-2xl sm:text-3xl font-bold -mt-0.5">f</span>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="font-caveat text-2xl sm:text-3xl font-bold tracking-tight text-brand-500">foodaro</span>
+        </div>
+      </a>
+
+      <!-- Desktop Links -->
+      <nav class="hidden lg:flex items-center gap-6 text-xs font-bold text-zinc-600 dark:text-zinc-300">
+        <a href="#beneficios" class="hover:text-brand-500 transition-colors">Beneficios</a>
+        <a href="#calculadora" class="hover:text-brand-500 transition-colors">Calculadora de Ahorro</a>
+        <a href="#comparativa" class="hover:text-brand-500 transition-colors">Comparativa</a>
+        <a href="#precios" class="hover:text-brand-500 transition-colors">Planes</a>
+        <a href="#faq" class="hover:text-brand-500 transition-colors">FAQ</a>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button 
+          id="themeToggleBtn" 
+          onclick="toggleTheme()" 
+          class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-amber-400 flex items-center justify-center tap-scale border border-zinc-200/80 dark:border-zinc-700/60"
+          title="Alternar Modo Oscuro / Claro"
+          aria-label="Cambiar tema visual"
+        >
+          <i id="themeIcon" class="fa-solid fa-moon text-xs sm:text-sm"></i>
+        </button>
+
+        <button onclick="openRegistrationModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs py-2 sm:py-2.5 px-3 sm:px-5 rounded-xl sm:rounded-2xl shadow-coral tap-scale flex items-center gap-1.5 sm:gap-2">
+          <span>Crear Catálogo Gratis</span>
+          <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </button>
+
+        <button onclick="toggleMobileMenu()" class="lg:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center">
+          <i class="fa-solid fa-bars text-xs sm:text-sm"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileDropdown" class="hidden lg:hidden max-w-6xl mx-auto mt-2 bg-white dark:bg-surface-darkCard border border-zinc-200 dark:border-surface-darkBorder rounded-2xl p-4 shadow-xl space-y-2 text-xs font-bold">
+      <a href="#beneficios" onclick="toggleMobileMenu()" class="block py-2 text-zinc-700 dark:text-zinc-200 hover:text-brand-500 border-b border-zinc-100 dark:border-zinc-800">Beneficios</a>
+      <a href="#calculadora" onclick="toggleMobileMenu()" class="block py-2 text-zinc-700 dark:text-zinc-200 hover:text-brand-500 border-b border-zinc-100 dark:border-zinc-800">Calculadora de Ahorro</a>
+      <a href="#comparativa" onclick="toggleMobileMenu()" class="block py-2 text-zinc-700 dark:text-zinc-200 hover:text-brand-500 border-b border-zinc-100 dark:border-zinc-800">Comparativa</a>
+      <a href="#precios" onclick="toggleMobileMenu()" class="block py-2 text-zinc-700 dark:text-zinc-200 hover:text-brand-500 border-b border-zinc-100 dark:border-zinc-800">Planes</a>
+      <a href="#faq" onclick="toggleMobileMenu()" class="block py-2 text-zinc-700 dark:text-zinc-200 hover:text-brand-500">Preguntas Frecuentes</a>
+    </div>
+  </header>
+
+  <!-- ==================== HERO SECTION ==================== -->
+  <section class="pt-24 sm:pt-36 lg:pt-40 pb-12 sm:pb-20 px-4 sm:px-6 relative overflow-hidden">
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-80 sm:w-96 h-80 sm:h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      
+      <!-- Columna Texto -->
+      <div class="lg:col-span-7 space-y-5 sm:space-y-6 text-center lg:text-left">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 dark:bg-brand-500/15 border border-brand-200/80 dark:border-brand-500/30 text-brand-600 dark:text-brand-400 text-xs font-bold tracking-tight shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-brand-500 animate-ping"></span>
+          <span>Para Gastronomía, Tiendas de Moda, Dietéticas y Comercios</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.12] text-zinc-900 dark:text-white">
+          Tu catálogo digital con QR. <br>
+          <span class="text-brand-500">0% comisiones</span> en tus ventas.
+        </h1>
+
+        <p class="text-sm sm:text-base lg:text-lg text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+          Vendé más y mostrá tus productos de forma impecable. Un catálogo interactivo con fotos, precios en tiempo real y pedidos ordenados directo a tu WhatsApp o mostrador.
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
+          <button onclick="openRegistrationModal()" class="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-sm py-3.5 sm:py-4 px-6 sm:px-7 rounded-2xl shadow-coral-lg tap-scale flex items-center justify-center gap-2.5">
+            <i class="fa-solid fa-rocket text-xs"></i>
+            <span>Probar 14 Días Gratis</span>
+          </button>
+          
+          <a href="https://wa.me/3853115268?text=Hola!%20Quiero%20conocer%20Foodaro%20para%20mi%20comercio" target="_blank" class="w-full sm:w-auto py-3.5 px-5 rounded-2xl bg-white dark:bg-surface-darkCard border border-zinc-200 dark:border-surface-darkBorder text-zinc-800 dark:text-zinc-200 text-xs font-bold hover:border-brand-300 shadow-soft tap-scale flex items-center justify-center gap-2">
+            <i class="fa-brands fa-whatsapp text-emerald-500 text-sm"></i>
+            <span>Hablar con un Asesor</span>
+          </a>
+        </div>
+
+        <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-5 text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-semibold">
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-500"></i> Sin comisiones por venta</span>
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-500"></i> Sin tarjetas requeridas</span>
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-500"></i> Adaptable a cualquier rubro</span>
+        </div>
+      </div>
+
+      <!-- Columna Mockup Multirrubro Interactivo -->
+      <div class="lg:col-span-5 flex flex-col items-center justify-center relative pt-4 lg:pt-0">
+        
+        <!-- Selector de Rubro en Vivo -->
+        <div class="flex items-center gap-1 bg-zinc-200 dark:bg-zinc-800 p-1 rounded-2xl mb-3 text-[11px] font-bold">
+          <button onclick="setIndustryDemo('gastro')" id="btn-ind-gastro" class="px-3 py-1 rounded-xl bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-white">🍔 Resto/Bar</button>
+          <button onclick="setIndustryDemo('fashion')" id="btn-ind-fashion" class="px-3 py-1 rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-white">👕 Ropa/Moda</button>
+          <button onclick="setIndustryDemo('retail')" id="btn-ind-retail" class="px-3 py-1 rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-white">🥑 Almacén</button>
+        </div>
+
+        <div class="w-[280px] sm:w-[310px] rounded-[44px] bg-zinc-950 p-3 ring-1 ring-zinc-800 shadow-2xl animate-float">
+          <div class="w-20 h-3.5 bg-zinc-900 rounded-full mx-auto mb-2 flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-zinc-800"></span>
+          </div>
+
+          <div class="rounded-[34px] bg-white dark:bg-surface-darkCard overflow-hidden text-zinc-900 dark:text-zinc-100 p-3.5 space-y-3 border border-zinc-200/50 dark:border-zinc-800">
+            <div class="flex items-center justify-between pb-1.5 border-b border-zinc-100 dark:border-surface-darkBorder">
+              <span class="font-caveat text-xl font-bold text-brand-500">foodaro</span>
+              <span id="demoStoreBadge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">• Abierto</span>
+            </div>
+
+            <div class="rounded-xl bg-zinc-900 text-white p-2.5 space-y-0.5">
+              <span id="demoPromoTag" class="text-[8px] font-black uppercase text-brand-400">Promo Hoy</span>
+              <p id="demoPromoText" class="text-[11px] font-bold leading-tight">25% OFF en tu primera compra</p>
+            </div>
+
+            <!-- Categorias Demo -->
+            <div id="demoCategories" class="flex items-center gap-2 overflow-x-hidden pt-0.5">
+              <!-- Renderizado dinámico -->
+            </div>
+
+            <!-- Tarjeta Producto Demo -->
+            <div class="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+              <img id="demoProductImg" src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=120&q=80" alt="Producto" class="w-10 h-10 rounded-lg object-cover">
+              <div class="flex-1 min-w-0">
+                <h5 id="demoProductName" class="text-[11px] font-bold truncate">Doble Smash Angus</h5>
+                <span id="demoProductPrice" class="text-[10px] font-black text-brand-500">$ 13.800</span>
+              </div>
+              <span class="w-5 h-5 rounded bg-brand-500 text-white flex items-center justify-center text-[10px] font-bold">+</span>
+            </div>
+
+            <div class="p-2 rounded-lg bg-emerald-600 text-white flex items-center justify-between text-[10px] font-bold">
+              <span class="flex items-center gap-1"><i class="fa-brands fa-whatsapp"></i> Pedir por WhatsApp</span>
+              <span id="demoCartTotal">$ 13.800</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== CALCULADORA DE AHORRO ==================== -->
+  <section id="calculadora" class="py-12 sm:py-16 px-4 sm:px-6 bg-zinc-900 text-white rounded-[32px] sm:rounded-[40px] max-w-6xl mx-auto shadow-2xl relative overflow-hidden">
+    <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-4xl mx-auto space-y-8">
+      <div class="text-center space-y-2">
+        <span class="text-xs font-black uppercase text-brand-400 tracking-widest">Calculadora de Pérdida en Comisiones</span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight">
+          ¿Cuánto dinero dejás en plataformas intermediarias?
+        </h2>
+        <p class="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
+          Las aplicaciones y marketplaces retienen comisiones excesivas en cada compra. Simulá tu ahorro directo reteniendo el 100% de tus ventas.
+        </p>
+      </div>
+
+      <div class="bg-zinc-950/90 rounded-3xl p-5 sm:p-8 border border-zinc-800 space-y-6 sm:space-y-8">
+        <div class="space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm font-bold gap-1">
+            <span class="text-zinc-300">Ventas mensuales estimadas:</span>
+            <span id="salesDisplay" class="text-lg sm:text-2xl font-black text-brand-400">$ 4.000.000 / mes</span>
+          </div>
+
+          <input 
+            type="range" 
+            id="salesRange" 
+            min="1000000" 
+            max="25000000" 
+            step="500000" 
+            value="4000000" 
+            oninput="calculateSavings(this.value)"
+            class="w-full"
+          />
+
+          <div class="flex justify-between text-[10px] sm:text-[11px] font-bold text-zinc-500">
+            <span>$ 1.000.000</span>
+            <span>$ 12.500.000</span>
+            <span>$ 25.000.000</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-zinc-800">
+          <div class="p-4 sm:p-5 rounded-2xl bg-red-950/20 border border-red-900/40 space-y-1">
+            <span class="text-xs text-red-300 font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation"></i> Retención en apps (~25%)
+            </span>
+            <p id="commissionLoss" class="text-xl sm:text-3xl font-black text-red-400">-$ 1.000.000</p>
+            <p class="text-[11px] text-zinc-400">Comisión mensual que pierde tu negocio.</p>
+          </div>
+
+          <div class="p-4 sm:p-5 rounded-2xl bg-emerald-950/20 border border-emerald-900/40 space-y-1">
+            <span class="text-xs text-emerald-300 font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-piggy-bank"></i> Ahorro anual estimado con Foodaro
+            </span>
+            <p id="annualSavings" class="text-xl sm:text-3xl font-black text-emerald-400">+$ 11.641.200</p>
+            <p class="text-[11px] text-zinc-400">Ganancia neta retenida por tu comercio.</p>
+          </div>
+        </div>
+
+        <div class="text-center pt-2">
+          <button onclick="openRegistrationModal('Control de Pedidos & Stock')" class="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm py-3.5 px-8 rounded-2xl shadow-coral tap-scale inline-flex items-center justify-center gap-2">
+            <span>Eliminar Comisiones Ahora</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== BENTO FEATURES MULTIRRUBRO ==================== -->
+  <section id="beneficios" class="py-16 sm:py-20 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto space-y-10 sm:space-y-12">
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <span class="text-xs font-extrabold text-brand-500 uppercase tracking-widest">Versatilidad Operativa</span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+          Diseñado para el ritmo real de tu comercio
+        </h2>
+        <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+          Sin necesidad de equipos caros: compartí tu link en Instagram, imprimí códigos QR en tu mostrador o recibí pedidos directos.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 rounded-3xl bg-white dark:bg-surface-darkCard p-6 sm:p-7 border border-zinc-200/80 dark:border-surface-darkBorder shadow-soft flex flex-col justify-between space-y-6">
+          <div class="space-y-2">
+            <div class="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-store text-lg"></i>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white">Catálogo Web Instantáneo sin Descargas</h3>
+            <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-lg">
+              Tu cliente abre el enlace desde tu biografía de Instagram o escanea el QR en tu tienda física y ve tus productos con variantes (talles, colores, sabores) al instante.
+            </p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="p-1.5 bg-white rounded-xl shadow-sm">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https://foodaro.app" alt="QR" class="w-8 h-8">
+              </div>
+              <div>
+                <p class="text-xs font-bold text-zinc-900 dark:text-white">QR para Mostrador, Vidrieras y Redes</p>
+                <p class="text-[11px] text-zinc-400">Listo para imprimir en calcos o folletería</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/20 px-2.5 py-1 rounded-full">
+              Incluido
+            </span>
+          </div>
+        </div>
+
+        <div class="rounded-3xl bg-white dark:bg-surface-darkCard p-6 sm:p-7 border border-zinc-200/80 dark:border-surface-darkBorder shadow-soft flex flex-col justify-between space-y-6">
+          <div class="space-y-2">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+              <i class="fa-brands fa-whatsapp text-lg"></i>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white">Pedidos Formateados a WhatsApp</h3>
+            <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              El cliente elige, agrega al carrito y te envía la orden lista: ítems, modelos, opciones personalizadas y monto final claro.
+            </p>
+          </div>
+          <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 text-xs font-bold flex items-center justify-between">
+            <span>Mensaje Ordenado</span>
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== COMPARATIVA ==================== -->
+  <section id="comparativa" class="py-12 sm:py-16 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto space-y-8">
+      <div class="text-center space-y-2">
+        <span class="text-xs font-extrabold text-brand-500 uppercase tracking-widest">Comparativa Real</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+          Foodaro vs Marketplaces y Plataformas Tradicionales
+        </h2>
+      </div>
+
+      <div class="bg-white dark:bg-surface-darkCard rounded-3xl border border-zinc-200/80 dark:border-surface-darkBorder shadow-soft overflow-hidden">
+        <div class="overflow-x-auto touch-pan-x">
+          <table class="w-full text-left text-xs sm:text-sm min-w-[500px]">
+            <thead>
+              <tr class="border-b border-zinc-200 dark:border-surface-darkBorder text-zinc-400 uppercase text-[10px] font-extrabold tracking-wider bg-zinc-50 dark:bg-zinc-900/50">
+                <th class="py-3.5 px-4 sm:px-5">Aspecto Clave</th>
+                <th class="py-3.5 px-4 sm:px-5 text-brand-500 font-black">Foodaro</th>
+                <th class="py-3.5 px-4 sm:px-5 text-zinc-400">Marketplaces Externos</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 dark:divide-surface-darkBorder font-medium">
+              <tr>
+                <td class="py-3.5 px-4 sm:px-5 font-bold text-zinc-800 dark:text-zinc-200">Comisión por venta</td>
+                <td class="py-3.5 px-4 sm:px-5 font-extrabold text-emerald-600 dark:text-emerald-400">0% (Suscripción plana)</td>
+                <td class="py-3.5 px-4 sm:px-5 text-red-500 font-bold">15% al 35% por transacción</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 sm:px-5 font-bold text-zinc-800 dark:text-zinc-200">Cobro de tus clientes</td>
+                <td class="py-3.5 px-4 sm:px-5 font-extrabold text-emerald-600 dark:text-emerald-400">Efectivo, Transferencia o MP directo</td>
+                <td class="py-3.5 px-4 sm:px-5 text-zinc-400">Fondos retenidos por días o semanas</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 sm:px-5 font-bold text-zinc-800 dark:text-zinc-200">Control de la relación comercial</td>
+                <td class="py-3.5 px-4 sm:px-5 font-extrabold text-emerald-600 dark:text-emerald-400">100% tuyo (contacto directo WhatsApp)</td>
+                <td class="py-3.5 px-4 sm:px-5 text-zinc-400">No accedes al teléfono ni datos del cliente</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 sm:px-5 font-bold text-zinc-800 dark:text-zinc-200">Actualización de stock y precios</td>
+                <td class="py-3.5 px-4 sm:px-5 font-extrabold text-emerald-600 dark:text-emerald-400">Al instante desde tu teléfono</td>
+                <td class="py-3.5 px-4 sm:px-5 text-zinc-400">Sistemas pesados con aprobaciones</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PLANES ==================== -->
+  <section id="precios" class="py-16 sm:py-20 px-4 sm:px-6 bg-zinc-100/60 dark:bg-zinc-950/40">
+    <div class="max-w-6xl mx-auto space-y-10 sm:space-y-12">
+      
+      <!-- Encabezado Simplificado -->
+      <div class="text-center space-y-3">
+        <h2 class="text-3xl sm:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">
+          Planes
+        </h2>
+        <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+          Elegí la solución adecuada para la escala y ritmo operativo de tu local o comercio.
+        </p>
+
+        <!-- Switch de Facturación -->
+        <div class="pt-2 flex items-center justify-center gap-3 text-xs font-bold">
+          <span id="monthlyLabel" class="text-zinc-900 dark:text-white">Pago Mensual</span>
+          <button onclick="toggleBillingCycle()" class="w-12 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 p-1 relative transition-colors" id="cycleToggleTrack">
+            <div id="cycleToggleThumb" class="w-4 h-4 rounded-full bg-brand-500 transition-transform"></div>
+          </button>
+          <span id="annualLabel" class="text-zinc-400">Pago Anual <span class="text-[10px] bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-black">20% OFF</span></span>
+        </div>
+      </div>
+
+      <!-- Grid de 3 Planes -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch max-w-5xl mx-auto">
+        
+        <!-- PLAN 1: BÁSICO -->
+        <div class="rounded-3xl bg-white dark:bg-surface-darkCard p-6 sm:p-7 border border-zinc-200/80 dark:border-surface-darkBorder shadow-soft flex flex-col justify-between space-y-6">
+          <div class="space-y-4">
+            <span class="text-xs font-extrabold uppercase text-zinc-400">Inicial</span>
+            <div>
+              <h3 class="text-base font-extrabold text-zinc-900 dark:text-white">Catálogo & WhatsApp</h3>
+              <p id="starterPrice" class="text-3xl font-black text-zinc-900 dark:text-white mt-1">$ 19.900 <span class="text-xs font-normal text-zinc-500">/ mes</span></p>
+            </div>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">
+              Ideal para digitalizar tus productos y recibir pedidos directos sin intermediarios.
+            </p>
+            <ul class="space-y-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 pt-3 border-t border-zinc-100 dark:border-surface-darkBorder">
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Catálogo digital interactivo con QR y Link</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Pedidos directos a tu WhatsApp</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Panel Administrador del comercio</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Modificación de precios y stock en vivo</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Soporte para Modo Claro y Oscuro</li>
+            </ul>
+          </div>
+          <button onclick="openRegistrationModal('Catálogo & WhatsApp')" class="w-full py-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white text-xs font-bold tap-scale">
+            Elegir Básico
+          </button>
+        </div>
+
+        <!-- PLAN 2: PRO (CONTROL DE PEDIDOS) -->
+        <div class="rounded-3xl bg-zinc-900 text-white p-6 sm:p-7 ring-2 ring-brand-500 shadow-coral-lg flex flex-col justify-between space-y-6 relative">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-500 text-white text-[10px] font-black uppercase px-3 py-0.5 rounded-full shadow-md">
+            Más Elegido
+          </span>
+
+          <div class="space-y-4">
+            <span class="text-xs font-extrabold uppercase text-brand-400">Gestión Activa</span>
+            <div>
+              <h3 class="text-base font-extrabold text-white">Control de Pedidos & Stock</h3>
+              <p id="proPrice" class="text-3xl sm:text-4xl font-black mt-1">$ 29.900 <span class="text-xs font-normal text-zinc-400">/ mes</span></p>
+            </div>
+            <p class="text-xs text-zinc-300">
+              Para negocios con volumen diario que necesitan controlar despachos y pedidos.
+            </p>
+            <ul class="space-y-2.5 text-xs font-semibold text-zinc-300 pt-3 border-t border-zinc-800">
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-500"></i> <strong>Todo lo del plan Básico</strong></li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-500"></i> Consola de pedidos en tiempo real</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-500"></i> Control de pedidos Sin Pagar vs Pagados</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-500"></i> Pausa rápida de ítems agotados</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-500"></i> Banners promocionales y cupones de descuento</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-brand-500"></i> Kit imprimible de mostrador en PDF</li>
+            </ul>
+          </div>
+          <button onclick="openRegistrationModal('Control de Pedidos & Stock')" class="w-full py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-extrabold shadow-coral tap-scale">
+            Probar 14 Días Gratis
+          </button>
+        </div>
+
+        <!-- PLAN 3: FULL SALÓN / POS -->
+        <div class="rounded-3xl bg-white dark:bg-surface-darkCard p-6 sm:p-7 border border-zinc-200/80 dark:border-surface-darkBorder shadow-soft flex flex-col justify-between space-y-6">
+          <div class="space-y-4">
+            <span class="text-xs font-extrabold uppercase text-zinc-400">Operación Completa</span>
+            <div>
+              <h3 class="text-base font-extrabold text-zinc-900 dark:text-white">Terminal POS & Mostrador</h3>
+              <p id="enterprisePrice" class="text-3xl font-black text-zinc-900 dark:text-white mt-1">$ 44.900 <span class="text-xs font-normal text-zinc-500">/ mes</span></p>
+            </div>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">
+              Operación integral de salón, mozos o cajeros para atención presencial y pedidos.
+            </p>
+            <ul class="space-y-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 pt-3 border-t border-zinc-100 dark:border-surface-darkBorder">
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> <strong>Todo lo del plan Control</strong></li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Terminal táctil para mozos o vendedores</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Login por PIN (Vendedor vs Encargado)</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Registro de cliente con nombre en mostrador</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Control de horario comercial y turnos</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Arqueo rápido de caja y cobros del turno</li>
+            </ul>
+          </div>
+          <button onclick="openRegistrationModal('Terminal POS & Mostrador')" class="w-full py-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white text-xs font-bold tap-scale">
+            Comenzar con POS
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== FAQ ==================== -->
+  <section id="faq" class="py-16 sm:py-20 px-4 sm:px-6">
+    <div class="max-w-3xl mx-auto space-y-8">
+      <div class="text-center space-y-2">
+        <span class="text-xs font-extrabold text-brand-500 uppercase tracking-widest">Preguntas Frecuentes</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+          Dudas comunes de comerciantes
+        </h2>
+      </div>
+
+      <div class="space-y-3">
+        <details class="group bg-white dark:bg-surface-darkCard rounded-2xl border border-zinc-200/80 dark:border-surface-darkBorder p-4 sm:p-5 cursor-pointer">
+          <summary class="flex justify-between items-center text-xs sm:text-sm font-bold text-zinc-900 dark:text-white list-none">
+            <span>¿Cómo cobro las ventas que entran por Foodaro?</span>
+            <i class="fa-solid fa-chevron-down text-xs text-zinc-400 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-2.5 leading-relaxed">
+            Directamente vos. Los clientes te pagan en tu local, en mostrador o por transferencia directa a tu alias/CBU o billetera virtual. Nosotros no cobramos comisión ni retenemos tu dinero.
+          </p>
+        </details>
+
+        <details class="group bg-white dark:bg-surface-darkCard rounded-2xl border border-zinc-200/80 dark:border-surface-darkBorder p-4 sm:p-5 cursor-pointer">
+          <summary class="flex justify-between items-center text-xs sm:text-sm font-bold text-zinc-900 dark:text-white list-none">
+            <span>¿Sirve para indumentaria, almacenes o dietéticas?</span>
+            <i class="fa-solid fa-chevron-down text-xs text-zinc-400 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-2.5 leading-relaxed">
+            Sí. Foodaro te permite cargar cualquier tipo de producto con fotos, descripciones, talles, colores o sabores, funcionando como un catálogo online ágil con pedidos directos.
+          </p>
+        </details>
+
+        <details class="group bg-white dark:bg-surface-darkCard rounded-2xl border border-zinc-200/80 dark:border-surface-darkBorder p-4 sm:p-5 cursor-pointer">
+          <summary class="flex justify-between items-center text-xs sm:text-sm font-bold text-zinc-900 dark:text-white list-none">
+            <span>¿Puedo empezar con el plan básico y después sumar la terminal de ventas?</span>
+            <i class="fa-solid fa-chevron-down text-xs text-zinc-400 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-2.5 leading-relaxed">
+            Totalmente. Podés arrancar digitalizando tu catálogo y más adelante activar la terminal de toma-pedidos y control de cobros de caja cuando tu negocio crezca.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== REGISTRATION MODAL ==================== -->
+  <div id="registrationModalBackdrop" onclick="closeRegistrationModal()" class="fixed inset-0 bg-black/65 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity"></div>
+  
+  <div id="registrationModal" class="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto z-50 bg-white dark:bg-surface-darkCard rounded-3xl p-5 sm:p-7 shadow-2xl border border-zinc-200 dark:border-surface-darkBorder hidden transform scale-95 transition-all">
+    <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-darkBorder">
+      <div>
+        <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white">Empezar con Foodaro</h3>
+        <p class="text-[11px] text-zinc-400">14 días de prueba gratuita sin tarjeta de crédito</p>
+      </div>
+      <button onclick="closeRegistrationModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center justify-center hover:opacity-80">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+
+    <form onsubmit="handleRegistrationSubmit(event)" class="mt-4 space-y-3 text-xs">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre del Comercio / Marca</label>
+        <input type="text" id="regStoreName" required placeholder="Ej: Tienda Aurora / Café del Centro" class="w-full bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-surface-darkBorder rounded-xl px-3.5 py-2.5 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Ciudad</label>
+          <input type="text" id="regCity" required placeholder="Ej: Rosario" class="w-full bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-surface-darkBorder rounded-xl px-3.5 py-2.5 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">WhatsApp de Contacto</label>
+          <input type="tel" id="regWhatsapp" required placeholder="+54 9..." class="w-full bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-surface-darkBorder rounded-xl px-3.5 py-2.5 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Plan Seleccionado</label>
+        <select id="regPlanSelect" class="w-full bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-surface-darkBorder rounded-xl px-3.5 py-2.5 font-semibold focus:outline-none">
+          <option value="Control de Pedidos & Stock">Plan Control de Pedidos & Stock — $ 29.900/mes</option>
+          <option value="Catálogo & WhatsApp">Plan Catálogo & WhatsApp — $ 19.900/mes</option>
+          <option value="Terminal POS & Mostrador">Plan Terminal POS & Mostrador — $ 44.900/mes</option>
+        </select>
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold shadow-coral tap-scale flex items-center justify-center gap-2">
+          <span>Crear Mi Catálogo Gratis</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </div>
+      <p class="text-[10px] text-zinc-400 text-center font-medium">Activación en el día sin compromiso.</p>
+    </form>
+  </div>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="border-t border-zinc-200 dark:border-surface-darkBorder bg-white dark:bg-surface-dark py-10 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-xs text-zinc-500">
+      <div class="flex items-center gap-2">
+        <span class="font-caveat text-2xl font-bold text-brand-500">foodaro</span>
+        <span>• Catálogos Digitales y Gestión Comercial</span>
+      </div>
+      <p>© 2026 Foodaro. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script>
+    let isAnnualBilling = false;
+
+    // Data para el Mockup Interactivo Multirrubro
+    const demoData = {
+      gastro: {
+        store: '• Restaurante & Bar',
+        promo: 'Burger + Pinta con 20% OFF',
+        categories: [
+          { icon: '🍔', name: 'Burgers' },
+          { icon: '🍕', name: 'Pizzas' },
+          { icon: '🥟', name: 'Empanadas' },
+          { icon: '☕', name: 'Café' }
+        ],
+        item: {
+          name: 'Doble Smash Angus',
+          price: '$ 13.800',
+          img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=120&q=80'
+        }
+      },
+      fashion: {
+        store: '• Tienda de Moda',
+        promo: 'Liquidación Temporada: 30% OFF',
+        categories: [
+          { icon: '👕', name: 'Remeras' },
+          { icon: '👖', name: 'Pantalones' },
+          { icon: '🧥', name: 'Abrigos' },
+          { icon: '🧢', name: 'Accesorios' }
+        ],
+        item: {
+          name: 'Remera Boxy Fit 100% Algodón',
+          price: '$ 24.500',
+          img: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=120&q=80'
+        }
+      },
+      retail: {
+        store: '• Almacén & Dietética',
+        promo: 'Mix Frutos Secos en Promo',
+        categories: [
+          { icon: '🥑', name: 'Frescos' },
+          { icon: '🥜', name: 'Frutos Secos' },
+          { icon: '🫒', name: 'Aceites' },
+          { icon: '🍯', name: 'Mieles' }
+        ],
+        item: {
+          name: 'Mix Energía Premium 500g',
+          price: '$ 8.900',
+          img: 'https://images.unsplash.com/photo-1599785209707-a456fc1337bb?auto=format&fit=crop&w=120&q=80'
+        }
+      }
+    };
+
+    function setIndustryDemo(type) {
+      const data = demoData[type];
+      
+      // Update UI active buttons
+      ['gastro', 'fashion', 'retail'].forEach(t => {
+        const btn = document.getElementById(`btn-ind-${t}`);
+        if (t === type) {
+          btn.className = "px-3 py-1 rounded-xl bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-white font-bold";
+        } else {
+          btn.className = "px-3 py-1 rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-white";
+        }
+      });
+
+      // Update phone mockup preview
+      document.getElementById('demoStoreBadge').innerText = data.store;
+      document.getElementById('demoPromoText').innerText = data.promo;
+      document.getElementById('demoProductName').innerText = data.item.name;
+      document.getElementById('demoProductPrice').innerText = data.item.price;
+      document.getElementById('demoCartTotal').innerText = data.item.price;
+      document.getElementById('demoProductImg').src = data.item.img;
+
+      // Render Categories
+      const catContainer = document.getElementById('demoCategories');
+      catContainer.innerHTML = data.categories.map((c, i) => `
+        <div class="flex flex-col items-center gap-0.5">
+          <div class="w-8 h-8 rounded-full ${i === 0 ? 'bg-brand-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'} flex items-center justify-center text-[10px]">
+            ${c.icon}
+          </div>
+          <span class="text-[8px] ${i === 0 ? 'font-bold text-brand-500' : 'font-semibold text-zinc-400'}">${c.name}</span>
+        </div>
+      `).join('');
+    }
+
+    function formatNumber(val) {
+      return '$ ' + new Intl.NumberFormat('es-AR').format(val);
+    }
+
+    function calculateSavings(val) {
+      const sales = parseFloat(val);
+      document.getElementById('salesDisplay').innerText = `${formatNumber(sales)} / mes`;
+      
+      const commission = sales * 0.25;
+      const netMonthlySavings = Math.max(0, commission - 29900);
+      const annual = netMonthlySavings * 12;
+
+      document.getElementById('commissionLoss').innerText = `-${formatNumber(Math.round(commission))}`;
+      document.getElementById('annualSavings').innerText = `+${formatNumber(Math.round(annual))}`;
+    }
+
+    function toggleBillingCycle() {
+      isAnnualBilling = !isAnnualBilling;
+      const thumb = document.getElementById('cycleToggleThumb');
+      const track = document.getElementById('cycleToggleTrack');
+      const mLabel = document.getElementById('monthlyLabel');
+      const aLabel = document.getElementById('annualLabel');
+      const starterPrice = document.getElementById('starterPrice');
+      const proPrice = document.getElementById('proPrice');
+      const entPrice = document.getElementById('enterprisePrice');
+
+      if (isAnnualBilling) {
+        thumb.classList.add('translate-x-6');
+        track.classList.add('bg-brand-500/20');
+        mLabel.classList.replace('text-zinc-900', 'text-zinc-400');
+        aLabel.classList.replace('text-zinc-400', 'text-zinc-900');
+        starterPrice.innerHTML = `$ 15.900 <span class="text-xs font-normal text-zinc-500">/ mes (anual)</span>`;
+        proPrice.innerHTML = `$ 23.900 <span class="text-xs font-normal text-zinc-500">/ mes (anual)</span>`;
+        entPrice.innerHTML = `$ 35.900 <span class="text-xs font-normal text-zinc-500">/ mes (anual)</span>`;
+      } else {
+        thumb.classList.remove('translate-x-6');
+        track.classList.remove('bg-brand-500/20');
+        mLabel.classList.replace('text-zinc-400', 'text-zinc-900');
+        aLabel.classList.replace('text-zinc-900', 'text-zinc-400');
+        starterPrice.innerHTML = `$ 19.900 <span class="text-xs font-normal text-zinc-500">/ mes</span>`;
+        proPrice.innerHTML = `$ 29.900 <span class="text-xs font-normal text-zinc-500">/ mes</span>`;
+        entPrice.innerHTML = `$ 44.900 <span class="text-xs font-normal text-zinc-500">/ mes</span>`;
+      }
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem('foodaro_theme');
+      if (saved === 'dark') {
+        document.documentElement.classList.add('dark');
+        updateThemeIcon(true);
+      } else {
+        document.documentElement.classList.remove('dark');
+        updateThemeIcon(false);
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('foodaro_theme', isDark ? 'dark' : 'light');
+      updateThemeIcon(isDark);
+    }
+
+    function updateThemeIcon(isDark) {
+      const icon = document.getElementById('themeIcon');
+      if (icon) {
+        icon.className = isDark ? 'fa-solid fa-sun text-xs sm:text-sm' : 'fa-solid fa-moon text-xs sm:text-sm';
+      }
+    }
+
+    function toggleMobileMenu() {
+      document.getElementById('mobileDropdown').classList.toggle('hidden');
+    }
+
+    function openRegistrationModal(plan = 'Control de Pedidos & Stock') {
+      const select = document.getElementById('regPlanSelect');
+      if (select) select.value = plan;
+
+      const modal = document.getElementById('registrationModal');
+      const backdrop = document.getElementById('registrationModalBackdrop');
+      backdrop.classList.remove('hidden');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        backdrop.classList.remove('opacity-0');
+        modal.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeRegistrationModal() {
+      const modal = document.getElementById('registrationModal');
+      const backdrop = document.getElementById('registrationModalBackdrop');
+      backdrop.classList.add('opacity-0');
+      modal.classList.add('scale-95');
+      setTimeout(() => {
+        backdrop.classList.add('hidden');
+        modal.classList.add('hidden');
+      }, 200);
+    }
+
+    function handleRegistrationSubmit(e) {
+      e.preventDefault();
+      const store = document.getElementById('regStoreName').value;
+      const phone = document.getElementById('regWhatsapp').value;
+      const plan = document.getElementById('regPlanSelect').value;
+      closeRegistrationModal();
+      
+      const msg = encodeURIComponent(`Hola! Acabo de registrar "${store}" para probar Foodaro (${plan}). Mi número es ${phone}.`);
+      window.open(`https://wa.me/5491140508800?text=${msg}`, '_blank');
+    }
+
+    window.onload = function() {
+      initTheme();
+      calculateSavings(4000000);
+      setIndustryDemo('gastro');
+    };
+  </script>
+
+</body>
+</html>

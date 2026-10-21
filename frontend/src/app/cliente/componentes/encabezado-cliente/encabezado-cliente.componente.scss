@@ -1,0 +1,4 @@
+/* display: contents para que el <header> sticky tome como contenedor al layout completo. */
+:host {
+  display: contents;
+}

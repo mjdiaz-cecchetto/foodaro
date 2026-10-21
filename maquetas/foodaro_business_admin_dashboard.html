@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodaro Backoffice • Panel del Administrador</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Caveat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 (Free CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#FFF1F1',
+              100: '#FFE1E1',
+              400: '#FF6B6B',
+              500: '#FF4B4B',
+              600: '#FF3B30',
+              700: '#E02E24',
+            },
+            surface: {
+              light: '#FFFFFF',
+              dark: '#12161F',
+              darker: '#0B0E14',
+              cardDark: '#181E29',
+              borderDark: '#232B3A',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            caveat: ['"Caveat"', 'cursive'],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px rgba(0, 0, 0, 0.04)',
+            'card': '0 10px 30px rgba(0, 0, 0, 0.06)',
+            'coral': '0 10px 24px -4px rgba(255, 59, 48, 0.35)',
+            'modal': '0 25px 60px -15px rgba(0, 0, 0, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom thin scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+    .tap-scale {
+      transition: transform 0.15s ease;
+    }
+    .tap-scale:active {
+      transform: scale(0.97);
+    }
+  </style>
+</head>
+
+<body class="bg-[#F8F9FA] dark:bg-surface-darker text-zinc-900 dark:text-zinc-100 font-sans antialiased min-h-screen flex flex-col md:flex-row transition-colors duration-200">
+
+  <!-- ==================== MOBILE TOP BAR ==================== -->
+  <header class="md:hidden flex items-center justify-between px-5 py-3.5 bg-white dark:bg-surface-dark border-b border-zinc-200 dark:border-surface-borderDark sticky top-0 z-40">
+    <div class="flex items-center gap-2.5">
+      <button onclick="toggleMobileSidebar()" class="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-surface-cardDark">
+        <i class="fa-solid fa-bars text-lg"></i>
+      </button>
+      <div class="flex items-center gap-2">
+        <span class="font-caveat text-3xl font-bold text-brand-600">foodaro</span>
+        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400">Admin</span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <!-- Dark mode toggle -->
+      <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark flex items-center justify-center text-zinc-600 dark:text-amber-400 tap-scale">
+        <i id="mobileThemeIcon" class="fa-solid fa-moon"></i>
+      </button>
+      <!-- View Public Store -->
+      <a href="index.html" target="_blank" class="p-2 rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-bold flex items-center gap-1.5" title="Ver Carta en Vivo">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </a>
+    </div>
+  </header>
+
+  <!-- ==================== SIDEBAR BACKDROP (MOBILE) ==================== -->
+  <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+
+  <!-- ==================== SIDEBAR NAVIGATION ==================== -->
+  <aside id="sidebarMenu" class="fixed md:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-surface-dark border-r border-zinc-200 dark:border-surface-borderDark flex flex-col justify-between transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
+    
+    <!-- Top Area: Brand & Restaurant Mini Card -->
+    <div>
+      <div class="p-6 border-b border-zinc-100 dark:border-surface-borderDark hidden md:flex items-center justify-between">
+        <div>
+          <a href="#" class="font-caveat text-3xl font-bold tracking-tight text-brand-600">
+            foodaro
+          </a>
+          <p class="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Backoffice v2.4</p>
+        </div>
+        <!-- Dark Mode Toggle Button Desktop -->
+        <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark border border-zinc-200/60 dark:border-surface-borderDark text-zinc-600 dark:text-amber-400 flex items-center justify-center tap-scale hover:opacity-90">
+          <i id="themeIcon" class="fa-solid fa-moon text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Restaurant Mini Preview Pill -->
+      <div class="px-5 py-4 border-b border-zinc-100 dark:border-surface-borderDark">
+        <div class="flex items-center gap-3 p-2 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark/70 border border-zinc-100 dark:border-surface-borderDark">
+          <img id="navStoreLogo" src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=160&q=80" alt="Logo" class="w-10 h-10 rounded-xl object-cover ring-2 ring-brand-500/20">
+          <div class="min-w-0 flex-1">
+            <h4 id="navStoreName" class="text-xs font-bold text-zinc-900 dark:text-white truncate">Foodaro Bistro & Grill</h4>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">Carta Activa</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nav Links List -->
+      <nav class="p-4 space-y-1.5">
+        <button onclick="switchTab('tab-profile')" id="nav-tab-profile" class="nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-xs transition-all bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-store w-4 text-center"></i>
+            <span>Datos del Local</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] opacity-70"></i>
+        </button>
+
+        <button onclick="switchTab('tab-categories')" id="nav-tab-categories" class="nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-xs transition-all text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-surface-cardDark">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-shapes w-4 text-center"></i>
+            <span>Categorías</span>
+          </div>
+          <span id="badgeCatCount" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">6</span>
+        </button>
+
+        <button onclick="switchTab('tab-products')" id="nav-tab-products" class="nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-xs transition-all text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-surface-cardDark">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-utensils w-4 text-center"></i>
+            <span>Platos & Carta</span>
+          </div>
+          <span id="badgeProdCount" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">7</span>
+        </button>
+
+        <button onclick="switchTab('tab-promos')" id="nav-tab-promos" class="nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-xs transition-all text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-surface-cardDark">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-tags w-4 text-center"></i>
+            <span>Promos & Cupones</span>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Bottom Actions: View Live Store & Support -->
+    <div class="p-5 border-t border-zinc-100 dark:border-surface-borderDark space-y-3">
+      <a href="index.html" target="_blank" class="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-black dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold flex items-center justify-center gap-2 tap-scale shadow-sm transition">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        <span>Abrir Carta Digital</span>
+      </a>
+      <p class="text-[10px] text-zinc-400 text-center font-medium">Foodaro Cloud Restaurant OS</p>
+    </div>
+
+  </aside>
+
+  <!-- ==================== MAIN ADMIN CONTAINER ==================== -->
+  <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full custom-scroll">
+    
+    <!-- ==================== SECTION 1: DATOS DEL LOCAL ==================== -->
+    <section id="section-profile" class="space-y-6">
+      
+      <!-- Header banner -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200 dark:border-surface-borderDark">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Perfil del Restaurante</h1>
+          <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1">Configura la identidad pública, portada ambiental con degradado, mapa y redes.</p>
+        </div>
+        <button onclick="saveStoreProfile()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs sm:text-sm shadow-coral tap-scale flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>Guardar Cambios</span>
+        </button>
+      </div>
+
+      <!-- Live Mockup Preview Card of Header Degradé -->
+      <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+            <i class="fa-solid fa-eye text-brand-500"></i> Vista Previa en Vivo de tu Cabecera
+          </span>
+          <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2.5 py-0.5 rounded-full">Se actualiza en tiempo real</span>
+        </div>
+
+        <!-- Banner Component Preview -->
+        <div class="relative w-full h-44 sm:h-52 rounded-2xl overflow-hidden bg-zinc-900 shadow-inner group">
+          <img id="livePreviewCover" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80" alt="Cover" class="w-full h-full object-cover">
+          <!-- Degradé Layer -->
+          <div class="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent dark:from-surface-dark dark:via-surface-dark/50"></div>
+          
+          <div class="absolute top-3 left-4">
+            <span class="bg-emerald-500/90 text-white backdrop-blur-sm text-[11px] font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+              <span id="livePreviewStatus">Abierto Hoy • Cierra 23:30</span>
+            </span>
+          </div>
+
+          <!-- Overlapped Brand Pill -->
+          <div class="absolute bottom-3 left-4 sm:left-6 flex items-end gap-3.5 z-10">
+            <img id="livePreviewLogo" src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=160&q=80" alt="Logo" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ring-4 ring-white dark:ring-surface-dark shadow-xl object-cover bg-white">
+            <div class="pb-1">
+              <h3 id="livePreviewName" class="text-lg sm:text-xl font-black text-zinc-900 dark:text-white leading-tight">Foodaro Bistro & Grill</h3>
+              <p id="livePreviewTagline" class="text-xs text-zinc-600 dark:text-zinc-300 font-medium">Cocina contemporánea, pizzas a la leña y smash burgers.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Profile Form -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Left Column: Basic Info & Images -->
+        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
+          <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">1. Identidad de Marca</h3>
+          
+          <div>
+            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Nombre Comercial del Local</label>
+            <input type="text" id="storeNameInput" value="Foodaro Bistro & Grill" oninput="updateLiveStorePreview()" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-3 text-xs sm:text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Eslogan o Descripción Corta</label>
+            <input type="text" id="storeTaglineInput" value="Cocina contemporánea, pizzas a la leña y smash burgers." oninput="updateLiveStorePreview()" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-3 text-xs sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">URL Imagen Logotipo</label>
+              <input type="url" id="storeLogoUrlInput" value="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=160&q=80" oninput="updateLiveStorePreview()" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 text-xs text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">URL Imagen Portada (Cover)</label>
+              <input type="url" id="storeCoverUrlInput" value="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80" oninput="updateLiveStorePreview()" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 text-xs text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <h4 class="font-extrabold text-xs uppercase tracking-wider text-brand-600 mb-3">Ubicación y Google Maps</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Dirección Física</label>
+                <input type="text" id="storeAddressInput" value="Av. Libertador San Martín 1420, Barrio Gourmet" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 text-xs text-zinc-900 dark:text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Enlace directo a Google Maps</label>
+                <input type="url" id="storeMapsUrlInput" value="https://maps.google.com" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 text-xs text-zinc-900 dark:text-white">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Schedules & Social Media Channels -->
+        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
+          <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">2. Horarios & Canales Oficiales</h3>
+          
+          <div class="space-y-3">
+            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300">Horarios de Atención</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark">
+                <span class="font-bold block text-zinc-900 dark:text-white">Lunes a Jueves</span>
+                <input type="text" id="schWeekday" value="12:00 - 16:00 | 19:30 - 23:30" class="mt-1 w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 text-xs py-1 focus:outline-none focus:border-brand-500 font-medium">
+              </div>
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark">
+                <span class="font-bold block text-zinc-900 dark:text-white">Viernes y Sábados</span>
+                <input type="text" id="schWeekend" value="12:00 - 01:00 (Corrido)" class="mt-1 w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 text-xs py-1 focus:outline-none focus:border-brand-500 font-medium">
+              </div>
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark sm:col-span-2">
+                <span class="font-bold block text-zinc-900 dark:text-white">Domingos</span>
+                <input type="text" id="schSunday" value="12:00 - 18:00" class="mt-1 w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 text-xs py-1 focus:outline-none focus:border-brand-500 font-medium">
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 space-y-3">
+            <h4 class="font-extrabold text-xs uppercase tracking-wider text-brand-600">Redes y Contacto</h4>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label class="block text-zinc-500 mb-1 font-semibold flex items-center gap-1.5"><i class="fa-brands fa-whatsapp text-emerald-500"></i> WhatsApp</label>
+                <input type="text" id="storeWaInput" value="+54 9 11 4050-8800" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-xl px-3 py-2 text-zinc-900 dark:text-white">
+              </div>
+              <div>
+                <label class="block text-zinc-500 mb-1 font-semibold flex items-center gap-1.5"><i class="fa-brands fa-instagram text-pink-500"></i> Instagram</label>
+                <input type="text" id="storeIgInput" value="@foodarobistro" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-xl px-3 py-2 text-zinc-900 dark:text-white">
+              </div>
+              <div>
+                <label class="block text-zinc-500 mb-1 font-semibold flex items-center gap-1.5"><i class="fa-brands fa-tiktok text-zinc-800 dark:text-white"></i> TikTok</label>
+                <input type="text" id="storeTtInput" value="@foodaro.oficial" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-xl px-3 py-2 text-zinc-900 dark:text-white">
+              </div>
+              <div>
+                <label class="block text-zinc-500 mb-1 font-semibold flex items-center gap-1.5"><i class="fa-solid fa-phone text-brand-600"></i> Teléfono Salón</label>
+                <input type="text" id="storePhoneInput" value="+54 11 4789-2211" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-xl px-3 py-2 text-zinc-900 dark:text-white">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==================== SECTION 2: GESTIÓN DE CATEGORÍAS ==================== -->
+    <section id="section-categories" class="hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200 dark:border-surface-borderDark">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Categorías del Menú</h1>
+          <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1">Organiza cómo se exhiben los platos y los círculos navegables en la carta.</p>
+        </div>
+        <button onclick="openCategoryModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs sm:text-sm shadow-coral tap-scale flex items-center justify-center gap-2">
+          <i class="fa-solid fa-plus"></i>
+          <span>Nueva Categoría</span>
+        </button>
+      </div>
+
+      <!-- Categories Grid Cards -->
+      <div id="adminCategoriesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rendered via JS -->
+      </div>
+
+    </section>
+
+    <!-- ==================== SECTION 3: PRODUCTOS Y PLATOS ==================== -->
+    <section id="section-products" class="hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200 dark:border-surface-borderDark">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Platos & Catálogo</h1>
+          <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1">Administra precios, descripción de ingredientes, badges y disponibilidad inmediata.</p>
+        </div>
+        <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs sm:text-sm shadow-coral tap-scale flex items-center justify-center gap-2">
+          <i class="fa-solid fa-plus"></i>
+          <span>Agregar Plato</span>
+        </button>
+      </div>
+
+      <!-- Search & Category Filter Toolbar -->
+      <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="relative w-full sm:w-80">
+          <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-xs"></i>
+          <input type="text" id="adminProductSearch" oninput="renderAdminProducts()" placeholder="Buscar plato por nombre..." class="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-surface-borderDark rounded-2xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+        </div>
+        
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <select id="adminCategoryFilter" onchange="renderAdminProducts()" class="w-full sm:w-auto bg-white dark:bg-surface-dark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 focus:outline-none">
+            <option value="all">Todas las Categorías</option>
+            <!-- Injected via JS -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Products Data Table Card -->
+      <div class="bg-white dark:bg-surface-dark rounded-3xl shadow-soft border border-zinc-100 dark:border-surface-borderDark overflow-hidden">
+        <div class="overflow-x-auto custom-scroll">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-zinc-100 dark:border-surface-borderDark text-zinc-400 uppercase text-[10px] font-extrabold tracking-wider bg-zinc-50/50 dark:bg-surface-cardDark/40">
+                <th class="py-3.5 px-5">Plato</th>
+                <th class="py-3.5 px-4">Categoría</th>
+                <th class="py-3.5 px-4">Precio</th>
+                <th class="py-3.5 px-4 text-center">Disponibilidad</th>
+                <th class="py-3.5 px-5 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="adminProductsTableBody" class="divide-y divide-zinc-100 dark:divide-surface-borderDark font-medium">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== SECTION 4: PROMOCIONES & BANNERS ==================== -->
+    <section id="section-promos" class="hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200 dark:border-surface-borderDark">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Promociones & Banners</h1>
+          <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1">Configura las tarjetas de descuento y cupones promocionales de la carta digital.</p>
+        </div>
+        <button onclick="openPromoModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs sm:text-sm shadow-coral tap-scale flex items-center justify-center gap-2">
+          <i class="fa-solid fa-plus"></i>
+          <span>Nueva Promoción</span>
+        </button>
+      </div>
+
+      <!-- Promos List Cards -->
+      <div id="adminPromosList" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Rendered via JS -->
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== MODAL: AGREGAR / EDITAR CATEGORÍA ==================== -->
+  <div id="categoryModalBackdrop" onclick="closeCategoryModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity"></div>
+  <div id="categoryModal" class="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto z-50 bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-modal border border-zinc-100 dark:border-surface-borderDark hidden transform scale-95 transition-all">
+    <div class="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-surface-borderDark">
+      <h3 id="categoryModalTitle" class="font-extrabold text-base text-zinc-900 dark:text-white">Nueva Categoría</h3>
+      <button onclick="closeCategoryModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center hover:opacity-80">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="categoryForm" onsubmit="handleCategorySubmit(event)" class="mt-4 space-y-4 text-xs">
+      <input type="hidden" id="catEditId">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre de la Categoría</label>
+        <input type="text" id="catNameInput" placeholder="Ej: Cocktails, Pastas, Hamburguesas" required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">URL Imagen Redonda (PNG o Foto)</label>
+        <input type="url" id="catImgInput" placeholder="https://images.unsplash.com/..." required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+      </div>
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-surface-borderDark">
+        <button type="button" onclick="closeCategoryModal()" class="px-4 py-2.5 rounded-xl font-bold text-zinc-500 hover:text-zinc-700">Cancelar</button>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral tap-scale">Guardar Categoría</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ==================== MODAL: AGREGAR / EDITAR PLATO ==================== -->
+  <div id="productModalBackdrop" onclick="closeProductModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity"></div>
+  <div id="productModal" class="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-xl mx-auto z-50 bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-modal border border-zinc-100 dark:border-surface-borderDark hidden transform scale-95 transition-all max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-borderDark shrink-0">
+      <h3 id="productModalTitle" class="font-extrabold text-base text-zinc-900 dark:text-white">Nuevo Plato en la Carta</h3>
+      <button onclick="closeProductModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center hover:opacity-80">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="productForm" onsubmit="handleProductSubmit(event)" class="mt-4 space-y-4 text-xs overflow-y-auto custom-scroll pr-1 flex-1">
+      <input type="hidden" id="prodEditId">
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre del Plato</label>
+          <input type="text" id="prodNameInput" placeholder="Ej: Truffle Angus Burger" required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-3.5 py-2.5 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Categoría</label>
+          <select id="prodCategorySelect" required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-3.5 py-2.5 font-semibold focus:outline-none">
+            <!-- Injected via JS -->
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Precio ($ USD)</label>
+          <input type="number" step="0.10" id="prodPriceInput" placeholder="12.50" required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-3.5 py-2.5 font-extrabold text-brand-600 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Tiempo Est.</label>
+          <input type="text" id="prodTimeInput" placeholder="15-20 min" value="15 min" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-3.5 py-2.5">
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Badge / Insignia</label>
+          <input type="text" id="prodBadgeInput" placeholder="Bestseller, Nuevo" value="Bestseller" class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-3.5 py-2.5">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">URL Imagen del Plato</label>
+        <input type="url" id="prodImgInput" placeholder="https://images.unsplash.com/..." required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-3.5 py-2.5 focus:outline-none">
+      </div>
+
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Descripción e Ingredientes</label>
+        <textarea id="prodDescInput" rows="3" placeholder="Detalle minucioso de masa, cocción y alérgenos..." required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl p-3 focus:outline-none leading-relaxed"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-surface-borderDark shrink-0">
+        <button type="button" onclick="closeProductModal()" class="px-4 py-2.5 rounded-xl font-bold text-zinc-500 hover:text-zinc-700">Cancelar</button>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral tap-scale">Guardar Plato</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ==================== MODAL: AGREGAR / EDITAR PROMO ==================== -->
+  <div id="promoModalBackdrop" onclick="closePromoModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity"></div>
+  <div id="promoModal" class="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto z-50 bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-modal border border-zinc-100 dark:border-surface-borderDark hidden transform scale-95 transition-all">
+    <div class="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-surface-borderDark">
+      <h3 id="promoModalTitle" class="font-extrabold text-base text-zinc-900 dark:text-white">Nueva Promoción</h3>
+      <button onclick="closePromoModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center hover:opacity-80">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="promoForm" onsubmit="handlePromoSubmit(event)" class="mt-4 space-y-4 text-xs">
+      <input type="hidden" id="promoEditId">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Título del Banner</label>
+        <input type="text" id="promoTitleInput" placeholder="Hasta un 25% OFF en toda la carta" required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 font-semibold focus:outline-none">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Descuento (%)</label>
+          <input type="number" id="promoDiscountInput" placeholder="25" min="5" max="90" required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 font-bold text-brand-600 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Código de Cupón</label>
+          <input type="text" id="promoCodeInput" placeholder="FOODARO25" required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 font-mono uppercase font-bold focus:outline-none">
+        </div>
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">URL Imagen del Banner</label>
+        <input type="url" id="promoImgInput" placeholder="https://images.unsplash.com/..." required class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 focus:outline-none">
+      </div>
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-surface-borderDark">
+        <button type="button" onclick="closePromoModal()" class="px-4 py-2.5 rounded-xl font-bold text-zinc-500 hover:text-zinc-700">Cancelar</button>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral tap-scale">Guardar Promo</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ==================== TOAST FEEDBACK NOTIFICATION ==================== -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold px-4 py-3 rounded-2xl shadow-modal flex items-center gap-3 opacity-0 pointer-events-none transition-all duration-300 transform translate-y-3">
+    <div class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <span id="toastMessage">Operación realizada con éxito</span>
+  </div>
+
+  <!-- ==================== JAVASCRIPT STATE & LOGIC ==================== -->
+  <script>
+    // 1. Initial State Data
+    let categories = [
+      { id: 'burgers', name: 'Burgers', img: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=120&h=120&q=80', active: true },
+      { id: 'pizzas', name: 'Pizzas', img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=120&h=120&q=80', active: true },
+      { id: 'tacos', name: 'Tacos', img: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=120&h=120&q=80', active: true },
+      { id: 'bebidas', name: 'Bebidas', img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=120&h=120&q=80', active: true },
+      { id: 'postres', name: 'Postres', img: 'https://images.unsplash.com/photo-1527515862127-a4fc05baf7a5?auto=format&fit=crop&w=120&h=120&q=80', active: true },
+    ];
+
+    let products = [
+      {
+        id: 1,
+        title: 'Truffle Pepperoni Pizza',
+        category: 'pizzas',
+        rating: 4.9,
+        time: '15-20 min',
+        price: 12.50,
+        badge: 'Bestseller',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?auto=format&fit=crop&w=400&q=80',
+        description: 'Masa fermentada 48 horas a la piedra, salsa San Marzano, mozzarella fior di latte y pepperoni curado.'
+      },
+      {
+        id: 2,
+        title: 'Double Angus Smash Burger',
+        category: 'burgers',
+        rating: 4.8,
+        time: '12-15 min',
+        price: 9.80,
+        badge: 'Top Pick',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80',
+        description: 'Doble medallón Angus de 100g con costra caramelizada, doble queso cheddar fundido y cebolla crispy.'
+      },
+      {
+        id: 3,
+        title: 'Tacos Al Pastor Gourmet',
+        category: 'tacos',
+        rating: 4.9,
+        time: '10-12 min',
+        price: 8.90,
+        badge: 'Chef Special',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80',
+        description: 'Tres tortillas de maíz nixtamalizado con bondiola de cerdo marinada al achiote y piña asada.'
+      },
+      {
+        id: 4,
+        title: 'Crispy Bacon & Cheddar Fries',
+        category: 'burgers',
+        rating: 4.7,
+        time: '8-10 min',
+        price: 6.50,
+        badge: 'Favorito',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=400&q=80',
+        description: 'Papas rústicas cortadas a mano, bañadas en auténtico queso cheddar fundido y panceta ahumada.'
+      },
+      {
+        id: 5,
+        title: 'Strawberry Boba Iced Tea',
+        category: 'bebidas',
+        rating: 4.8,
+        time: '5 min',
+        price: 4.80,
+        badge: 'Refrescante',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=400&q=80',
+        description: 'Té negro aromático con coulis de frutillas naturales y tiernas perlas de tapioca caramelizadas.'
+      }
+    ];
+
+    let promos = [
+      {
+        id: 1,
+        title: 'Hasta un 25% OFF en toda la carta',
+        discount: 25,
+        code: 'FOODARO25',
+        active: true,
+        image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80'
+      }
+    ];
+
+    // ==================== TABS SWITCHER ====================
+    function switchTab(tabId) {
+      // Hide all sections
+      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+      // Deselect all nav items
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.className = "nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-xs transition-all text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-surface-cardDark";
+      });
+
+      // Show selected section
+      const activeSection = document.getElementById(tabId.replace('tab-', 'section-'));
+      if (activeSection) activeSection.classList.remove('hidden');
+
+      // Highlight selected nav item
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.className = "nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-xs transition-all bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400";
+      }
+
+      // Close mobile drawer if open
+      const sidebar = document.getElementById('sidebarMenu');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (!sidebar.classList.contains('-translate-x-full')) {
+        toggleMobileSidebar();
+      }
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebarMenu');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const isOpen = !sidebar.classList.contains('-translate-x-full');
+
+      if (isOpen) {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      } else {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      }
+    }
+
+    // ==================== LIVE STORE MOCKUP PREVIEW ====================
+    function updateLiveStorePreview() {
+      const name = document.getElementById('storeNameInput').value;
+      const tagline = document.getElementById('storeTaglineInput').value;
+      const logo = document.getElementById('storeLogoUrlInput').value;
+      const cover = document.getElementById('storeCoverUrlInput').value;
+
+      document.getElementById('livePreviewName').innerText = name || 'Nombre del Restaurante';
+      document.getElementById('livePreviewTagline').innerText = tagline || 'Eslogan gastronómico';
+      if (logo) {
+        document.getElementById('livePreviewLogo').src = logo;
+        document.getElementById('navStoreLogo').src = logo;
+      }
+      if (cover) {
+        document.getElementById('livePreviewCover').src = cover;
+      }
+      document.getElementById('navStoreName').innerText = name || 'Foodaro Local';
+    }
+
+    function saveStoreProfile() {
+      showToast('¡Datos del restaurante actualizados correctamente!');
+    }
+
+    // ==================== CRUD CATEGORIES ====================
+    function renderAdminCategories() {
+      const grid = document.getElementById('adminCategoriesGrid');
+      grid.innerHTML = '';
+      document.getElementById('badgeCatCount').innerText = categories.length;
+
+      // Populate filter in products view
+      const filterSelect = document.getElementById('adminCategoryFilter');
+      const prodModalSelect = document.getElementById('prodCategorySelect');
+      
+      let filterOpts = '<option value="all">Todas las Categorías</option>';
+      let modalOpts = '';
+
+      categories.forEach(cat => {
+        filterOpts += `<option value="${cat.id}">${cat.name}</option>`;
+        modalOpts += `<option value="${cat.id}">${cat.name}</option>`;
+
+        const count = products.filter(p => p.category === cat.id).length;
+        const card = document.createElement('div');
+        card.className = "bg-white dark:bg-surface-dark rounded-3xl p-4 shadow-soft border border-zinc-100 dark:border-surface-borderDark flex items-center justify-between gap-4";
+        
+        card.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <img src="${cat.img}" alt="${cat.name}" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-brand-500/20 shrink-0">
+            <div class="min-w-0">
+              <h4 class="font-bold text-sm text-zinc-900 dark:text-white truncate">${cat.name}</h4>
+              <p class="text-[11px] font-semibold text-zinc-400 mt-0.5">${count} platos asociados</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="editCategory('${cat.id}')" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 hover:text-brand-600 flex items-center justify-center tap-scale" title="Editar">
+              <i class="fa-solid fa-pen text-xs"></i>
+            </button>
+            <button onclick="deleteCategory('${cat.id}')" class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 flex items-center justify-center tap-scale" title="Eliminar">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      filterSelect.innerHTML = filterOpts;
+      prodModalSelect.innerHTML = modalOpts;
+    }
+
+    function openCategoryModal(isEdit = false) {
+      document.getElementById('categoryModalTitle').innerText = isEdit ? 'Editar Categoría' : 'Nueva Categoría';
+      document.getElementById('categoryModalBackdrop').classList.remove('hidden');
+      document.getElementById('categoryModal').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('categoryModalBackdrop').classList.remove('opacity-0');
+        document.getElementById('categoryModal').classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('categoryModalBackdrop').classList.add('opacity-0');
+      document.getElementById('categoryModal').classList.add('scale-95');
+      setTimeout(() => {
+        document.getElementById('categoryModalBackdrop').classList.add('hidden');
+        document.getElementById('categoryModal').classList.add('hidden');
+        document.getElementById('categoryForm').reset();
+        document.getElementById('catEditId').value = '';
+      }, 200);
+    }
+
+    function handleCategorySubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('catEditId').value;
+      const name = document.getElementById('catNameInput').value.trim();
+      const img = document.getElementById('catImgInput').value.trim();
+
+      if (editId) {
+        const cat = categories.find(c => c.id === editId);
+        if (cat) {
+          cat.name = name;
+          cat.img = img;
+          showToast('Categoría actualizada');
+        }
+      } else {
+        const newId = name.toLowerCase().replace(/\s+/g, '-');
+        categories.push({ id: newId, name, img, active: true });
+        showToast('Categoría creada exitosamente');
+      }
+
+      closeCategoryModal();
+      renderAdminCategories();
+      renderAdminProducts();
+    }
+
+    function editCategory(catId) {
+      const cat = categories.find(c => c.id === catId);
+      if (!cat) return;
+      document.getElementById('catEditId').value = cat.id;
+      document.getElementById('catNameInput').value = cat.name;
+      document.getElementById('catImgInput').value = cat.img;
+      openCategoryModal(true);
+    }
+
+    function deleteCategory(catId) {
+      if (confirm('¿Eliminar esta categoría? Los platos asociados seguirán existiendo.')) {
+        categories = categories.filter(c => c.id !== catId);
+        renderAdminCategories();
+        showToast('Categoría eliminada');
+      }
+    }
+
+    // ==================== CRUD PRODUCTS ====================
+    function renderAdminProducts() {
+      const tbody = document.getElementById('adminProductsTableBody');
+      const search = document.getElementById('adminProductSearch').value.toLowerCase();
+      const filterCat = document.getElementById('adminCategoryFilter').value;
+
+      tbody.innerHTML = '';
+
+      const filtered = products.filter(p => {
+        const matchesName = p.title.toLowerCase().includes(search) || p.description.toLowerCase().includes(search);
+        const matchesCategory = filterCat === 'all' || p.category === filterCat;
+        return matchesName && matchesCategory;
+      });
+
+      document.getElementById('badgeProdCount').innerText = products.length;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-zinc-400 font-bold">No se encontraron platos que coincidan</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-zinc-50/70 dark:hover:bg-surface-cardDark/50 transition-colors";
+        
+        tr.innerHTML = `
+          <td class="py-3 px-5">
+            <div class="flex items-center gap-3">
+              <img src="${p.image}" alt="${p.title}" class="w-12 h-12 rounded-xl object-cover shrink-0 shadow-sm">
+              <div class="min-w-0">
+                <p class="font-bold text-zinc-900 dark:text-white truncate">${p.title}</p>
+                <span class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">${p.badge}</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-4">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400">
+              ${p.category}
+            </span>
+          </td>
+          <td class="py-3 px-4 font-black text-zinc-900 dark:text-white">
+            $${p.price.toFixed(2)}
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="toggleProductAvailability(${p.id})" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tap-scale transition-colors ${p.available ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'}">
+              <span class="w-1.5 h-1.5 rounded-full ${p.available ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}"></span>
+              <span>${p.available ? 'Disponible' : 'Agotado'}</span>
+            </button>
+          </td>
+          <td class="py-3 px-5 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <button onclick="editProduct(${p.id})" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 hover:text-brand-600 flex items-center justify-center tap-scale" title="Editar">
+                <i class="fa-solid fa-pen text-xs"></i>
+              </button>
+              <button onclick="deleteProduct(${p.id})" class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 flex items-center justify-center tap-scale" title="Eliminar">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleProductAvailability(id) {
+      const p = products.find(prod => prod.id === id);
+      if (!p) return;
+      p.available = !p.available;
+      renderAdminProducts();
+      showToast(`${p.title}: ${p.available ? 'Habilitado en carta' : 'Marcado como agotado'}`);
+    }
+
+    function openProductModal(isEdit = false) {
+      document.getElementById('productModalTitle').innerText = isEdit ? 'Editar Plato' : 'Nuevo Plato en la Carta';
+      document.getElementById('productModalBackdrop').classList.remove('hidden');
+      document.getElementById('productModal').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('productModalBackdrop').classList.remove('opacity-0');
+        document.getElementById('productModal').classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModalBackdrop').classList.add('opacity-0');
+      document.getElementById('productModal').classList.add('scale-95');
+      setTimeout(() => {
+        document.getElementById('productModalBackdrop').classList.add('hidden');
+        document.getElementById('productModal').classList.add('hidden');
+        document.getElementById('productForm').reset();
+        document.getElementById('prodEditId').value = '';
+      }, 200);
+    }
+
+    function handleProductSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('prodEditId').value;
+      const title = document.getElementById('prodNameInput').value.trim();
+      const category = document.getElementById('prodCategorySelect').value;
+      const price = parseFloat(document.getElementById('prodPriceInput').value);
+      const time = document.getElementById('prodTimeInput').value.trim() || '15 min';
+      const badge = document.getElementById('prodBadgeInput').value.trim() || 'Plato';
+      const image = document.getElementById('prodImgInput').value.trim();
+      const description = document.getElementById('prodDescInput').value.trim();
+
+      if (editId) {
+        const p = products.find(prod => prod.id === parseInt(editId));
+        if (p) {
+          p.title = title;
+          p.category = category;
+          p.price = price;
+          p.time = time;
+          p.badge = badge;
+          p.image = image;
+          p.description = description;
+          showToast('Plato actualizado exitosamente');
+        }
+      } else {
+        const newProduct = {
+          id: Date.now(),
+          title,
+          category,
+          price,
+          time,
+          badge,
+          image,
+          description,
+          rating: 5.0,
+          available: true
+        };
+        products.unshift(newProduct);
+        showToast('Nuevo plato agregado a la carta');
+      }
+
+      closeProductModal();
+      renderAdminProducts();
+      renderAdminCategories();
+    }
+
+    function editProduct(id) {
+      const p = products.find(prod => prod.id === id);
+      if (!p) return;
+      document.getElementById('prodEditId').value = p.id;
+      document.getElementById('prodNameInput').value = p.title;
+      document.getElementById('prodCategorySelect').value = p.category;
+      document.getElementById('prodPriceInput').value = p.price;
+      document.getElementById('prodTimeInput').value = p.time;
+      document.getElementById('prodBadgeInput').value = p.badge;
+      document.getElementById('prodImgInput').value = p.image;
+      document.getElementById('prodDescInput').value = p.description;
+      openProductModal(true);
+    }
+
+    function deleteProduct(id) {
+      if (confirm('¿Eliminar este plato permanentemente del menú?')) {
+        products = products.filter(p => p.id !== id);
+        renderAdminProducts();
+        renderAdminCategories();
+        showToast('Plato eliminado');
+      }
+    }
+
+    // ==================== CRUD PROMOTIONS ====================
+    function renderAdminPromos() {
+      const container = document.getElementById('adminPromosList');
+      container.innerHTML = '';
+
+      promos.forEach(promo => {
+        const card = document.createElement('div');
+        card.className = "bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4";
+
+        card.innerHTML = `
+          <div class="relative h-36 rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
+            <img src="${promo.image}" alt="${promo.title}" class="w-full h-full object-cover opacity-80">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-4 flex flex-col justify-end">
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-brand-600 text-white w-max mb-1">
+                ${promo.discount}% OFF
+              </span>
+              <h4 class="text-base font-extrabold text-white leading-snug">${promo.title}</h4>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-zinc-400 font-semibold">Cupón:</span>
+              <span class="font-mono text-xs font-black px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-brand-600 dark:text-brand-400 border border-zinc-200 dark:border-surface-borderDark">${promo.code}</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="togglePromoStatus(${promo.id})" class="px-3 py-1 rounded-full text-xs font-bold tap-scale ${promo.active ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'}">
+                ${promo.active ? 'Activa' : 'Pausada'}
+              </button>
+              <button onclick="deletePromo(${promo.id})" class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 flex items-center justify-center hover:bg-red-100 tap-scale">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function togglePromoStatus(id) {
+      const p = promos.find(pr => pr.id === id);
+      if (!p) return;
+      p.active = !p.active;
+      renderAdminPromos();
+      showToast(`Promoción ${p.active ? 'activada' : 'pausada'}`);
+    }
+
+    function openPromoModal() {
+      document.getElementById('promoModalBackdrop').classList.remove('hidden');
+      document.getElementById('promoModal').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('promoModalBackdrop').classList.remove('opacity-0');
+        document.getElementById('promoModal').classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closePromoModal() {
+      document.getElementById('promoModalBackdrop').classList.add('opacity-0');
+      document.getElementById('promoModal').classList.add('scale-95');
+      setTimeout(() => {
+        document.getElementById('promoModalBackdrop').classList.add('hidden');
+        document.getElementById('promoModal').classList.add('hidden');
+        document.getElementById('promoForm').reset();
+      }, 200);
+    }
+
+    function handlePromoSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('promoTitleInput').value.trim();
+      const discount = parseInt(document.getElementById('promoDiscountInput').value);
+      const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
+      const image = document.getElementById('promoImgInput').value.trim();
+
+      promos.unshift({
+        id: Date.now(),
+        title,
+        discount,
+        code,
+        image,
+        active: true
+      });
+
+      closePromoModal();
+      renderAdminPromos();
+      showToast('Nueva promoción creada exitosamente');
+    }
+
+    function deletePromo(id) {
+      if (confirm('¿Eliminar esta promoción?')) {
+        promos = promos.filter(p => p.id !== id);
+        renderAdminPromos();
+        showToast('Promoción eliminada');
+      }
+    }
+
+    // ==================== DARK MODE TOGGLE ====================
+    function initTheme() {
+      const isDark = localStorage.getItem('foodaro_theme') === 'dark' || 
+                    (!('foodaro_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        updateThemeIcons(true);
+      } else {
+        document.documentElement.classList.remove('dark');
+        updateThemeIcons(false);
+      }
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('foodaro_theme', isDark ? 'dark' : 'light');
+      updateThemeIcons(isDark);
+      showToast(`Modo ${isDark ? 'Oscuro' : 'Claro'} activado`);
+    }
+
+    function updateThemeIcons(isDark) {
+      const icon = document.getElementById('themeIcon');
+      const mIcon = document.getElementById('mobileThemeIcon');
+      if (icon) icon.className = isDark ? 'fa-solid fa-sun text-sm' : 'fa-solid fa-moon text-sm';
+      if (mIcon) mIcon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    }
+
+    // ==================== TOAST SYSTEM ====================
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toastMessage');
+      text.innerText = msg;
+
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-3');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-3');
+      }, 2500);
+    }
+
+    // ==================== INIT ====================
+    window.onload = function() {
+      initTheme();
+      renderAdminCategories();
+      renderAdminProducts();
+      renderAdminPromos();
+      updateLiveStorePreview();
+    };
+  </script>
+
+</body>
+</html>

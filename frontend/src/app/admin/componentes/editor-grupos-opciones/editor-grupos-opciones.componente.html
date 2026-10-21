@@ -1,0 +1,100 @@
+<div class="space-y-3">
+
+  <!-- Agregar desde plantilla / nuevo -->
+  <div class="flex flex-col sm:flex-row gap-2">
+    <select (change)="agregarDesdePlantilla($event)" [class]="claseCampo + ' flex-1 font-semibold'">
+      <option value="">+ Agregar desde plantilla del local…</option>
+      @for (p of plantillas(); track p.id) {
+        <option [value]="p.id" [disabled]="yaAgregada(p.id)">{{ p.nombre }} · {{ p.opciones.length }} opciones{{ yaAgregada(p.id) ? ' (ya agregado)' : '' }}</option>
+      }
+    </select>
+    <button type="button" (click)="agregarGrupoNuevo()" class="px-3.5 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold text-xs tap-scale whitespace-nowrap">
+      <i class="fa-solid fa-plus mr-1"></i>Grupo nuevo
+    </button>
+  </div>
+
+  @if (grupos().length === 0) {
+    <p class="text-[11px] text-zinc-400 text-center py-3 rounded-2xl border border-dashed border-zinc-200 dark:border-surface-borderDark">
+      Sin opciones. Ej: tamaño de la pizza, cantidad de empanadas, extras del sándwich.
+    </p>
+  }
+
+  <!-- Lista de grupos -->
+  @for (g of grupos(); track g.id) {
+    @let abierto = expandido() === g.id;
+    <div class="rounded-2xl border border-zinc-200 dark:border-surface-borderDark overflow-hidden">
+      <!-- Cabecera -->
+      <div class="flex items-center gap-2 px-3 py-2.5 bg-zinc-50 dark:bg-surface-cardDark/60">
+        <button type="button" (click)="alternarExpandido(g.id)" class="flex-1 flex items-center gap-2 text-left min-w-0">
+          <i class="fa-solid fa-chevron-right text-[10px] text-zinc-400 transition-transform" [class.rotate-90]="abierto"></i>
+          <span class="font-bold text-xs text-zinc-900 dark:text-white truncate">{{ g.nombre || 'Grupo sin nombre' }}</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold">{{ g.tipo === 'unica' ? 'Elegir 1' : 'Varias' + (g.maximo ? ' (máx ' + g.maximo + ')' : '') }}</span>
+          @if (g.obligatorio) { <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-500/10 text-brand-600 font-semibold">Obligatorio</span> }
+          <span class="text-[10px] text-zinc-400 hidden sm:inline">{{ g.opciones.length }} opciones</span>
+        </button>
+        <button type="button" (click)="guardarComoPlantilla(g.id)" class="w-7 h-7 rounded-lg text-zinc-500 hover:text-brand-600 hover:bg-white dark:hover:bg-surface-cardDark flex items-center justify-center" [title]="esPlantilla(g.id) ? 'Actualizar plantilla del local' : 'Guardar como plantilla del local'">
+          <i class="text-xs" [class]="esPlantilla(g.id) ? 'fa-solid fa-bookmark text-brand-600' : 'fa-regular fa-bookmark'"></i>
+        </button>
+        <button type="button" (click)="quitarGrupo(g.id)" class="w-7 h-7 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center" title="Quitar grupo del producto">
+          <i class="fa-solid fa-trash-can text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Edición -->
+      @if (abierto) {
+        <div class="p-3 space-y-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="sm:col-span-1">
+              <label class="block font-bold text-zinc-600 dark:text-zinc-300 mb-1">Nombre del grupo</label>
+              <input type="text" [value]="g.nombre" (input)="actualizarGrupo(g.id, { nombre: valorTexto($event) })" placeholder="Ej: Tamaño" [class]="claseCampo + ' w-full font-semibold'" />
+            </div>
+            <div>
+              <label class="block font-bold text-zinc-600 dark:text-zinc-300 mb-1">Tipo de selección</label>
+              <select [value]="g.tipo" (change)="cambiarTipo(g.id, $any(valorTexto($event)))" [class]="claseCampo + ' w-full'">
+                <option value="unica">Una sola (radio)</option>
+                <option value="multiple">Varias (checkbox)</option>
+              </select>
+            </div>
+            <div class="flex items-end gap-3">
+              <label class="flex items-center gap-2 font-bold text-zinc-600 dark:text-zinc-300 pb-2 cursor-pointer">
+                <input type="checkbox" [checked]="g.obligatorio" (change)="actualizarGrupo(g.id, { obligatorio: valorMarcado($event) })" class="accent-brand-600 w-4 h-4" />
+                Obligatorio
+              </label>
+              @if (g.tipo === 'multiple') {
+                <div class="flex-1">
+                  <label class="block font-bold text-zinc-600 dark:text-zinc-300 mb-1">Máximo</label>
+                  <input type="number" min="1" [value]="g.maximo ?? ''" (input)="actualizarGrupo(g.id, { maximo: valorNumero($event) || undefined })" placeholder="Sin límite" [class]="claseCampo + ' w-full'" />
+                </div>
+              }
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="font-bold text-zinc-600 dark:text-zinc-300">Opciones</label>
+              <span class="text-[10px] text-zinc-400">Precio adicional en $ (0 = sin cargo) · ★ por defecto</span>
+            </div>
+            <div class="space-y-1.5">
+              @for (o of g.opciones; track o.id) {
+                <div class="flex items-center gap-2">
+                  <button type="button" (click)="actualizarOpcion(g.id, o.id, { porDefecto: !o.porDefecto })" class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" [class]="o.porDefecto ? 'text-amber-500 bg-amber-50 dark:bg-amber-500/10' : 'text-zinc-300 hover:text-amber-400'" title="Preseleccionada">
+                    <i class="fa-solid fa-star text-xs"></i>
+                  </button>
+                  <input type="text" [value]="o.etiqueta" (input)="actualizarOpcion(g.id, o.id, { etiqueta: valorTexto($event) })" placeholder="Ej: 12 porciones" [class]="claseCampo + ' flex-1 min-w-0'" />
+                  <div class="relative w-28 shrink-0">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">+$</span>
+                    <input type="number" min="0" step="100" [value]="o.precioAdicional" (input)="actualizarOpcion(g.id, o.id, { precioAdicional: valorNumero($event) })" [class]="claseCampo + ' w-full pl-7 font-bold text-brand-600'" />
+                  </div>
+                  <button type="button" (click)="quitarOpcion(g.id, o.id)" [disabled]="g.opciones.length <= 1" class="w-7 h-7 rounded-lg text-zinc-400 hover:text-red-500 disabled:opacity-30 flex items-center justify-center shrink-0" title="Quitar opción">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                  </button>
+                </div>
+              }
+            </div>
+            <button type="button" (click)="agregarOpcion(g.id)" class="mt-2 text-[11px] font-bold text-brand-600 hover:text-brand-700"><i class="fa-solid fa-plus mr-1"></i>Agregar opción</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

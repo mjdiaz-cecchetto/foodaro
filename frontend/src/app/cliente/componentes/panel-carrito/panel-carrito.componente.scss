@@ -1,0 +1,5 @@
+/*
+ * Sin regla :host a propósito: la visibilidad la controla el padre con
+ * `hidden lg:block` (una regla :host { display } pisaría el `hidden` de Tailwind
+ * y el panel aparecería también en móvil).
+ */

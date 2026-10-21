@@ -1,0 +1,24 @@
+<app-modal [abierto]="abierto()" variante="hoja" claseAncho="sm:max-w-sm" clasePanel="max-h-[90dvh]" (cerrado)="cerrar()">
+  <div class="px-5 pt-3 pb-5">
+    <div class="w-10 h-1 rounded-full bg-gray-300 dark:bg-dark-border mx-auto mb-3 sm:hidden"></div>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-black text-lg text-gray-900 dark:text-white">Compartir carta</h3>
+      <button type="button" (click)="cerrar()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-dark-muted flex items-center justify-center tap-scale" aria-label="Cerrar"><i class="fa-solid fa-xmark text-sm"></i></button>
+    </div>
+
+    <div class="bg-white rounded-3xl p-4 border border-gray-100 dark:border-dark-border shadow-soft mx-auto w-fit">
+      <img [src]="localPublico.urlImagenQr(220)" alt="Código QR de la carta" width="220" height="220" class="rounded-xl" />
+    </div>
+    <p class="text-center text-xs text-gray-500 dark:text-dark-muted mt-3">Escaneá el código para abrir la carta de <span class="font-bold text-gray-800 dark:text-white">{{ localPublico.perfil().nombre }}</span></p>
+
+    <div class="mt-4 flex items-center gap-2 p-2 pl-4 rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border">
+      <span class="flex-1 text-xs text-gray-600 dark:text-dark-muted truncate">{{ localPublico.urlCompartible() }}</span>
+      <button type="button" (click)="copiarEnlace()" class="px-3 py-2 rounded-xl bg-white dark:bg-dark-surface text-xs font-bold text-gray-800 dark:text-white shadow-sm tap-scale"><i class="fa-regular fa-copy mr-1"></i>Copiar</button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <a [href]="localPublico.urlCompartirWhatsApp()" target="_blank" rel="noopener" class="h-11 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-2 tap-scale"><i class="fa-brands fa-whatsapp text-base"></i>WhatsApp</a>
+      <a [href]="localPublico.urlDescargaQr()" download="qr-carta.png" target="_blank" rel="noopener" class="h-11 rounded-2xl bg-gray-900 dark:bg-white hover:opacity-90 text-white dark:text-gray-900 font-bold text-xs flex items-center justify-center gap-2 tap-scale"><i class="fa-solid fa-download"></i>Descargar QR</a>
+    </div>
+  </div>
+</app-modal>

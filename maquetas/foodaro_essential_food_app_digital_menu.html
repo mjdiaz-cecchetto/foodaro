@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Foodaro • Bistro & Digital Menu</title>
+
+  <!-- Tailwind CSS CDN with dark mode class configuration -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#FFF1F1',
+              100: '#FFE1E1',
+              500: '#FF4B4B',
+              600: '#FF3B30',
+              700: '#E02E24',
+            },
+            dark: {
+              bg: '#0F1115',
+              surface: '#181B20',
+              card: '#20242B',
+              border: '#2E3440',
+              text: '#E5E7EB',
+              muted: '#9CA3AF'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            brand: ['"Caveat"', 'cursive'],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px rgba(0, 0, 0, 0.04)',
+            'card': '0 10px 30px rgba(0, 0, 0, 0.06)',
+            'coral': '0 10px 24px -4px rgba(255, 59, 48, 0.35)',
+            'modal': '0 25px 60px -15px rgba(0, 0, 0, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Caveat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    /* Smooth transitions when toggling dark mode */
+    * {
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* Hide scrollbars for smooth touch scroll */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .tap-scale {
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    .tap-scale:active {
+      transform: scale(0.96);
+    }
+
+    .sheet-transition {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-dark-text font-sans antialiased min-h-screen flex flex-col selection:bg-brand-100 selection:text-brand-600">
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="sticky top-0 z-30 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md border-b border-gray-100 dark:border-dark-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
+      
+      <!-- Brand & Store Profile Quick Trigger -->
+      <div class="flex items-center gap-3 sm:gap-5">
+        <a href="#" class="font-brand text-3xl sm:text-4xl font-bold tracking-tight text-brand-600 dark:text-brand-500 hover:opacity-90">
+          foodaro
+        </a>
+
+        <!-- Restaurant Trigger Pill -->
+        <button onclick="openStoreModal()" class="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-gray-100/80 dark:bg-dark-card border border-gray-200/60 dark:border-dark-border tap-scale hover:bg-gray-200/60 transition group text-left">
+          <img 
+            src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=120&h=120&q=80" 
+            alt="Logo Local" 
+            class="w-6 h-6 rounded-lg object-cover ring-1 ring-gray-300 dark:ring-gray-600"
+          />
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-600">Foodaro Bistro</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            </div>
+            <p class="text-[10px] text-gray-400 dark:text-dark-muted hidden sm:block">Ver Info y Horarios</p>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 ml-1"></i>
+        </button>
+      </div>
+
+      <!-- Action Buttons: Theme Toggle, QR Sharing & Cart Drawer -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Dark Mode Toggle Button -->
+        <button 
+          id="themeToggleBtn" 
+          onclick="toggleDarkMode()" 
+          class="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-dark-card border border-gray-200/80 dark:border-dark-border text-gray-700 dark:text-amber-400 flex items-center justify-center tap-scale shadow-sm hover:scale-105"
+          aria-label="Cambiar tema claro/oscuro"
+          title="Alternar Modo Oscuro"
+        >
+          <i id="themeIcon" class="fa-solid fa-moon text-base"></i>
+        </button>
+
+        <!-- QR Code Share Modal Trigger -->
+        <button onclick="openQrModal()" class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-dark-surface text-gray-800 dark:text-white border border-gray-200/80 dark:border-dark-border shadow-soft text-xs sm:text-sm font-bold tap-scale" title="Compartir Carta por QR o Enlace">
+          <i class="fa-solid fa-qrcode text-brand-600 text-sm"></i>
+          <span class="hidden sm:inline">Compartir Carta</span>
+        </button>
+
+        <!-- Tablet / Mobile Cart Trigger Button -->
+        <button onclick="toggleCartDrawer()" class="lg:hidden relative p-2.5 rounded-2xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-800/40 tap-scale flex items-center gap-2">
+          <i class="fa-solid fa-bag-shopping text-base"></i>
+          <span id="headerCartCount" class="w-5 h-5 rounded-full bg-brand-600 text-white text-[10px] font-black flex items-center justify-center">0</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT WRAPPER ==================== -->
+  <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- ==================== MAIN FOOD CATALOG (SPAN 8 ON DESKTOP) ==================== -->
+      <main class="lg:col-span-8 space-y-6">
+
+        <!-- 1. INSTANT SEARCH BAR -->
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass text-gray-400 dark:text-dark-muted absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-sm"></i>
+          <input 
+            type="text" 
+            id="searchInput"
+            oninput="handleSearch(this.value)"
+            placeholder="Buscar hamburguesas, pizzas, tacos, bebidas o postres..." 
+            class="w-full bg-white dark:bg-dark-surface rounded-2xl pl-11 sm:pl-12 pr-10 py-3.5 text-xs sm:text-sm font-medium text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-dark-muted shadow-soft border border-gray-100 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+          />
+          <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- 2. PROMO BANNER CON DEGRADADO GASTRONÓMICO -->
+        <section class="relative rounded-3xl overflow-hidden bg-gradient-to-r from-neutral-900 via-gray-900 to-neutral-800 text-white p-5 sm:p-7 shadow-card border border-neutral-800 dark:border-dark-border">
+          <!-- Background Ambient Glow -->
+          <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-brand-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-5 relative z-10">
+            <div class="space-y-2 max-w-md text-center sm:text-left">
+              <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-100 uppercase tracking-widest bg-white/10 dark:bg-white/5 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                <i class="fa-solid fa-fire text-brand-500"></i> Promo Especial
+              </span>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                Hasta un <span class="text-brand-500">25% OFF</span> en toda la carta
+              </h2>
+              <p class="text-xs sm:text-sm text-gray-300">
+                Pide directamente desde tu teléfono para consumir en el local o retirar en barra.
+              </p>
+              <div class="pt-2">
+                <button id="voucherBtn" onclick="applyPromoVoucher()" class="bg-white dark:bg-dark-surface text-gray-900 dark:text-white font-extrabold text-xs sm:text-sm py-2.5 px-5 rounded-2xl shadow-md hover:bg-brand-50 dark:hover:bg-dark-card hover:text-brand-600 dark:hover:text-brand-400 tap-scale transition inline-flex items-center gap-2 border border-transparent dark:border-dark-border">
+                  <i class="fa-solid fa-ticket text-brand-600"></i>
+                  <span id="voucherText">Activar Cupón: FOODARO25</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Banner Visual Image -->
+            <div class="relative w-full sm:w-56 h-36 flex-shrink-0">
+              <img 
+                src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80" 
+                alt="Plato gourmet" 
+                class="w-full h-full object-cover rounded-2xl shadow-lg ring-1 ring-white/10"
+              />
+              <span class="absolute bottom-2 left-2 bg-brand-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-md">
+                Recomendado
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. CIRCULAR CATEGORIES CAROUSEL -->
+        <section>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">Categorías</h3>
+            <button onclick="selectCategory('all')" class="text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 hover:underline tap-scale">Ver Todo</button>
+          </div>
+
+          <div id="categoriesList" class="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <!-- Dynamic Category Buttons injected via JS -->
+          </div>
+        </section>
+
+        <!-- 4. PRODUCT ITEMS GRID -->
+        <section class="pb-24 lg:pb-8">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">Nuestra Carta</h3>
+            <span id="itemsCounter" class="text-xs font-semibold px-2.5 py-1 bg-gray-100 dark:bg-dark-card rounded-full text-gray-600 dark:text-dark-muted">0 platos</span>
+          </div>
+
+          <!-- Responsive Product Grid -->
+          <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Dynamic Product Cards injected via JS -->
+          </div>
+
+          <!-- Empty State -->
+          <div id="noProductsFound" class="hidden text-center py-16 bg-white dark:bg-dark-surface rounded-3xl p-8 shadow-soft border border-gray-100 dark:border-dark-border">
+            <div class="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center mx-auto mb-3">
+              <i class="fa-solid fa-bowl-food text-2xl"></i>
+            </div>
+            <h4 class="font-bold text-gray-900 dark:text-white text-base">No se encontraron productos</h4>
+            <p class="text-xs text-gray-400 dark:text-dark-muted mt-1 max-w-xs mx-auto">Intenta buscar otro plato o selecciona otra categoría.</p>
+            <button onclick="resetSearchAndCategories()" class="mt-4 px-4 py-2 bg-brand-600 text-white text-xs font-bold rounded-xl shadow-coral tap-scale">Restablecer filtros</button>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- ==================== DESKTOP PERSISTENT CART SIDEBAR (SPAN 4) ==================== -->
+      <aside class="hidden lg:block lg:col-span-4 sticky top-24">
+        <div class="bg-white dark:bg-dark-surface rounded-3xl p-6 shadow-card border border-gray-100 dark:border-dark-border space-y-5">
+          
+          <div class="flex items-center justify-between border-b border-gray-100 dark:border-dark-border pb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-basket-shopping text-sm"></i>
+              </div>
+              <div>
+                <h3 class="font-extrabold text-base text-gray-900 dark:text-white">Tu Comanda</h3>
+                <span class="text-xs text-gray-400 dark:text-dark-muted">Foodaro Bistro</span>
+              </div>
+            </div>
+            <button onclick="emptyCart()" class="text-xs text-gray-400 dark:text-dark-muted hover:text-brand-600 font-semibold transition" title="Vaciar Carrito">
+              Vaciar
+            </button>
+          </div>
+
+          <!-- Items list -->
+          <div id="desktopCartList" class="space-y-3 max-h-[320px] overflow-y-auto no-scrollbar pr-1">
+            <!-- Injected via JS -->
+          </div>
+
+          <!-- Empty cart state -->
+          <div id="desktopEmptyCartState" class="text-center py-8">
+            <div class="w-12 h-12 rounded-full bg-gray-50 dark:bg-dark-card text-gray-400 dark:text-dark-muted flex items-center justify-center mx-auto mb-2">
+              <i class="fa-solid fa-cart-shopping text-lg"></i>
+            </div>
+            <p class="text-xs font-bold text-gray-700 dark:text-gray-300">Tu carrito está vacío</p>
+            <p class="text-[11px] text-gray-400 dark:text-dark-muted mt-0.5">Elige platos de la carta para empezar.</p>
+          </div>
+
+          <!-- Pricing Calculations -->
+          <div id="desktopCartSummary" class="hidden space-y-2.5 pt-4 border-t border-gray-100 dark:border-dark-border text-xs">
+            <div class="flex justify-between text-gray-500 dark:text-dark-muted">
+              <span>Subtotal</span>
+              <span id="desktopSubtotal" class="font-bold text-gray-800 dark:text-gray-200">$0.00</span>
+            </div>
+            <div id="desktopDiscountRow" class="hidden flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span>Descuento Promo (25%)</span>
+              <span id="desktopDiscount">-$0.00</span>
+            </div>
+            <div class="flex justify-between text-gray-500 dark:text-dark-muted">
+              <span>Servicio de Mesa / Empaque</span>
+              <span class="font-bold text-gray-800 dark:text-gray-200">$1.50</span>
+            </div>
+            <div class="flex justify-between text-base font-extrabold text-gray-900 dark:text-white pt-2 border-t border-gray-100 dark:border-dark-border">
+              <span>Total Final</span>
+              <span id="desktopTotal" class="text-brand-600 dark:text-brand-400 font-black">$0.00</span>
+            </div>
+
+            <!-- Checkout Order CTA -->
+            <button onclick="checkoutOrder()" class="w-full mt-4 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-coral tap-scale transition">
+              <span>Confirmar y Enviar a Cocina</span>
+              <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- ==================== MOBILE/TABLET FLOATING BOTTOM CART BAR ==================== -->
+  <div id="mobileBottomBar" class="lg:hidden fixed bottom-4 inset-x-4 max-w-md mx-auto z-40 transition-transform duration-300 translate-y-28">
+    <button onclick="toggleCartDrawer()" class="w-full bg-gray-900 dark:bg-dark-surface text-white rounded-2xl p-3.5 shadow-2xl flex items-center justify-between tap-scale border border-gray-800 dark:border-dark-border">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-brand-600 flex items-center justify-center font-black text-xs text-white">
+          <span id="mobileBarQty">0</span>
+        </div>
+        <div class="text-left">
+          <p class="text-xs font-bold text-white">Ver Comanda</p>
+          <p class="text-[10px] text-gray-400 dark:text-dark-muted">Toca para revisar y confirmar</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="mobileBarTotal" class="text-sm font-extrabold text-white">$0.00</span>
+        <i class="fa-solid fa-chevron-up text-xs text-gray-400"></i>
+      </div>
+    </button>
+  </div>
+
+  <!-- ==================== MOBILE/TABLET CART SLIDE-OVER DRAWER ==================== -->
+  <div id="drawerBackdrop" onclick="toggleCartDrawer()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <div id="cartDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white dark:bg-dark-surface shadow-2xl p-5 flex flex-col transform translate-x-full pointer-events-none sheet-transition border-l border-transparent dark:border-dark-border">
+    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-dark-border">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center">
+          <i class="fa-solid fa-bag-shopping text-sm"></i>
+        </div>
+        <h3 class="font-extrabold text-base text-gray-900 dark:text-white">Tu Comanda</h3>
+      </div>
+      <button onclick="toggleCartDrawer()" class="p-2 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Drawer items list -->
+    <div id="drawerCartList" class="flex-1 overflow-y-auto no-scrollbar space-y-3 py-4">
+      <!-- Injected via JS -->
+    </div>
+
+    <div id="drawerEmptyCartState" class="text-center py-12 flex-1 flex flex-col justify-center">
+      <i class="fa-solid fa-cart-shopping text-3xl text-gray-300 dark:text-gray-600 mx-auto mb-2"></i>
+      <p class="text-xs font-bold text-gray-700 dark:text-gray-300">Tu carrito está vacío</p>
+      <p class="text-[11px] text-gray-400 dark:text-dark-muted">Agrega platos para completar tu orden.</p>
+    </div>
+
+    <!-- Drawer Footer -->
+    <div id="drawerCartSummary" class="hidden border-t border-gray-100 dark:border-dark-border pt-4 space-y-2 text-xs">
+      <div class="flex justify-between text-gray-500 dark:text-dark-muted">
+        <span>Subtotal</span>
+        <span id="drawerSubtotal" class="font-bold text-gray-800 dark:text-gray-200">$0.00</span>
+      </div>
+      <div id="drawerDiscountRow" class="hidden flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+        <span>Descuento (25%)</span>
+        <span id="drawerDiscount">-$0.00</span>
+      </div>
+      <div class="flex justify-between text-base font-extrabold text-gray-900 dark:text-white pt-1">
+        <span>Total</span>
+        <span id="drawerTotal" class="text-brand-600 dark:text-brand-400 font-black">$0.00</span>
+      </div>
+      <button onclick="checkoutOrder()" class="w-full mt-3 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-2xl shadow-coral tap-scale transition">
+        Confirmar y Enviar Pedido
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== RESTAURANT PROFILE MODAL (WITH DEGRADE COVER BANNER) ==================== -->
+  <div id="storeModalBackdrop" onclick="closeStoreModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <div id="storeModal" class="fixed z-50 pointer-events-none sheet-transition overflow-hidden bg-white dark:bg-dark-surface shadow-modal
+       inset-x-0 bottom-0 rounded-t-[32px] max-h-[92vh] flex flex-col translate-y-full
+       sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:w-full sm:rounded-3xl sm:opacity-0 sm:scale-95 sm:translate-y-0 border border-gray-100 dark:border-dark-border">
+    
+    <!-- Mobile Drag handle -->
+    <div class="sm:hidden w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mt-2.5 mb-1 cursor-pointer" onclick="closeStoreModal()"></div>
+
+    <!-- Scrollable Modal Body -->
+    <div class="overflow-y-auto no-scrollbar flex-1">
+      
+      <!-- COVER HERO BANNER WITH GASTRONOMIC DEGRADÉ -->
+      <div class="relative h-44 sm:h-52 w-full overflow-hidden bg-neutral-900">
+        <img 
+          src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80" 
+          alt="Interior Foodaro Bistro" 
+          class="w-full h-full object-cover opacity-85"
+        />
+        <!-- Atmospheric Linear Degradé to White/Dark Surface -->
+        <div class="absolute inset-0 bg-gradient-to-t from-white dark:from-dark-surface via-white/40 dark:via-dark-surface/40 to-transparent"></div>
+
+        <!-- Floating Badge: Open Status -->
+        <div class="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/90 text-white text-xs font-bold backdrop-blur-md shadow-md">
+          <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+          <span>Abierto Hoy</span>
+        </div>
+
+        <!-- Close Button -->
+        <button onclick="closeStoreModal()" class="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center backdrop-blur-md tap-scale transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- OVERLAPPING AVATAR / LOGO & STORE HEADER -->
+      <div class="px-6 -mt-12 relative z-10">
+        <div class="flex items-end justify-between">
+          <div class="relative">
+            <img 
+              src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&h=200&q=80" 
+              alt="Logo Foodaro" 
+              class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-4 ring-white dark:ring-dark-surface shadow-xl bg-white dark:bg-dark-card"
+            />
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-800/40">
+            Cocina Gourmet & Tragos
+          </span>
+        </div>
+
+        <div class="mt-3">
+          <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">Foodaro Bistro & Grill</h2>
+          <p class="text-xs text-gray-500 dark:text-dark-muted mt-0.5">
+            Hamburguesas de autor, pizzas a la leña napolitanas, coctelería y café de especialidad.
+          </p>
+        </div>
+      </div>
+
+      <!-- DETAILS CONTENT -->
+      <div class="p-6 space-y-4">
+        
+        <!-- Address Card with Google Maps action -->
+        <div class="p-4 rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-location-dot text-sm"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-gray-900 dark:text-white">Ubicación y Dirección</h4>
+              <p class="text-xs text-gray-600 dark:text-gray-300">Av. Libertador San Martín 1420</p>
+              <p class="text-[11px] text-gray-400 dark:text-dark-muted">Frente a la Plaza Central • Zona Gourmet</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button onclick="openMapsRoute()" class="flex-1 sm:flex-initial px-3 py-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-800 dark:text-white hover:text-brand-600 rounded-xl text-xs font-bold shadow-sm tap-scale flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-diamond-turn-right text-brand-600"></i>
+              <span>Cómo llegar</span>
+            </button>
+            <button onclick="copyAddressText()" class="px-3 py-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-700 dark:text-gray-300 hover:text-brand-600 rounded-xl text-xs font-bold shadow-sm tap-scale" title="Copiar dirección">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Opening Hours Table -->
+        <div class="p-4 rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border space-y-2">
+          <div class="flex items-center gap-2 text-xs font-bold text-gray-900 dark:text-white mb-1">
+            <i class="fa-regular fa-clock text-brand-600"></i>
+            <span>Horarios de Atención</span>
+          </div>
+          <div class="grid grid-cols-2 text-xs py-1 border-b border-gray-200/50 dark:border-dark-border">
+            <span class="text-gray-500 dark:text-dark-muted">Lunes a Jueves</span>
+            <span class="text-right font-semibold text-gray-800 dark:text-gray-200">12:00 - 16:00 | 19:30 - 23:30</span>
+          </div>
+          <div class="grid grid-cols-2 text-xs py-1 border-b border-gray-200/50 dark:border-dark-border bg-brand-50/50 dark:bg-brand-900/10 px-1 rounded-md">
+            <span class="font-bold text-brand-600 dark:text-brand-400">Viernes y Sábados</span>
+            <span class="text-right font-extrabold text-brand-600 dark:text-brand-400">12:00 - 01:00 (Corrido)</span>
+          </div>
+          <div class="grid grid-cols-2 text-xs py-1">
+            <span class="text-gray-500 dark:text-dark-muted">Domingos</span>
+            <span class="text-right font-semibold text-gray-800 dark:text-gray-200">12:00 - 18:00</span>
+          </div>
+        </div>
+
+        <!-- Social Media & Contact Buttons -->
+        <div>
+          <h4 class="text-xs font-bold text-gray-900 dark:text-white mb-2">Contacto & Canales Oficiales</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <a href="https://instagram.com" target="_blank" class="p-2.5 rounded-2xl bg-pink-50 dark:bg-pink-950/20 border border-pink-100 dark:border-pink-900/40 text-pink-700 dark:text-pink-400 text-xs font-bold flex items-center justify-center gap-2 tap-scale">
+              <i class="fa-brands fa-instagram text-sm"></i>
+              <span>@foodarobistro</span>
+            </a>
+            <a href="https://wa.me/5491140508800" target="_blank" class="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center justify-center gap-2 tap-scale">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
+              <span>+54 9 11 4050-8800</span>
+            </a>
+            <a href="https://tiktok.com" target="_blank" class="p-2.5 rounded-2xl bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border text-gray-800 dark:text-gray-200 text-xs font-bold flex items-center justify-center gap-2 tap-scale">
+              <i class="fa-brands fa-tiktok text-sm"></i>
+              <span>TikTok Oficial</span>
+            </a>
+            <a href="tel:+5491140508800" class="p-2.5 rounded-2xl bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/40 text-brand-600 dark:text-brand-400 text-xs font-bold flex items-center justify-center gap-2 tap-scale">
+              <i class="fa-solid fa-phone text-sm"></i>
+              <span>Llamar al Local</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PRODUCT DETAIL MODAL (BOTTOM SHEET ON MOBILE / CENTERED DESKTOP) ==================== -->
+  <div id="productModalBackdrop" onclick="closeProductModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <div id="productModal" class="fixed z-50 pointer-events-none sheet-transition overflow-hidden bg-white dark:bg-dark-surface shadow-modal
+       inset-x-0 bottom-0 rounded-t-[32px] max-h-[90vh] flex flex-col translate-y-full
+       md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-2xl md:w-full md:rounded-3xl md:opacity-0 md:scale-95 md:translate-y-0 border border-gray-100 dark:border-dark-border">
+    
+    <!-- Mobile Drag handle -->
+    <div class="md:hidden w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mt-3 mb-1 cursor-pointer" onclick="closeProductModal()"></div>
+
+    <!-- Close button -->
+    <button onclick="closeProductModal()" class="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-gray-300 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-dark-border tap-scale">
+      <i class="fa-solid fa-xmark text-sm"></i>
+    </button>
+
+    <!-- Modal Content: 1 col on mobile, 2 cols on tablet/desktop -->
+    <div class="overflow-y-auto no-scrollbar flex-1 p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+      
+      <!-- Food Image -->
+      <div class="relative h-52 md:h-full min-h-[220px] w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-dark-card shadow-inner">
+        <img id="modalImg" src="" alt="Producto" class="w-full h-full object-cover">
+        <span id="modalTag" class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/95 dark:bg-dark-surface/90 text-brand-600 dark:text-brand-400 shadow-sm backdrop-blur-sm">
+          🔥 Bestseller
+        </span>
+      </div>
+
+      <!-- Detail specifications -->
+      <div class="space-y-4">
+        <div>
+          <span id="modalCategoryBadge" class="text-[10px] font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">Categoría</span>
+          <h2 id="modalDishTitle" class="text-xl md:text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5 leading-snug">Nombre del Plato</h2>
+          <div class="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-dark-muted font-medium">
+            <span class="flex items-center gap-1 text-amber-500 font-bold">
+              <i class="fa-solid fa-star text-xs"></i> <span id="modalRatingText">4.9</span>
+            </span>
+            <span>•</span>
+            <span class="flex items-center gap-1">
+              <i class="fa-regular fa-clock text-xs text-gray-400"></i> <span id="modalPrepTime">15-20 min</span>
+            </span>
+          </div>
+        </div>
+
+        <p id="modalDescText" class="text-gray-500 dark:text-dark-muted text-xs leading-relaxed">
+          Descripción del plato y detalle de sus ingredientes principales.
+        </p>
+
+        <!-- Portion selection -->
+        <div>
+          <label class="block text-xs font-bold text-gray-900 dark:text-white mb-1.5">Tamaño / Porción</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="setPortion(this, 0)" class="portion-btn active py-2 px-2 rounded-2xl border-2 border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold text-center tap-scale">
+              Regular
+            </button>
+            <button type="button" onclick="setPortion(this, 2.50)" class="portion-btn py-2 px-2 rounded-2xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 text-xs font-medium text-center hover:border-gray-300 tap-scale">
+              Mediano <span class="text-[10px] text-gray-400 block">+$2.50</span>
+            </button>
+            <button type="button" onclick="setPortion(this, 4.00)" class="portion-btn py-2 px-2 rounded-2xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 text-xs font-medium text-center hover:border-gray-300 tap-scale">
+              Grande <span class="text-[10px] text-gray-400 block">+$4.00</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add-ons -->
+        <div>
+          <label class="block text-xs font-bold text-gray-900 dark:text-white mb-1.5">Extras opcionales</label>
+          <div class="space-y-1.5">
+            <label class="flex items-center justify-between p-2.5 rounded-2xl border border-gray-100 dark:border-dark-border bg-gray-50/70 dark:bg-dark-card cursor-pointer text-xs">
+              <span class="flex items-center gap-2 font-medium text-gray-800 dark:text-gray-200">
+                <input type="checkbox" onchange="toggleModalExtra(this, 1.50)" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-gray-300 accent-brand-600">
+                Extra Queso Parmesano / Cheddar
+              </span>
+              <span class="font-bold text-gray-600 dark:text-gray-400">+$1.50</span>
+            </label>
+            <label class="flex items-center justify-between p-2.5 rounded-2xl border border-gray-100 dark:border-dark-border bg-gray-50/70 dark:bg-dark-card cursor-pointer text-xs">
+              <span class="flex items-center gap-2 font-medium text-gray-800 dark:text-gray-200">
+                <input type="checkbox" onchange="toggleModalExtra(this, 1.00)" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-gray-300 accent-brand-600">
+                Salsa dip especial de la casa
+              </span>
+              <span class="font-bold text-gray-600 dark:text-gray-400">+$1.00</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Chef special notes -->
+        <div>
+          <label class="block text-xs font-bold text-gray-900 dark:text-white mb-1">Notas especiales</label>
+          <input 
+            type="text" 
+            id="modalNotesInput"
+            placeholder="Ej: salsa aparte, sin picante, etc." 
+            class="w-full bg-gray-50 dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl px-3 py-2 text-xs text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-dark-muted focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+          />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Modal Action Footer -->
+    <div class="p-4 bg-white dark:bg-dark-surface border-t border-gray-100 dark:border-dark-border flex items-center justify-between gap-3">
+      <!-- Quantity Incrementer -->
+      <div class="flex items-center bg-gray-100 dark:bg-dark-card rounded-2xl p-1 shadow-inner">
+        <button onclick="changeModalQty(-1)" class="w-8 h-8 rounded-xl bg-white dark:bg-dark-surface text-gray-800 dark:text-white flex items-center justify-center font-bold text-sm shadow-sm tap-scale">-</button>
+        <span id="modalQuantityCounter" class="w-8 text-center text-xs font-black text-gray-900 dark:text-white">1</span>
+        <button onclick="changeModalQty(1)" class="w-8 h-8 rounded-xl bg-white dark:bg-dark-surface text-gray-800 dark:text-white flex items-center justify-center font-bold text-sm shadow-sm tap-scale">+</button>
+      </div>
+
+      <!-- Add to Cart CTA -->
+      <button onclick="addModalItemToCart()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-5 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-coral tap-scale transition">
+        <span>Agregar a la Orden</span>
+        <span class="opacity-60">•</span>
+        <span id="modalTotalPrice">$0.00</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ==================== QR CODE & SHARING MODAL ==================== -->
+  <div id="qrModalBackdrop" onclick="closeQrModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <div id="qrModal" class="fixed z-50 pointer-events-none sheet-transition overflow-hidden bg-white dark:bg-dark-surface shadow-modal
+       inset-x-0 bottom-0 rounded-t-[32px] max-h-[90vh] p-6 flex flex-col translate-y-full
+       sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:w-full sm:rounded-3xl sm:opacity-0 sm:scale-95 sm:translate-y-0 border border-gray-100 dark:border-dark-border">
+    
+    <div class="sm:hidden w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4" onclick="closeQrModal()"></div>
+
+    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-dark-border">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center">
+          <i class="fa-solid fa-qrcode text-sm"></i>
+        </div>
+        <div>
+          <h3 class="font-extrabold text-base text-gray-900 dark:text-white">Código QR & Enlace</h3>
+          <p class="text-[11px] text-gray-400 dark:text-dark-muted">Acceso instantáneo para clientes</p>
+        </div>
+      </div>
+      <button onclick="closeQrModal()" class="p-2 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- QR Code Graphic Container -->
+    <div class="py-6 flex flex-col items-center justify-center">
+      <div class="p-4 bg-white rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700 shadow-soft flex items-center justify-center">
+        <img id="qrImageTag" src="" alt="QR Code Carta Digital" class="w-48 h-48 rounded-xl object-contain">
+      </div>
+      <p class="text-xs text-gray-500 dark:text-dark-muted mt-3 font-medium text-center">
+        Escanea este código con cualquier cámara de smartphone para abrir esta carta en vivo.
+      </p>
+    </div>
+
+    <!-- Link Copier & WhatsApp Share -->
+    <div class="space-y-3">
+      <div class="flex items-center gap-2 p-2 rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-200 dark:border-dark-border">
+        <input 
+          type="text" 
+          id="qrShareLinkInput" 
+          readonly 
+          class="bg-transparent text-xs text-gray-700 dark:text-gray-300 w-full px-2 font-mono outline-none"
+        />
+        <button onclick="copyShareLink()" class="px-3 py-1.5 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-900 dark:text-white hover:text-brand-600 rounded-xl text-xs font-bold shadow-sm tap-scale flex items-center gap-1.5 flex-shrink-0">
+          <i class="fa-regular fa-copy text-xs"></i>
+          <span id="copyBtnText">Copiar</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="shareViaWhatsApp()" class="py-2.5 px-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm tap-scale">
+          <i class="fa-brands fa-whatsapp text-sm"></i>
+          <span>Enviar WhatsApp</span>
+        </button>
+        <button onclick="downloadQrCode()" class="py-2.5 px-3 rounded-2xl bg-gray-100 dark:bg-dark-card hover:bg-gray-200 dark:hover:bg-dark-border text-gray-800 dark:text-white text-xs font-bold flex items-center justify-center gap-1.5 tap-scale border border-transparent dark:border-dark-border">
+          <i class="fa-solid fa-download text-xs"></i>
+          <span>Descargar PNG</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== TOAST FEEDBACK NOTIFICATION ==================== -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-gray-900 dark:bg-dark-surface text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 border border-gray-800 dark:border-dark-border">
+    <i class="fa-solid fa-circle-check text-brand-500"></i>
+    <span id="toastMessage">Acción completada con éxito</span>
+  </div>
+
+  <!-- ==================== LOGIC JAVASCRIPT ==================== -->
+  <script>
+    // 1. Data Source: Categories
+    const categories = [
+      { id: 'all', name: 'Todo', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=120&h=120&q=80' },
+      { id: 'burgers', name: 'Burgers', img: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=120&h=120&q=80' },
+      { id: 'pizzas', name: 'Pizzas', img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=120&h=120&q=80' },
+      { id: 'tacos', name: 'Tacos', img: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=120&h=120&q=80' },
+      { id: 'bebidas', name: 'Bebidas', img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=120&h=120&q=80' },
+      { id: 'postres', name: 'Postres', img: 'https://images.unsplash.com/photo-1527515862127-a4fc05baf7a5?auto=format&fit=crop&w=120&h=120&q=80' },
+    ];
+
+    // 2. Data Source: Products
+    const products = [
+      {
+        id: 1,
+        title: 'Truffle Pepperoni Pizza',
+        category: 'pizzas',
+        rating: 4.9,
+        time: '15-20 min',
+        price: 12.50,
+        badge: 'Bestseller',
+        image: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?auto=format&fit=crop&w=700&q=80',
+        description: 'Masa fermentada 48 horas a la piedra, salsa San Marzano, mozzarella fior di latte y pepperoni curado bañado con aceite de trufa blanca.'
+      },
+      {
+        id: 2,
+        title: 'Double Angus Smash Burger',
+        category: 'burgers',
+        rating: 4.8,
+        time: '12-15 min',
+        price: 9.80,
+        badge: 'Top Pick',
+        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=700&q=80',
+        description: 'Doble medallón Angus con costra caramelizada, doble queso cheddar fundido, cebolla crispy y salsa especial en pan brioche artesanal.'
+      },
+      {
+        id: 3,
+        title: 'Tacos Al Pastor Gourmet',
+        category: 'tacos',
+        rating: 4.9,
+        time: '10-12 min',
+        price: 8.90,
+        badge: 'Chef Special',
+        image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=700&q=80',
+        description: 'Tres tortillas de maíz nixtamalizado con bondiola marinada al achiote, piña asada al fuego, cilantro fresco y cebolla morada.'
+      },
+      {
+        id: 4,
+        title: 'Crispy Bacon & Cheddar Fries',
+        category: 'burgers',
+        rating: 4.7,
+        time: '8-10 min',
+        price: 6.50,
+        badge: 'Favorito',
+        image: 'https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=700&q=80',
+        description: 'Papas rústicas cortadas a mano, doble fritura crujiente, queso cheddar fundido artesanal y trozos de panceta ahumada crujiente.'
+      },
+      {
+        id: 5,
+        title: 'Pizza Margherita Di Bufala',
+        category: 'pizzas',
+        rating: 4.9,
+        time: '15 min',
+        price: 11.00,
+        badge: 'Italian Tradition',
+        image: 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=700&q=80',
+        description: 'Clásica napolitana con salsa de tomate cruda, mozzarella di bufala fresca agregada al salir del horno y hojas de albahaca con AOVE.'
+      },
+      {
+        id: 6,
+        title: 'Strawberry Boba Iced Tea',
+        category: 'bebidas',
+        rating: 4.8,
+        time: '5 min',
+        price: 4.80,
+        badge: 'Refrescante',
+        image: 'https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=700&q=80',
+        description: 'Té negro aromático infusionado en frío con leche cremosa, coulis casero de frutillas naturales y tiernas perlas de tapioca.'
+      },
+      {
+        id: 7,
+        title: 'Volcán Fondant de Chocolate',
+        category: 'postres',
+        rating: 4.9,
+        time: '8-10 min',
+        price: 6.90,
+        badge: 'Dulce Final',
+        image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=700&q=80',
+        description: 'Bizcocho tibio de chocolate 70% cacao con centro líquido fundido, acompañado de helado artesanal de crema y frutos rojos.'
+      }
+    ];
+
+    // State Variables
+    let activeCategory = 'all';
+    let searchQuery = '';
+    let promoDiscountActive = false;
+    let cart = [];
+
+    // Modal Active Dish State
+    let activeModalDish = null;
+    let modalQuantity = 1;
+    let modalPortionExtra = 0;
+    let modalAddonsExtra = 0;
+
+    // ==================== DARK MODE LOGIC ====================
+    function initTheme() {
+      const savedTheme = localStorage.getItem('foodaro_theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+        updateThemeIcon(true);
+      } else {
+        document.documentElement.classList.remove('dark');
+        updateThemeIcon(false);
+      }
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('foodaro_theme', isDark ? 'dark' : 'light');
+      updateThemeIcon(isDark);
+      showToast(isDark ? 'Modo Oscuro Activado' : 'Modo Claro Activado');
+    }
+
+    function updateThemeIcon(isDark) {
+      const icon = document.getElementById('themeIcon');
+      if (isDark) {
+        icon.className = 'fa-solid fa-sun text-base text-amber-400';
+      } else {
+        icon.className = 'fa-solid fa-moon text-base text-gray-700';
+      }
+    }
+
+    // ==================== RENDERING LOGIC ====================
+    function renderCategories() {
+      const container = document.getElementById('categoriesList');
+      container.innerHTML = '';
+
+      categories.forEach(cat => {
+        const isActive = cat.id === activeCategory;
+        const btn = document.createElement('button');
+        btn.onclick = () => selectCategory(cat.id);
+        btn.className = 'flex flex-col items-center gap-1.5 flex-shrink-0 tap-scale group w-16 sm:w-20';
+
+        btn.innerHTML = `
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center p-1 transition-all duration-300 ${isActive ? 'bg-brand-500 shadow-coral ring-4 ring-brand-100 dark:ring-brand-900/40 scale-105' : 'bg-white dark:bg-dark-surface shadow-soft border border-gray-100 dark:border-dark-border group-hover:border-brand-300'}">
+            <img 
+              src="${cat.img}" 
+              alt="${cat.name}" 
+              class="w-full h-full object-cover rounded-full"
+            />
+          </div>
+          <span class="text-xs font-bold ${isActive ? 'text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-dark-muted group-hover:text-gray-900 dark:group-hover:text-white'}">
+            ${cat.name}
+          </span>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function renderProducts() {
+      const grid = document.getElementById('productsGrid');
+      const emptyState = document.getElementById('noProductsFound');
+      const counter = document.getElementById('itemsCounter');
+
+      const filtered = products.filter(dish => {
+        const matchCategory = (activeCategory === 'all') || (dish.category === activeCategory);
+        const matchSearch = dish.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            dish.description.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchCategory && matchSearch;
+      });
+
+      counter.innerText = `${filtered.length} productos`;
+      grid.innerHTML = '';
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      filtered.forEach(dish => {
+        const card = document.createElement('div');
+        card.className = "bg-white dark:bg-dark-surface rounded-3xl p-3 sm:p-4 shadow-soft border border-gray-100/90 dark:border-dark-border hover:shadow-card transition-all duration-300 flex items-center gap-3.5 cursor-pointer tap-scale group";
+        card.onclick = () => openProductModal(dish.id);
+
+        card.innerHTML = `
+          <!-- Dish Image -->
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-100 dark:bg-dark-card flex-shrink-0">
+            <img 
+              src="${dish.image}" 
+              alt="${dish.title}" 
+              class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+              loading="lazy"
+            />
+            <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-[9px] font-bold text-white flex items-center gap-1">
+              <i class="fa-solid fa-star text-[8px] text-amber-400"></i> ${dish.rating}
+            </span>
+          </div>
+
+          <!-- Dish Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 uppercase tracking-wider">${dish.badge}</span>
+              <span class="text-[10px] text-gray-400 dark:text-dark-muted">• ${dish.time}</span>
+            </div>
+            
+            <h4 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+              ${dish.title}
+            </h4>
+            
+            <p class="text-[11px] text-gray-400 dark:text-dark-muted line-clamp-1 mt-0.5">
+              ${dish.description}
+            </p>
+
+            <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-gray-50 dark:border-dark-border">
+              <span class="text-sm sm:text-base font-extrabold text-gray-900 dark:text-white">$${dish.price.toFixed(2)}</span>
+              <button onclick="event.stopPropagation(); openProductModal(${dish.id})" class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 hover:bg-brand-600 hover:text-white flex items-center justify-center font-bold text-xs transition shadow-sm tap-scale">
+                <i class="fa-solid fa-plus text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // ==================== FILTER & SEARCH HANDLERS ====================
+    function selectCategory(catId) {
+      activeCategory = catId;
+      renderCategories();
+      renderProducts();
+    }
+
+    function handleSearch(val) {
+      searchQuery = val.trim();
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (searchQuery.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+      renderProducts();
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      searchQuery = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      renderProducts();
+    }
+
+    function resetSearchAndCategories() {
+      activeCategory = 'all';
+      clearSearch();
+      renderCategories();
+    }
+
+    function applyPromoVoucher() {
+      if (promoDiscountActive) {
+        showToast('El cupón FOODARO25 ya se encuentra activo');
+        return;
+      }
+      promoDiscountActive = true;
+      const btn = document.getElementById('voucherBtn');
+      btn.innerHTML = `<i class="fa-solid fa-check text-emerald-500"></i><span class="text-emerald-600 dark:text-emerald-400 font-bold">¡Cupón 25% Aplicado!</span>`;
+      btn.classList.add('bg-emerald-50', 'dark:bg-emerald-950/30');
+      updateCartViews();
+      showToast('¡Descuento del 25% activado en tu comanda!');
+    }
+
+    // ==================== PRODUCT DETAIL MODAL ====================
+    function openProductModal(dishId) {
+      const dish = products.find(p => p.id === dishId);
+      if (!dish) return;
+
+      activeModalDish = dish;
+      modalQuantity = 1;
+      modalPortionExtra = 0;
+      modalAddonsExtra = 0;
+
+      document.getElementById('modalImg').src = dish.image;
+      document.getElementById('modalTag').innerText = `🔥 ${dish.badge}`;
+      document.getElementById('modalCategoryBadge').innerText = dish.category.toUpperCase();
+      document.getElementById('modalDishTitle').innerText = dish.title;
+      document.getElementById('modalRatingText').innerText = dish.rating;
+      document.getElementById('modalPrepTime').innerText = dish.time;
+      document.getElementById('modalDescText').innerText = dish.description;
+      document.getElementById('modalQuantityCounter').innerText = modalQuantity;
+      document.getElementById('modalNotesInput').value = '';
+
+      // Reset sizes buttons
+      document.querySelectorAll('.portion-btn').forEach((b, idx) => {
+        if (idx === 0) {
+          b.className = "portion-btn active py-2 px-2 rounded-2xl border-2 border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold text-center tap-scale";
+        } else {
+          b.className = "portion-btn py-2 px-2 rounded-2xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 text-xs font-medium text-center hover:border-gray-300 tap-scale";
+        }
+      });
+
+      // Reset checkboxes
+      document.querySelectorAll('#productModal input[type="checkbox"]').forEach(c => c.checked = false);
+
+      updateModalPrice();
+
+      const modal = document.getElementById('productModal');
+      const backdrop = document.getElementById('productModalBackdrop');
+
+      backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      backdrop.classList.add('opacity-100');
+
+      modal.classList.remove('pointer-events-none', 'translate-y-full', 'md:opacity-0', 'md:scale-95');
+      modal.classList.add('translate-y-0', 'md:opacity-100', 'md:scale-100');
+    }
+
+    function closeProductModal() {
+      const modal = document.getElementById('productModal');
+      const backdrop = document.getElementById('productModalBackdrop');
+
+      backdrop.classList.remove('opacity-100');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+
+      modal.classList.add('pointer-events-none', 'translate-y-full', 'md:opacity-0', 'md:scale-95');
+      modal.classList.remove('translate-y-0', 'md:opacity-100', 'md:scale-100');
+    }
+
+    function setPortion(btn, extra) {
+      document.querySelectorAll('.portion-btn').forEach(b => {
+        b.className = "portion-btn py-2 px-2 rounded-2xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 text-xs font-medium text-center hover:border-gray-300 tap-scale";
+      });
+      btn.className = "portion-btn active py-2 px-2 rounded-2xl border-2 border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold text-center tap-scale";
+      modalPortionExtra = extra;
+      updateModalPrice();
+    }
+
+    function toggleModalExtra(checkbox, extra) {
+      if (checkbox.checked) {
+        modalAddonsExtra += extra;
+      } else {
+        modalAddonsExtra -= extra;
+      }
+      updateModalPrice();
+    }
+
+    function changeModalQty(delta) {
+      modalQuantity = Math.max(1, modalQuantity + delta);
+      document.getElementById('modalQuantityCounter').innerText = modalQuantity;
+      updateModalPrice();
+    }
+
+    function updateModalPrice() {
+      if (!activeModalDish) return;
+      const unit = activeModalDish.price + modalPortionExtra + modalAddonsExtra;
+      const total = unit * modalQuantity;
+      document.getElementById('modalTotalPrice').innerText = `$${total.toFixed(2)}`;
+    }
+
+    function addModalItemToCart() {
+      if (!activeModalDish) return;
+
+      const unitPrice = activeModalDish.price + modalPortionExtra + modalAddonsExtra;
+      const totalItemPrice = unitPrice * modalQuantity;
+
+      const existingIndex = cart.findIndex(item => item.id === activeModalDish.id);
+      if (existingIndex > -1) {
+        cart[existingIndex].quantity += modalQuantity;
+        cart[existingIndex].total += totalItemPrice;
+      } else {
+        cart.push({
+          id: activeModalDish.id,
+          title: activeModalDish.title,
+          price: unitPrice,
+          quantity: modalQuantity,
+          total: totalItemPrice,
+          image: activeModalDish.image
+        });
+      }
+
+      updateCartViews();
+      showToast(`¡${modalQuantity}x ${activeModalDish.title} añadido!`);
+      closeProductModal();
+    }
+
+    // ==================== CART VIEW STATE ====================
+    function updateCartViews() {
+      const desktopList = document.getElementById('desktopCartList');
+      const drawerList = document.getElementById('drawerCartList');
+      const desktopEmpty = document.getElementById('desktopEmptyCartState');
+      const drawerEmpty = document.getElementById('drawerEmptyCartState');
+      const desktopSummary = document.getElementById('desktopCartSummary');
+      const drawerSummary = document.getElementById('drawerCartSummary');
+
+      const mobileBottomBar = document.getElementById('mobileBottomBar');
+      const headerCount = document.getElementById('headerCartCount');
+
+      const totalQuantity = cart.reduce((acc, item) => acc + item.quantity, 0);
+      const subtotal = cart.reduce((acc, item) => acc + item.total, 0);
+      const discount = promoDiscountActive ? (subtotal * 0.25) : 0;
+      const serviceFee = totalQuantity > 0 ? 1.50 : 0;
+      const finalTotal = Math.max(0, subtotal - discount + serviceFee);
+
+      // Counters
+      headerCount.innerText = totalQuantity;
+      document.getElementById('mobileBarQty').innerText = totalQuantity;
+      document.getElementById('mobileBarTotal').innerText = `$${finalTotal.toFixed(2)}`;
+
+      // Control Mobile Floating Bar visibility
+      if (totalQuantity > 0) {
+        mobileBottomBar.classList.remove('translate-y-28');
+      } else {
+        mobileBottomBar.classList.add('translate-y-28');
+      }
+
+      // Empty states
+      if (cart.length === 0) {
+        desktopEmpty.classList.remove('hidden');
+        drawerEmpty.classList.remove('hidden');
+        desktopSummary.classList.add('hidden');
+        drawerSummary.classList.add('hidden');
+        desktopList.innerHTML = '';
+        drawerList.innerHTML = '';
+        return;
+      }
+
+      desktopEmpty.classList.add('hidden');
+      drawerEmpty.classList.add('hidden');
+      desktopSummary.classList.remove('hidden');
+      drawerSummary.classList.remove('hidden');
+
+      const html = cart.map(item => `
+        <div class="flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border">
+          <img src="${item.image}" alt="${item.title}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0">
+          <div class="flex-1 min-w-0">
+            <h4 class="text-xs font-bold text-gray-900 dark:text-white truncate">${item.title}</h4>
+            <span class="text-[11px] font-extrabold text-brand-600 dark:text-brand-400">$${item.total.toFixed(2)}</span>
+          </div>
+          <div class="flex items-center gap-1.5 bg-white dark:bg-dark-surface rounded-xl p-1 shadow-sm border border-gray-100 dark:border-dark-border">
+            <button onclick="modifyCartItem(${item.id}, -1)" class="w-6 h-6 rounded-lg bg-gray-50 dark:bg-dark-card hover:bg-gray-100 text-gray-700 dark:text-gray-300 flex items-center justify-center font-bold text-xs tap-scale">-</button>
+            <span class="text-xs font-bold w-4 text-center text-gray-800 dark:text-gray-200">${item.quantity}</span>
+            <button onclick="modifyCartItem(${item.id}, 1)" class="w-6 h-6 rounded-lg bg-gray-50 dark:bg-dark-card hover:bg-gray-100 text-gray-700 dark:text-gray-300 flex items-center justify-center font-bold text-xs tap-scale">+</button>
+          </div>
+        </div>
+      `).join('');
+
+      desktopList.innerHTML = html;
+      drawerList.innerHTML = html;
+
+      // Update Desktop Summary
+      document.getElementById('desktopSubtotal').innerText = `$${subtotal.toFixed(2)}`;
+      document.getElementById('desktopTotal').innerText = `$${finalTotal.toFixed(2)}`;
+      const deskDiscountRow = document.getElementById('desktopDiscountRow');
+      if (promoDiscountActive) {
+        deskDiscountRow.classList.remove('hidden');
+        document.getElementById('desktopDiscount').innerText = `-$${discount.toFixed(2)}`;
+      } else {
+        deskDiscountRow.classList.add('hidden');
+      }
+
+      // Update Drawer Summary
+      document.getElementById('drawerSubtotal').innerText = `$${subtotal.toFixed(2)}`;
+      document.getElementById('drawerTotal').innerText = `$${finalTotal.toFixed(2)}`;
+      const drawerDiscountRow = document.getElementById('drawerDiscountRow');
+      if (promoDiscountActive) {
+        drawerDiscountRow.classList.remove('hidden');
+        document.getElementById('drawerDiscount').innerText = `-$${discount.toFixed(2)}`;
+      } else {
+        drawerDiscountRow.classList.add('hidden');
+      }
+    }
+
+    function modifyCartItem(id, delta) {
+      const item = cart.find(i => i.id === id);
+      if (!item) return;
+
+      item.quantity += delta;
+      if (item.quantity <= 0) {
+        cart = cart.filter(i => i.id !== id);
+      } else {
+        item.total = item.price * item.quantity;
+      }
+      updateCartViews();
+    }
+
+    function emptyCart() {
+      cart = [];
+      updateCartViews();
+      showToast('Comanda vaciada.');
+    }
+
+    function toggleCartDrawer() {
+      const drawer = document.getElementById('cartDrawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      const isOpen = !drawer.classList.contains('translate-x-full');
+
+      if (isOpen) {
+        backdrop.classList.remove('opacity-100');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        drawer.classList.add('translate-x-full', 'pointer-events-none');
+      } else {
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        backdrop.classList.add('opacity-100');
+        drawer.classList.remove('translate-x-full', 'pointer-events-none');
+      }
+    }
+
+    function checkoutOrder() {
+      if (cart.length === 0) return;
+      showToast('¡Comanda enviada a cocina con éxito!');
+      cart = [];
+      updateCartViews();
+      const drawer = document.getElementById('cartDrawer');
+      if (!drawer.classList.contains('translate-x-full')) {
+        toggleCartDrawer();
+      }
+    }
+
+    // ==================== RESTAURANT STORE MODAL ====================
+    function openStoreModal() {
+      const modal = document.getElementById('storeModal');
+      const backdrop = document.getElementById('storeModalBackdrop');
+
+      backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      backdrop.classList.add('opacity-100');
+
+      modal.classList.remove('pointer-events-none', 'translate-y-full', 'sm:opacity-0', 'sm:scale-95');
+      modal.classList.add('translate-y-0', 'sm:opacity-100', 'sm:scale-100');
+    }
+
+    function closeStoreModal() {
+      const modal = document.getElementById('storeModal');
+      const backdrop = document.getElementById('storeModalBackdrop');
+
+      backdrop.classList.remove('opacity-100');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+
+      modal.classList.add('pointer-events-none', 'translate-y-full', 'sm:opacity-0', 'sm:scale-95');
+      modal.classList.remove('translate-y-0', 'sm:opacity-100', 'sm:scale-100');
+    }
+
+    function openMapsRoute() {
+      window.open('https://maps.google.com/?q=Av.+Libertador+San+Martin+1420', '_blank');
+    }
+
+    function copyAddressText() {
+      const text = "Av. Libertador San Martín 1420, Barrio Gourmet";
+      const dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.value = text;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+      showToast('¡Dirección copiada al portapapeles!');
+    }
+
+    // ==================== QR CODE GENERATOR & LINK SHARING ====================
+    function getShareableUrl() {
+      return window.location.origin + window.location.pathname;
+    }
+
+    function openQrModal() {
+      const shareUrl = getShareableUrl();
+      const qrInput = document.getElementById('qrShareLinkInput');
+      const qrImg = document.getElementById('qrImageTag');
+
+      qrInput.value = shareUrl;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}&margin=10&color=22-25-29`;
+      qrImg.src = qrApiUrl;
+
+      const modal = document.getElementById('qrModal');
+      const backdrop = document.getElementById('qrModalBackdrop');
+
+      backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      backdrop.classList.add('opacity-100');
+
+      modal.classList.remove('pointer-events-none', 'translate-y-full', 'sm:opacity-0', 'sm:scale-95');
+      modal.classList.add('translate-y-0', 'sm:opacity-100', 'sm:scale-100');
+    }
+
+    function closeQrModal() {
+      const modal = document.getElementById('qrModal');
+      const backdrop = document.getElementById('qrModalBackdrop');
+
+      backdrop.classList.remove('opacity-100');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+
+      modal.classList.add('pointer-events-none', 'translate-y-full', 'sm:opacity-0', 'sm:scale-95');
+      modal.classList.remove('translate-y-0', 'sm:opacity-100', 'sm:scale-100');
+    }
+
+    function copyShareLink() {
+      const input = document.getElementById('qrShareLinkInput');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+
+      const btnText = document.getElementById('copyBtnText');
+      btnText.innerText = "¡Copiado!";
+      showToast('¡Enlace copiado al portapapeles!');
+
+      setTimeout(() => {
+        btnText.innerText = "Copiar";
+      }, 2000);
+    }
+
+    function shareViaWhatsApp() {
+      const shareUrl = getShareableUrl();
+      const text = encodeURIComponent(`¡Hola! Te comparto la carta digital interactiva de Foodaro Bistro: ${shareUrl}`);
+      window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    }
+
+    function downloadQrCode() {
+      const shareUrl = getShareableUrl();
+      const qrDownloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(shareUrl)}&margin=20`;
+      const a = document.createElement('a');
+      a.href = qrDownloadUrl;
+      a.download = `foodaro-qr-carta.png`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Descargando código QR...');
+    }
+
+    // ==================== TOAST NOTIFICATION ====================
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toastMessage');
+      text.innerText = msg;
+
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2400);
+    }
+
+    // Initialize application
+    window.onload = function() {
+      initTheme();
+      renderCategories();
+      renderProducts();
+      updateCartViews();
+    };
+  </script>
+
+</body>
+</html>

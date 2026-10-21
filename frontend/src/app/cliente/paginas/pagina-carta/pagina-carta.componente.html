@@ -1,0 +1,52 @@
+<div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-5 sm:py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- En modo menú (sin carrito) el contenido se centra -->
+    <main class="space-y-5 sm:space-y-6" [class]="ui.pedidosHabilitados() ? 'lg:col-span-8' : 'lg:col-span-8 lg:col-start-3'">
+
+      <app-banner-local />
+      <app-carrusel-promociones />
+      <app-carrusel-categorias />
+      <app-buscador />
+
+      <div class="flex items-center justify-between -mb-1">
+        <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">Nuestra Carta</h3>
+        <span class="text-xs font-semibold px-2.5 py-1 bg-gray-100 dark:bg-dark-card rounded-full text-gray-600 dark:text-dark-muted">
+          {{ cantidadVisible() }} productos
+        </span>
+      </div>
+
+      <!-- Carta ordenada por categoría; cada sección es destino del carrusel y del scroll-spy -->
+      @for (s of secciones(); track s.categoria.id) {
+        <section [id]="PREFIJO_SECCION + s.categoria.id" class="pt-1">
+          <div class="flex items-center gap-3 mb-3">
+            <img [src]="s.categoria.imagen" alt="" class="w-8 h-8 rounded-full object-cover ring-2 ring-white dark:ring-dark-border shadow-sm" />
+            <h4 class="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight">{{ s.categoria.nombre }}</h4>
+            <span class="text-[11px] font-semibold text-gray-400 dark:text-dark-muted">{{ s.productos.length }}</span>
+            <span class="flex-1 h-px bg-gray-200/80 dark:bg-dark-border"></span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @for (p of s.productos; track p.id) {
+              <app-tarjeta-producto [producto]="p" (seleccionado)="abrirProducto($event)" />
+            }
+          </div>
+        </section>
+      } @empty {
+        <div class="text-center py-16 bg-white dark:bg-dark-surface rounded-3xl p-8 shadow-soft border border-gray-100 dark:border-dark-border">
+          <div class="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center mx-auto mb-3">
+            <i class="fa-solid fa-bowl-food text-2xl"></i>
+          </div>
+          <h4 class="font-bold text-gray-900 dark:text-white text-base">No se encontraron productos</h4>
+          <p class="text-xs text-gray-400 dark:text-dark-muted mt-1 max-w-xs mx-auto">No hay resultados para “{{ busqueda() }}”. Probá con otra búsqueda.</p>
+          <button type="button" (click)="reiniciarFiltros()" class="mt-4 px-4 py-2 bg-brand-600 text-white text-xs font-bold rounded-xl shadow-coral tap-scale">Limpiar búsqueda</button>
+        </div>
+      }
+    </main>
+
+    @if (ui.pedidosHabilitados()) {
+      <app-panel-carrito class="hidden lg:block lg:col-span-4 sticky top-24" />
+    }
+  </div>
+</div>
+
+<app-modal-detalle-producto [productoId]="productoSeleccionadoId()" (cerrado)="cerrarProducto()" />

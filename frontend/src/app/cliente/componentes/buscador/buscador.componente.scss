@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+/* Oculta la "x" nativa de los inputs type=search para usar la propia */
+input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}

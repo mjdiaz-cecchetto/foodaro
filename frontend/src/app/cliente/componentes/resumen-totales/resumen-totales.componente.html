@@ -1,0 +1,23 @@
+@let t = totales();
+<dl class="space-y-1.5 text-sm">
+  <div class="flex justify-between text-gray-600 dark:text-dark-muted">
+    <dt>Subtotal</dt>
+    <dd class="font-semibold text-gray-900 dark:text-white">{{ t.subtotal | precio }}</dd>
+  </div>
+  @if (t.descuento > 0) {
+    <div class="flex justify-between text-emerald-600">
+      <dt>Descuento <span class="text-[11px] font-bold tracking-wider">{{ promo()?.codigo }}</span></dt>
+      <dd class="font-semibold">{{ t.descuento | precio: '-' }}</dd>
+    </div>
+  }
+  @if (t.cargoServicio > 0) {
+    <div class="flex justify-between text-gray-600 dark:text-dark-muted">
+      <dt>{{ etiquetaCargo() }}</dt>
+      <dd class="font-semibold text-gray-900 dark:text-white">{{ t.cargoServicio | precio }}</dd>
+    </div>
+  }
+  <div class="flex justify-between items-end pt-2 border-t border-dashed border-gray-200 dark:border-dark-border">
+    <dt class="font-bold text-gray-900 dark:text-white">Total</dt>
+    <dd class="text-xl font-black text-brand-600">{{ t.total | precio }}</dd>
+  </div>
+</dl>

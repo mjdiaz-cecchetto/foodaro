@@ -1,0 +1,19 @@
+<div class="bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-dark-text min-h-screen flex flex-col selection:bg-brand-100 selection:text-brand-600">
+
+  <app-encabezado-cliente />
+
+  <router-outlet />
+
+  <app-pie-cliente />
+
+  <!-- Carrito y confirmación: solo en modo pedido -->
+  @if (ui.pedidosHabilitados()) {
+    <app-barra-carrito-movil />
+    <app-hoja-carrito />
+    <app-modal-confirmar-pedido />
+  }
+
+  <!-- Modales globales -->
+  <app-modal-perfil-local [abierto]="ui.modalLocalAbierto()" (cerrado)="ui.cerrarModalLocal()" />
+  <app-modal-compartir-qr [abierto]="ui.modalQrAbierto()" (cerrado)="ui.cerrarModalQr()" />
+</div>

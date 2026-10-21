@@ -1,0 +1,31 @@
+<section class="space-y-6">
+
+  <app-encabezado-pagina
+    titulo="Categorías"
+    subtitulo="Organizá cómo se agrupan los productos en la carta."
+    etiquetaAccion="Nueva categoría"
+    (accion)="abrirAlta()"
+  />
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    @for (c of categorias(); track c.id) {
+      <div class="bg-white dark:bg-surface-dark rounded-3xl p-4 shadow-soft border border-zinc-100 dark:border-surface-borderDark flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <img [src]="c.imagen" [alt]="c.nombre" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-brand-500/20 shrink-0" />
+          <div class="min-w-0">
+            <h4 class="font-bold text-sm text-zinc-900 dark:text-white truncate">{{ c.nombre }}</h4>
+            <p class="text-[11px] font-semibold text-zinc-400 mt-0.5">{{ catalogo.cantidadProductosPorCategoria(c.id) }} productos</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" (click)="abrirEdicion(c)" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 hover:text-brand-600 flex items-center justify-center tap-scale" title="Editar"><i class="fa-solid fa-pen text-xs"></i></button>
+          <button type="button" (click)="eliminar(c)" class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 flex items-center justify-center tap-scale" title="Eliminar"><i class="fa-solid fa-trash-can text-xs"></i></button>
+        </div>
+      </div>
+    } @empty {
+      <div class="col-span-full text-center py-12 text-zinc-400 font-bold text-xs">Todavía no hay categorías cargadas</div>
+    }
+  </div>
+</section>
+
+<app-modal-formulario-categoria [abierto]="modalAbierto()" [categoria]="editando()" (cerrado)="cerrarModal()" (guardado)="guardar($event)" />

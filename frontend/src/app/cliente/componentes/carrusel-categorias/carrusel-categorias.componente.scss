@@ -1,0 +1,4 @@
+/* display: contents para que el sticky funcione respecto al <main> y no al host */
+:host {
+  display: contents;
+}

@@ -1,0 +1,49 @@
+@let p = perfil();
+<app-modal [abierto]="abierto()" variante="hoja" claseAncho="sm:max-w-md" clasePanel="max-h-[90dvh]" (cerrado)="cerrar()">
+  <div class="relative shrink-0 h-36 bg-neutral-900">
+    <img [src]="p.portadaUrl" alt="" class="w-full h-full object-cover opacity-70" />
+    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+    <button type="button" (click)="cerrar()" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md flex items-center justify-center tap-scale" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+    <div class="absolute -bottom-8 left-5 flex items-end gap-3">
+      <img [src]="p.logoUrl" alt="Logo" class="w-20 h-20 rounded-2xl object-cover ring-4 ring-white dark:ring-dark-surface shadow-xl bg-white" />
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto custom-scroll px-5 pt-11 pb-5 space-y-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <h3 class="text-xl font-black text-gray-900 dark:text-white">{{ p.nombre }}</h3>
+        <span class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>{{ p.estado }}</span>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-dark-muted mt-0.5">{{ p.eslogan }}</p>
+    </div>
+
+    <a [href]="p.mapsUrl" target="_blank" rel="noopener" class="flex items-start gap-3 p-3.5 rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border hover:border-brand-300 transition">
+      <span class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-location-dot"></i></span>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-bold text-gray-900 dark:text-white">{{ p.direccion }}</p>
+        <p class="text-xs text-gray-500 dark:text-dark-muted">{{ p.referenciaDireccion }}</p>
+      </div>
+      <i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-400 mt-1"></i>
+    </a>
+
+    <section>
+      <h4 class="text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider mb-2"><i class="fa-regular fa-clock mr-1.5"></i>Horarios</h4>
+      <dl class="rounded-2xl border border-gray-100 dark:border-dark-border divide-y divide-gray-100 dark:divide-dark-border text-sm">
+        <div class="flex justify-between px-4 py-2.5"><dt class="text-gray-600 dark:text-dark-muted">Lunes a Jueves</dt><dd class="font-bold text-gray-900 dark:text-white">{{ p.horarios.lunesAJueves }}</dd></div>
+        <div class="flex justify-between px-4 py-2.5"><dt class="text-gray-600 dark:text-dark-muted">Viernes y Sábado</dt><dd class="font-bold text-gray-900 dark:text-white">{{ p.horarios.viernesYSabado }}</dd></div>
+        <div class="flex justify-between px-4 py-2.5"><dt class="text-gray-600 dark:text-dark-muted">Domingo</dt><dd class="font-bold text-gray-900 dark:text-white">{{ p.horarios.domingo }}</dd></div>
+      </dl>
+    </section>
+
+    <section>
+      <h4 class="text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider mb-2"><i class="fa-regular fa-comments mr-1.5"></i>Contacto</h4>
+      <div class="grid grid-cols-2 gap-2">
+        <a [href]="localPublico.enlaceWhatsApp()" target="_blank" rel="noopener" class="flex items-center gap-2.5 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-bold text-xs tap-scale"><i class="fa-brands fa-whatsapp text-lg"></i>WhatsApp</a>
+        <a [href]="localPublico.enlaceTelefono()" class="flex items-center gap-2.5 p-3 rounded-2xl bg-gray-50 dark:bg-dark-card text-gray-800 dark:text-white font-bold text-xs tap-scale"><i class="fa-solid fa-phone text-base text-brand-600"></i>Llamar</a>
+        <a [href]="'https://instagram.com/' + p.contacto.instagram.replace('@', '')" target="_blank" rel="noopener" class="flex items-center gap-2.5 p-3 rounded-2xl bg-gray-50 dark:bg-dark-card text-gray-800 dark:text-white font-bold text-xs tap-scale"><i class="fa-brands fa-instagram text-lg text-pink-500"></i>{{ p.contacto.instagram }}</a>
+        <a [href]="'https://tiktok.com/' + p.contacto.tiktok" target="_blank" rel="noopener" class="flex items-center gap-2.5 p-3 rounded-2xl bg-gray-50 dark:bg-dark-card text-gray-800 dark:text-white font-bold text-xs tap-scale"><i class="fa-brands fa-tiktok text-base"></i>{{ p.contacto.tiktok }}</a>
+      </div>
+    </section>
+  </div>
+</app-modal>

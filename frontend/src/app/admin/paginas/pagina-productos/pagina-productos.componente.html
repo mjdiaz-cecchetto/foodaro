@@ -1,0 +1,83 @@
+<section class="space-y-6">
+
+  <app-encabezado-pagina
+    titulo="Productos"
+    subtitulo="Precios, descripciones, opciones (tamaños, extras) y disponibilidad."
+    etiquetaAccion="Agregar producto"
+    (accion)="abrirAlta()"
+  />
+
+  <!-- Búsqueda y filtro -->
+  <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+    <div class="relative w-full sm:w-80">
+      <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-xs"></i>
+      <input type="text" [value]="busqueda()" (input)="alBuscar($event)" placeholder="Buscar producto..." class="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-surface-borderDark rounded-2xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
+    </div>
+    <select [value]="filtroCategoria()" (change)="alFiltrarCategoria($event)" class="w-full sm:w-auto bg-white dark:bg-surface-dark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 focus:outline-none">
+      <option value="todas">Todas las categorías</option>
+      @for (c of categorias(); track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
+    </select>
+  </div>
+
+  <!-- Tabla -->
+  <div class="bg-white dark:bg-surface-dark rounded-3xl shadow-soft border border-zinc-100 dark:border-surface-borderDark overflow-hidden">
+    <div class="overflow-x-auto custom-scroll">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-zinc-100 dark:border-surface-borderDark text-zinc-400 uppercase text-[10px] font-extrabold tracking-wider bg-zinc-50/50 dark:bg-surface-cardDark/40">
+            <th class="py-3.5 px-5">Producto</th>
+            <th class="py-3.5 px-4">Categoría</th>
+            <th class="py-3.5 px-4">Precio</th>
+            <th class="py-3.5 px-4 text-center">Opciones</th>
+            <th class="py-3.5 px-4 text-center">Disponibilidad</th>
+            <th class="py-3.5 px-5 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-100 dark:divide-surface-borderDark font-medium">
+          @for (p of filtrados(); track p.id) {
+            <tr class="hover:bg-zinc-50/70 dark:hover:bg-surface-cardDark/50 transition-colors">
+              <td class="py-3 px-5">
+                <div class="flex items-center gap-3">
+                  <img [src]="p.imagen" [alt]="p.nombre" class="w-12 h-12 rounded-xl object-cover shrink-0 shadow-sm" />
+                  <div class="min-w-0">
+                    <p class="font-bold text-zinc-900 dark:text-white truncate">{{ p.nombre }}</p>
+                    @if (p.etiqueta) { <span class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{{ p.etiqueta }}</span> }
+                  </div>
+                </div>
+              </td>
+              <td class="py-3 px-4">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 whitespace-nowrap">{{ catalogo.nombreCategoria(p.categoriaId) }}</span>
+              </td>
+              <td class="py-3 px-4 font-black text-zinc-900 dark:text-white whitespace-nowrap">{{ p.precio | precio }}</td>
+              <td class="py-3 px-4 text-center">
+                @if (p.gruposOpciones.length) {
+                  <button type="button" (click)="abrirEdicion(p)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-300 text-[11px] font-bold tap-scale" title="Editar opciones">
+                    <i class="fa-solid fa-sliders text-[10px]"></i>{{ p.gruposOpciones.length }}
+                  </button>
+                } @else {
+                  <span class="text-zinc-300 dark:text-zinc-600">—</span>
+                }
+              </td>
+              <td class="py-3 px-4 text-center">
+                <button type="button" (click)="alternarDisponibilidad(p)" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tap-scale transition-colors whitespace-nowrap" [class]="p.disponible ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'">
+                  <span class="w-1.5 h-1.5 rounded-full" [class]="p.disponible ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'"></span>
+                  <span>{{ p.disponible ? 'Disponible' : 'Agotado' }}</span>
+                </button>
+              </td>
+              <td class="py-3 px-5 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button type="button" (click)="abrirEdicion(p)" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 hover:text-brand-600 flex items-center justify-center tap-scale" title="Editar"><i class="fa-solid fa-pen text-xs"></i></button>
+                  <button type="button" (click)="eliminar(p)" class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 flex items-center justify-center tap-scale" title="Eliminar"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="py-8 text-center text-zinc-400 font-bold">No se encontraron productos</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<app-modal-formulario-producto [abierto]="modalAbierto()" [categorias]="categorias()" [producto]="editando()" (cerrado)="cerrarModal()" (guardado)="guardar($event)" />

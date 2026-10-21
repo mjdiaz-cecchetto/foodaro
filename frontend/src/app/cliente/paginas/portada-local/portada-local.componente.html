@@ -1,0 +1,125 @@
+@let p = perfil();
+<div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-dark-text flex flex-col">
+
+  <!-- Encabezado: solo isotipo (la marca protagonista es la del local) -->
+  <header class="sticky top-0 z-30 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md border-b border-gray-100 dark:border-dark-border">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <app-logo variante="isotipo" tamanio="sm" [href]="'/'" />
+        <span class="font-extrabold text-sm sm:text-base truncate">{{ p.nombre }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <app-alternar-tema
+          claseBoton="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gray-100 dark:bg-dark-card border border-gray-200/80 dark:border-dark-border text-gray-700 dark:text-amber-400 flex items-center justify-center tap-scale shadow-sm"
+          claseIcono="text-sm"
+          (alternado)="alAlternarTema($event)"
+        />
+        <a [routerLink]="local.url('admin')" class="h-9 sm:h-10 px-3 sm:px-4 rounded-2xl bg-white dark:bg-dark-card border border-gray-200/80 dark:border-dark-border text-xs sm:text-sm font-bold flex items-center gap-2 tap-scale shadow-soft">
+          <i class="fa-solid fa-lock text-brand-600 text-xs"></i><span>Admin</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-6">
+
+    <!-- Banner del local -->
+    <section class="relative overflow-hidden rounded-3xl bg-neutral-900 shadow-card h-64 sm:h-80">
+      <img [src]="p.portadaUrl" alt="" class="absolute inset-0 w-full h-full object-cover opacity-90" />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10"></div>
+      <div class="absolute top-4 left-5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/90 text-white text-xs font-bold backdrop-blur-md shadow-md">
+        <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>{{ p.estado }}
+      </div>
+      <div class="absolute bottom-5 left-5 right-5 sm:left-7 sm:right-7 flex items-end gap-4 z-10">
+        <img [src]="p.logoUrl" alt="Logo" class="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl object-cover ring-2 ring-white/90 shadow-xl bg-white shrink-0" />
+        <div class="min-w-0 pb-1">
+          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-white/15 text-white border border-white/20 backdrop-blur-md">{{ p.rubro }}</span>
+          <h1 class="text-3xl sm:text-5xl font-black text-white leading-tight truncate mt-1.5">{{ p.nombre }}</h1>
+          <p class="text-sm text-gray-200 font-medium line-clamp-2">{{ p.eslogan }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Accesos -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      @for (a of accesos(); track a.titulo) {
+        <a [routerLink]="a.ruta" class="group rounded-3xl p-5 border flex items-center gap-4 tap-scale hover:-translate-y-0.5 transition-all duration-300" [class]="a.estilo">
+          <span class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0" [class]="a.estiloIcono"><i class="fa-solid" [class]="a.icono"></i></span>
+          <span class="flex-1 min-w-0">
+            <span class="block font-black text-lg leading-tight">{{ a.titulo }}</span>
+            <span class="block text-xs opacity-80 mt-0.5">{{ a.descripcion }}</span>
+            <span class="block text-[10px] font-mono opacity-60 mt-1 truncate">foodaro.net{{ a.enlace }}</span>
+          </span>
+          <i class="fa-solid fa-chevron-right opacity-60 group-hover:translate-x-1 transition"></i>
+        </a>
+      }
+    </section>
+
+    <!-- Datos + QR -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 bg-white dark:bg-dark-surface rounded-3xl p-5 sm:p-6 border border-gray-100 dark:border-dark-border shadow-soft space-y-5">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="rounded-2xl bg-gray-50 dark:bg-dark-card p-3 text-center">
+            <p class="text-2xl font-black text-brand-600">{{ cantidadCategorias() }}</p>
+            <p class="text-[11px] font-semibold text-gray-500 dark:text-dark-muted">Categorías</p>
+          </div>
+          <div class="rounded-2xl bg-gray-50 dark:bg-dark-card p-3 text-center">
+            <p class="text-2xl font-black text-brand-600">{{ cantidadProductos() }}</p>
+            <p class="text-[11px] font-semibold text-gray-500 dark:text-dark-muted">Productos</p>
+          </div>
+          <div class="rounded-2xl bg-gray-50 dark:bg-dark-card p-3 text-center">
+            <p class="text-2xl font-black text-brand-600">{{ promocionesActivas() }}</p>
+            <p class="text-[11px] font-semibold text-gray-500 dark:text-dark-muted">Promos</p>
+          </div>
+        </div>
+
+        <a [href]="p.mapsUrl" target="_blank" rel="noopener" class="flex items-start gap-3 p-3.5 rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border hover:border-brand-300 transition">
+          <span class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-location-dot"></i></span>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-bold">{{ p.direccion }}</p>
+            <p class="text-xs text-gray-500 dark:text-dark-muted">{{ p.referenciaDireccion }}</p>
+          </div>
+        </a>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <h4 class="text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider mb-2"><i class="fa-regular fa-clock mr-1.5"></i>Horarios</h4>
+            <dl class="text-sm space-y-1.5">
+              <div class="flex justify-between"><dt class="text-gray-600 dark:text-dark-muted">Lun a Jue</dt><dd class="font-bold">{{ p.horarios.lunesAJueves }}</dd></div>
+              <div class="flex justify-between"><dt class="text-gray-600 dark:text-dark-muted">Vie y Sáb</dt><dd class="font-bold">{{ p.horarios.viernesYSabado }}</dd></div>
+              <div class="flex justify-between"><dt class="text-gray-600 dark:text-dark-muted">Domingo</dt><dd class="font-bold">{{ p.horarios.domingo }}</dd></div>
+            </dl>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider mb-2"><i class="fa-regular fa-comments mr-1.5"></i>Contacto</h4>
+            <div class="flex flex-wrap gap-2">
+              <a [href]="localPublico.enlaceWhatsApp()" target="_blank" rel="noopener" class="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-bold text-xs flex items-center gap-2 tap-scale"><i class="fa-brands fa-whatsapp text-base"></i>WhatsApp</a>
+              <a [href]="'https://instagram.com/' + p.contacto.instagram.replace('@', '')" target="_blank" rel="noopener" class="px-3 py-2 rounded-xl bg-gray-50 dark:bg-dark-card font-bold text-xs flex items-center gap-2 tap-scale"><i class="fa-brands fa-instagram text-base text-pink-500"></i>{{ p.contacto.instagram }}</a>
+              <a [href]="localPublico.enlaceTelefono()" class="px-3 py-2 rounded-xl bg-gray-50 dark:bg-dark-card font-bold text-xs flex items-center gap-2 tap-scale"><i class="fa-solid fa-phone text-brand-600"></i>Llamar</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-dark-surface rounded-3xl p-5 border border-gray-100 dark:border-dark-border shadow-soft flex flex-col items-center text-center">
+        <h4 class="text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider mb-3"><i class="fa-solid fa-qrcode mr-1.5"></i>Compartí la carta</h4>
+        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-soft">
+          <img [src]="localPublico.urlImagenQr(180)" alt="QR de la carta" width="180" height="180" class="rounded-lg" />
+        </div>
+        <p class="text-[11px] text-gray-500 dark:text-dark-muted mt-3 break-all">foodaro.net{{ local.ruta() }}</p>
+        <div class="grid grid-cols-2 gap-2 w-full mt-3">
+          <button type="button" (click)="copiarEnlace()" class="h-10 rounded-xl bg-gray-100 dark:bg-dark-card font-bold text-xs tap-scale"><i class="fa-regular fa-copy mr-1"></i>Copiar</button>
+          <a [href]="localPublico.urlDescargaQr()" download="qr-carta.png" target="_blank" rel="noopener" class="h-10 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold text-xs flex items-center justify-center tap-scale"><i class="fa-solid fa-download mr-1"></i>QR</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="w-full px-4 py-6">
+    <p class="w-full text-center text-[10px] leading-none text-gray-400/80 dark:text-dark-muted/60 font-medium select-none">
+      <span class="align-middle">Carta digital creada con</span>
+      <a href="/" class="font-brand text-[15px] leading-none align-middle text-gray-400/90 dark:text-dark-muted/70 mx-1 hover:text-brand-600">foodaro</a>
+      <span class="align-middle opacity-60">· {{ anio }}</span>
+    </p>
+  </footer>
+</div>

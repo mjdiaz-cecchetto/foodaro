@@ -1,0 +1,21 @@
+<header class="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-surface-dark border-b border-zinc-200 dark:border-surface-borderDark sticky top-0 z-40">
+  <div class="flex items-center gap-2 min-w-0">
+    <button type="button" (click)="alternarMenu.emit()" class="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-surface-cardDark" aria-label="Abrir menú">
+      <i class="fa-solid fa-bars text-lg"></i>
+    </button>
+    <app-logo variante="isotipo" tamanio="sm" [href]="'/'" />
+    <span class="font-extrabold text-sm truncate">{{ perfil().nombre }}</span>
+    <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 shrink-0">Admin</span>
+  </div>
+
+  <div class="flex items-center gap-2 shrink-0">
+    <app-alternar-tema
+      claseBoton="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark flex items-center justify-center text-zinc-600 dark:text-amber-400 tap-scale"
+      claseIcono=""
+      (alternado)="alAlternarTema($event)"
+    />
+    <a [href]="enlaceCarta()" target="_blank" class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-bold flex items-center justify-center" title="Ver carta">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+    </a>
+  </div>
+</header>

@@ -1,0 +1,24 @@
+<ng-template #contenido>
+  <span
+    class="bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white shadow-md shadow-brand-600/30 shrink-0 font-brand font-bold leading-none"
+    [class]="clasesCuadro[tamanio()]"
+    aria-hidden="true"
+  >
+    <span class="-mt-0.5">f</span>
+  </span>
+  @if (variante() === 'completo') {
+    <span class="font-brand font-bold tracking-tight leading-none" [class]="clasesPalabra[tamanio()]" [class.text-white]="claro()" [class.text-brand-600]="!claro()">
+      foodaro<span class="text-brand-600" [class.hidden]="!claro()">.</span>
+    </span>
+  }
+</ng-template>
+
+@if (href()) {
+  <a [attr.href]="href()" class="inline-flex items-center gap-2 group hover:opacity-90" aria-label="Foodaro">
+    <ng-container *ngTemplateOutlet="contenido" />
+  </a>
+} @else {
+  <span class="inline-flex items-center gap-2" aria-label="Foodaro">
+    <ng-container *ngTemplateOutlet="contenido" />
+  </span>
+}

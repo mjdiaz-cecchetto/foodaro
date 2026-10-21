@@ -1,0 +1,62 @@
+@if (promociones().length > 0) {
+  <section class="relative">
+    <div
+      #pista
+      class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar rounded-2xl sm:rounded-3xl"
+      (scroll)="alDesplazar(pista)"
+      (touchstart)="pausar()"
+      (touchend)="reanudar()"
+      (mouseenter)="pausar()"
+      (mouseleave)="reanudar()"
+    >
+      @for (promo of promociones(); track promo.id) {
+        <article class="relative shrink-0 w-full snap-start overflow-hidden bg-neutral-900 h-28 sm:h-36 flex items-center">
+          <img [src]="promo.imagen" alt="" class="absolute inset-0 w-full h-full object-cover opacity-60" />
+          <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/15"></div>
+
+          <div class="relative z-10 px-4 sm:px-6 flex items-center justify-between gap-3 w-full">
+            <div class="min-w-0">
+              <span class="inline-block bg-brand-600 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider mb-1.5">Promo</span>
+              <h3 class="text-base sm:text-xl font-black text-white leading-tight truncate">{{ promo.titulo }}</h3>
+              <p class="text-[11px] sm:text-sm text-gray-200 font-medium">
+                <span class="text-brand-400 font-black">{{ promo.descuento }}% OFF</span>
+                <span class="opacity-70"> · código </span><span class="font-bold tracking-wider">{{ promo.codigo }}</span>
+              </p>
+            </div>
+
+            @if (ui.pedidosHabilitados()) {
+              <button
+                type="button"
+                (click)="aplicarCupon(promo.id, $event)"
+                class="shrink-0 px-3 py-2 rounded-xl text-[11px] sm:text-xs font-bold tap-scale shadow-md border backdrop-blur-md transition"
+                [class]="promoActivaId() === promo.id
+                  ? 'bg-emerald-500 border-emerald-400 text-white'
+                  : 'bg-white/15 border-white/25 text-white hover:bg-white/25'"
+              >
+                @if (promoActivaId() === promo.id) {
+                  <i class="fa-solid fa-check mr-1"></i>Aplicado
+                } @else {
+                  Usar cupón
+                }
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (promociones().length > 1) {
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+        @for (promo of promociones(); track promo.id; let i = $index) {
+          <button
+            type="button"
+            (click)="irA(i)"
+            class="h-1.5 rounded-full transition-all duration-300"
+            [class]="indice() === i ? 'w-5 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'"
+            [attr.aria-label]="'Ver promoción ' + (i + 1)"
+          ></button>
+        }
+      </div>
+    }
+  </section>
+}

@@ -1,0 +1,36 @@
+@let p = perfil();
+<!-- En móvil ocupa todo el ancho (sin márgenes ni radios); desde sm vuelve a ser una tarjeta -->
+<section
+  (click)="abrirPerfil()"
+  class="relative overflow-hidden bg-neutral-900 shadow-card cursor-pointer group h-56 sm:h-72 -mx-4 sm:mx-0 sm:rounded-3xl sm:border sm:border-gray-100 sm:dark:border-dark-border"
+  role="button"
+  tabindex="0"
+  (keydown.enter)="abrirPerfil()"
+  aria-label="Ver información y horarios del local"
+>
+  <img [src]="p.portadaUrl" alt="" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition duration-700" />
+  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10"></div>
+
+  <!-- Estado -->
+  <div class="absolute top-3 left-4 sm:top-4 sm:left-5 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/90 text-white text-[10px] sm:text-xs font-bold backdrop-blur-md shadow-md">
+    <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse"></span>
+    <span>{{ p.estado }}</span>
+  </div>
+
+  <!-- Acceso al perfil -->
+  <div class="absolute top-3 right-4 sm:top-4 sm:right-5 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-white/15 text-white text-[10px] sm:text-xs font-bold backdrop-blur-md border border-white/20">
+    <span class="hidden sm:inline">Ver Info y Horarios</span>
+    <span class="sm:hidden">Info</span>
+    <i class="fa-solid fa-chevron-right text-[9px] opacity-80"></i>
+  </div>
+
+  <!-- Logo en cuadro + identidad -->
+  <div class="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-6 sm:right-6 flex items-end gap-3.5 sm:gap-4 z-10">
+    <img [src]="p.logoUrl" alt="Logo del local" class="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl object-cover ring-2 ring-white/90 shadow-xl bg-white shrink-0" />
+    <div class="min-w-0 pb-0.5">
+      <span class="text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-white/15 text-white border border-white/20 backdrop-blur-md">{{ p.rubro }}</span>
+      <h2 class="text-2xl sm:text-4xl font-black text-white leading-tight truncate mt-1.5">{{ p.nombre }}</h2>
+      <p class="text-[11px] sm:text-sm text-gray-200 font-medium line-clamp-2 sm:line-clamp-1">{{ p.eslogan }}</p>
+    </div>
+  </div>
+</section>

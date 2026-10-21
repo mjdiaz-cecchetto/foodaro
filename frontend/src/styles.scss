@@ -1,0 +1,169 @@
+/* ============================================================
+   Foodaro — Estilos globales y tokens de diseño (Tailwind v4)
+   Unifica los tokens de los dos mockups HTML:
+   - Paleta neutra: zinc (admin) y gray (carta) se mantienen
+     ambas disponibles (son de Tailwind), pero los tokens propios
+     (brand, surface, sombras, fuentes) viven en un solo lugar.
+   ============================================================ */
+@import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
+/* Dark mode por clase en <html> (equivale a darkMode: 'class') */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* --- Tipografías --- */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Caveat", cursive;
+
+  /* --- Marca (coral) --- */
+  --color-brand-50: #fff1f1;
+  --color-brand-100: #ffe1e1;
+  --color-brand-300: #ffa3a3;
+  --color-brand-400: #ff6b6b;
+  --color-brand-500: #ff4b4b;
+  --color-brand-600: #ff3b30;
+  --color-brand-700: #e02e24;
+  --color-brand-800: #b3231b;
+  --color-brand-900: #7f1d18;
+  --color-brand-950: #4a0f0c;
+
+  /* --- Superficies dark (admin: surface.*) --- */
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #12161f;
+  --color-surface-darker: #0b0e14;
+  --color-surface-cardDark: #181e29;
+  --color-surface-borderDark: #232b3a;
+
+  /* --- Superficies dark (carta: dark.*) --- */
+  --color-dark-bg: #0f1115;
+  --color-dark-surface: #181b20;
+  --color-dark-card: #20242b;
+  --color-dark-border: #2e3440;
+  --color-dark-text: #e5e7eb;
+  --color-dark-muted: #9ca3af;
+
+  /* --- Superficies dark (landing de la plataforma) --- */
+  --color-landing-dark: #0b0f17;
+  --color-landing-card: #131926;
+  --color-landing-border: #1f293d;
+
+  /* --- Sombras --- */
+  --shadow-coral-lg: 0 20px 45px -10px rgba(255, 59, 48, 0.45);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --shadow-coral: 0 10px 24px -4px rgba(255, 59, 48, 0.35);
+  --shadow-modal: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Sin scroll horizontal en ningún dispositivo. `clip` (a diferencia de `hidden`)
+     no convierte al elemento en contenedor de scroll, así los sticky siguen funcionando. */
+  overflow-x: clip;
+}
+
+body {
+  @apply font-sans antialiased;
+}
+
+/* Transición suave de colores al alternar el tema (del mockup de la carta).
+   Va en la capa base para que las utilidades (.tap-scale, .sheet-transition,
+   transition-*) sigan teniendo prioridad. */
+@layer base {
+  * {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+}
+
+/* ------------------------------------------------------------
+   Utilidades compartidas por ambos mockups
+   ------------------------------------------------------------ */
+@layer utilities {
+  /* Scrollbar fina (admin) */
+  .custom-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scroll::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.4);
+    border-radius: 9999px;
+  }
+  .custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.7);
+  }
+
+  /* Scrollbar oculta (carta) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Feedback táctil */
+  .tap-scale {
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .tap-scale:active {
+    transform: scale(0.96);
+  }
+
+  /* Flotación suave del mockup de teléfono (landing) */
+  @keyframes float-phone {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .animate-float {
+    animation: float-phone 4s ease-in-out infinite;
+  }
+
+  /* Slider coral (calculadora de la landing) */
+  .range-coral {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+  }
+  .range-coral::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 9999px;
+    background: #1f293d;
+  }
+  .range-coral::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    margin-top: -8px;
+    border-radius: 9999px;
+    background: #ff3b30;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.45);
+    cursor: pointer;
+  }
+  .range-coral::-moz-range-track {
+    height: 8px;
+    border-radius: 9999px;
+    background: #1f293d;
+  }
+  .range-coral::-moz-range-thumb {
+    height: 24px;
+    width: 24px;
+    border-radius: 9999px;
+    background: #ff3b30;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.45);
+    cursor: pointer;
+  }
+
+  /* Transición de bottom-sheets / drawers */
+  .sheet-transition {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  }
+}

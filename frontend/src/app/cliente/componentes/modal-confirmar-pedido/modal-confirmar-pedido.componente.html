@@ -1,0 +1,192 @@
+<app-modal [abierto]="ui.confirmacionAbierta()" variante="hoja" claseAncho="sm:max-w-md" clasePanel="max-h-[90dvh]" claseZ="z-[60]" (cerrado)="cerrar()">
+  <form [formGroup]="formulario" (ngSubmit)="confirmar()" class="flex flex-col min-h-0 flex-1">
+
+    <!-- Encabezado + progreso -->
+    <div class="shrink-0 px-5 pt-3 pb-3 border-b border-gray-100 dark:border-dark-border">
+      <div class="w-10 h-1 rounded-full bg-gray-300 dark:bg-dark-border mx-auto mb-3 sm:hidden"></div>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          @if (paso() > 1 && !enviado()) {
+            <button type="button" (click)="anterior()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-card text-gray-600 dark:text-dark-muted flex items-center justify-center tap-scale" aria-label="Volver"><i class="fa-solid fa-arrow-left text-sm"></i></button>
+          }
+          <div>
+            <p class="text-[10px] font-bold text-brand-600 uppercase tracking-wider">{{ enviado() ? 'Listo' : 'Paso ' + paso() + ' de 4' }}</p>
+            <h3 class="font-black text-gray-900 dark:text-white text-base leading-tight">{{ enviado() ? '¡Pedido enviado!' : titulosPaso[paso()] }}</h3>
+          </div>
+        </div>
+        <button type="button" (click)="cerrar()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-dark-muted flex items-center justify-center tap-scale" aria-label="Cerrar"><i class="fa-solid fa-xmark text-sm"></i></button>
+      </div>
+      @if (!enviado()) {
+        <div class="flex gap-1.5 mt-3">
+          @for (n of [1, 2, 3, 4]; track n) {
+            <span class="h-1 flex-1 rounded-full transition-colors" [class]="n <= paso() ? 'bg-brand-600' : 'bg-gray-200 dark:bg-dark-border'"></span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Cuerpo -->
+    <div class="flex-1 overflow-y-auto custom-scroll px-5 py-4">
+
+      @if (enviado()) {
+        <div class="text-center py-6">
+          <div class="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 flex items-center justify-center mx-auto mb-4"><i class="fa-brands fa-whatsapp text-3xl"></i></div>
+          <p class="font-bold text-gray-900 dark:text-white">Se abrió WhatsApp con tu pedido</p>
+          <p class="text-sm text-gray-500 dark:text-dark-muted mt-1">Enviá el mensaje a <span class="font-bold">{{ nombreLocal() }}</span> para que lo empiecen a preparar.</p>
+        </div>
+      } @else {
+        @switch (paso()) {
+
+          <!-- Paso 1: entrega -->
+          @case (1) {
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" (click)="elegirEntrega('retiro')" class="p-4 rounded-2xl border-2 text-left transition tap-scale" [class]="modoEntrega() === 'retiro' ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card'">
+                <span class="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-3" [class]="modoEntrega() === 'retiro' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'"><i class="fa-solid fa-store"></i></span>
+                <p class="font-bold text-sm text-gray-900 dark:text-white">Retiro en el local</p>
+                <p class="text-[11px] text-gray-500 dark:text-dark-muted mt-0.5 line-clamp-2">{{ direccionLocal() }}</p>
+              </button>
+              <button type="button" (click)="elegirEntrega('envio')" class="p-4 rounded-2xl border-2 text-left transition tap-scale" [class]="modoEntrega() === 'envio' ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card'">
+                <span class="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-3" [class]="modoEntrega() === 'envio' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'"><i class="fa-solid fa-motorcycle"></i></span>
+                <p class="font-bold text-sm text-gray-900 dark:text-white">Envío a domicilio</p>
+                <p class="text-[11px] text-gray-500 dark:text-dark-muted mt-0.5">Te lo llevamos a tu dirección</p>
+              </button>
+            </div>
+          }
+
+          <!-- Paso 2: datos -->
+          @case (2) {
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 dark:text-dark-text mb-1.5" for="pedido-nombre">Nombre</label>
+                <input id="pedido-nombre" type="text" formControlName="nombre" placeholder="¿Cómo te llamás?" autocomplete="name" [class]="claseCampo(invalido('nombre'))" />
+                @if (invalido('nombre')) { <p class="text-[11px] text-brand-600 font-semibold mt-1">Ingresá tu nombre</p> }
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 dark:text-dark-text mb-1.5" for="pedido-telefono">Teléfono / WhatsApp</label>
+                <input id="pedido-telefono" type="tel" formControlName="telefono" placeholder="Ej: 11 5555 1234" autocomplete="tel" [class]="claseCampo(invalido('telefono'))" />
+                @if (invalido('telefono')) { <p class="text-[11px] text-brand-600 font-semibold mt-1">Ingresá un teléfono válido</p> }
+              </div>
+
+              @if (esEnvio()) {
+                <div class="pt-2 border-t border-dashed border-gray-200 dark:border-dark-border space-y-3">
+                  <p class="text-xs font-bold text-brand-600 uppercase tracking-wider"><i class="fa-solid fa-location-dot mr-1"></i>Dirección de entrega</p>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-dark-text mb-1.5" for="pedido-calle">Calle y número</label>
+                    <input id="pedido-calle" type="text" formControlName="calle" placeholder="Ej: Av. Corrientes 1234" autocomplete="street-address" [class]="claseCampo(invalido('calle'))" />
+                    @if (invalido('calle')) { <p class="text-[11px] text-brand-600 font-semibold mt-1">Ingresá la dirección</p> }
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-700 dark:text-dark-text mb-1.5" for="pedido-piso">Piso / Depto</label>
+                      <input id="pedido-piso" type="text" formControlName="pisoDepto" placeholder="Ej: 3° B" [class]="claseCampo()" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-700 dark:text-dark-text mb-1.5" for="pedido-ref">Referencia</label>
+                      <input id="pedido-ref" type="text" formControlName="referencia" placeholder="Ej: portón negro" [class]="claseCampo()" />
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Paso 3: pago -->
+          @case (3) {
+            <div class="space-y-2.5">
+              @for (medio of mediosPago; track medio.id) {
+                @let m = medio.id;
+                <button type="button" (click)="elegirPago(m)" class="w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 text-left transition tap-scale" [class]="medioPago() === m ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card'">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0" [class]="medioPago() === m ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'">
+                    <i class="fa-solid" [class]="medio.icono"></i>
+                  </span>
+                  <span class="flex-1">
+                    <span class="block font-bold text-sm text-gray-900 dark:text-white">{{ ETIQUETAS_PAGO[m] }}</span>
+                    <span class="block text-[11px] text-gray-500 dark:text-dark-muted">{{ medio.detalle }}</span>
+                  </span>
+                  <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0" [class]="medioPago() === m ? 'border-brand-600 bg-brand-600 text-white' : 'border-gray-300 dark:border-dark-border'">
+                    @if (medioPago() === m) { <i class="fa-solid fa-check text-[10px]"></i> }
+                  </span>
+                </button>
+              }
+
+              @if (medioPago() === 'efectivo') {
+                <div class="pt-1">
+                  <label class="block text-xs font-bold text-gray-700 dark:text-dark-text mb-1.5" for="pedido-efectivo">¿Con cuánto abonás? <span class="font-normal text-gray-400">(opcional, para el vuelto)</span></label>
+                  <input id="pedido-efectivo" type="number" inputmode="numeric" min="0" formControlName="montoEfectivo" placeholder="Ej: 20000" [class]="claseCampo()" />
+                </div>
+              }
+
+              <div class="pt-1">
+                <label class="block text-xs font-bold text-gray-700 dark:text-dark-text mb-1.5" for="pedido-comentarios">Comentarios para el local <span class="font-normal text-gray-400">(opcional)</span></label>
+                <textarea id="pedido-comentarios" rows="2" formControlName="comentarios" placeholder="Ej: tocar timbre, llegar antes de las 22..." [class]="claseCampo() + ' resize-none'"></textarea>
+              </div>
+            </div>
+          }
+
+          <!-- Paso 4: revisión -->
+          @case (4) {
+            @let v = formulario.getRawValue();
+            <div class="space-y-4">
+              <ul class="divide-y divide-gray-100 dark:divide-dark-border rounded-2xl border border-gray-100 dark:border-dark-border px-4">
+                @for (item of carrito.items(); track item.clave) {
+                  <li class="py-2.5 flex items-start justify-between gap-3 text-sm">
+                    <div class="min-w-0">
+                      <p class="font-bold text-gray-900 dark:text-white"><span class="text-brand-600">{{ item.cantidad }}x</span> {{ item.nombre }}</p>
+                      @if (item.opciones.length) {
+                        <p class="text-[11px] text-gray-500 dark:text-dark-muted">
+                          @for (o of item.opciones; track o.opcionId; let ultimo = $last) {{{ o.etiqueta }}{{ ultimo ? '' : ' · ' }}}
+                        </p>
+                      }
+                      @if (item.notas) { <p class="text-[11px] text-amber-600 dark:text-amber-400">{{ item.notas }}</p> }
+                    </div>
+                    <span class="font-bold text-gray-900 dark:text-white shrink-0">{{ item.total | precio }}</span>
+                  </li>
+                }
+              </ul>
+
+              <div class="rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border p-4 space-y-2 text-sm">
+                <div class="flex items-start gap-2.5">
+                  <i class="fa-solid w-4 text-center text-brand-600 mt-0.5" [class]="v.modoEntrega === 'envio' ? 'fa-motorcycle' : 'fa-store'"></i>
+                  <div>
+                    <p class="font-bold text-gray-900 dark:text-white">{{ ETIQUETAS_ENTREGA[v.modoEntrega] }}</p>
+                    @if (v.modoEntrega === 'envio') {
+                      <p class="text-xs text-gray-500 dark:text-dark-muted">{{ v.calle }}{{ v.pisoDepto ? ', ' + v.pisoDepto : '' }}{{ v.referencia ? ' · ' + v.referencia : '' }}</p>
+                    } @else {
+                      <p class="text-xs text-gray-500 dark:text-dark-muted">{{ direccionLocal() }}</p>
+                    }
+                  </div>
+                </div>
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-user w-4 text-center text-brand-600"></i>
+                  <p class="text-gray-800 dark:text-dark-text">{{ v.nombre }} · <span class="text-gray-500 dark:text-dark-muted">{{ v.telefono }}</span></p>
+                </div>
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-wallet w-4 text-center text-brand-600"></i>
+                  <p class="text-gray-800 dark:text-dark-text">{{ ETIQUETAS_PAGO[v.medioPago] }}@if (v.medioPago === 'efectivo' && v.montoEfectivo) { <span class="text-gray-500 dark:text-dark-muted"> · abona con {{ v.montoEfectivo | precio }}</span> }</p>
+                </div>
+              </div>
+
+              <app-resumen-totales />
+            </div>
+          }
+        }
+      }
+    </div>
+
+    <!-- Pie -->
+    <div class="shrink-0 px-5 pt-3 pb-4 border-t border-gray-100 dark:border-dark-border bg-white dark:bg-dark-surface">
+      @if (enviado()) {
+        <button type="button" (click)="finalizar()" class="w-full h-12 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold text-sm tap-scale">Volver a la carta</button>
+      } @else if (paso() < 4) {
+        <button type="button" (click)="siguiente()" class="w-full h-12 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-coral tap-scale transition flex items-center justify-center gap-2">
+          Continuar <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      } @else {
+        <button type="submit" [disabled]="enviando() || formulario.invalid" class="w-full h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 tap-scale transition flex items-center justify-center gap-2">
+          <i class="fa-brands fa-whatsapp text-lg"></i>
+          Enviar pedido por WhatsApp
+        </button>
+      }
+    </div>
+  </form>
+</app-modal>

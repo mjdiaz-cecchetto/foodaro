@@ -1,0 +1,16 @@
+<div class="bg-[#F8F9FA] dark:bg-surface-darker text-zinc-900 dark:text-zinc-100 min-h-screen flex flex-col md:flex-row transition-colors duration-200">
+
+  <!-- Barra superior (solo móvil) -->
+  <app-barra-superior-admin (alternarMenu)="alternarBarraLateral()" />
+
+  <!-- Fondo del drawer móvil -->
+  <div (click)="cerrarBarraLateral()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity" [class.hidden]="!barraLateralAbierta()"></div>
+
+  <!-- Navegación lateral -->
+  <app-barra-lateral-admin [abierta]="barraLateralAbierta()" (navegado)="cerrarBarraLateral()" (cerrarSesion)="cerrarSesion()" />
+
+  <!-- Contenido -->
+  <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full custom-scroll">
+    <router-outlet />
+  </main>
+</div>

@@ -1,0 +1,16 @@
+<div class="relative">
+  <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted text-sm pointer-events-none"></i>
+  <input
+    type="search"
+    [value]="valor()"
+    (input)="alEscribir($event)"
+    placeholder="Buscar en la carta..."
+    class="w-full pl-11 pr-11 py-3 sm:py-3.5 rounded-2xl bg-white dark:bg-dark-card border border-gray-200/80 dark:border-dark-border text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-dark-muted shadow-soft focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition"
+    aria-label="Buscar productos"
+  />
+  @if (valor()) {
+    <button type="button" (click)="limpiar()" class="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-gray-100 dark:bg-dark-surface text-gray-500 dark:text-dark-muted flex items-center justify-center tap-scale" aria-label="Limpiar búsqueda">
+      <i class="fa-solid fa-xmark text-xs"></i>
+    </button>
+  }
+</div>

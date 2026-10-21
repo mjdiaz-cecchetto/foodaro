@@ -1,0 +1,31 @@
+<!-- El contenido proyectado se declara una sola vez y se renderiza en la variante activa -->
+<ng-template #contenido><ng-content /></ng-template>
+
+@if (variante() === 'hoja') {
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+    [class]="claseZ()"
+    [class.opacity-0]="!abierto()"
+    [class.pointer-events-none]="!abierto()"
+    [class.opacity-100]="abierto()"
+    (click)="solicitarCierre()"
+  ></div>
+
+  <div [class]="clasesHoja()" role="dialog" aria-modal="true" [attr.aria-hidden]="!abierto()">
+    <ng-container *ngTemplateOutlet="contenido" />
+  </div>
+} @else {
+  @if (renderizado()) {
+    <div
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200"
+      [class]="claseZ()"
+      [class.opacity-0]="!visible()"
+      [class.opacity-100]="visible()"
+      (click)="solicitarCierre()"
+    ></div>
+
+    <div [class]="clasesDialogo()" role="dialog" aria-modal="true">
+      <ng-container *ngTemplateOutlet="contenido" />
+    </div>
+  }
+}

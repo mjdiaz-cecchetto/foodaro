@@ -1,0 +1,40 @@
+<section class="space-y-6">
+
+  <app-encabezado-pagina
+    titulo="Promociones"
+    subtitulo="Cupones y banners que rotan en el carrusel de la carta."
+    etiquetaAccion="Nueva promoción"
+    (accion)="abrirAlta()"
+  />
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    @for (promo of promociones(); track promo.id) {
+      <div class="bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
+        <div class="relative h-36 rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
+          <img [src]="promo.imagen" [alt]="promo.titulo" class="w-full h-full object-cover opacity-80" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-4 flex flex-col justify-end">
+            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-brand-600 text-white w-max mb-1">{{ promo.descuento }}% OFF</span>
+            <h4 class="text-base font-extrabold text-white leading-snug">{{ promo.titulo }}</h4>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-zinc-400 font-semibold">Cupón:</span>
+            <span class="font-mono text-xs font-black px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-brand-600 dark:text-brand-400 border border-zinc-200 dark:border-surface-borderDark">{{ promo.codigo }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" (click)="alternarEstado(promo)" class="px-3 py-1 rounded-full text-xs font-bold tap-scale" [class]="promo.activa ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'">
+              {{ promo.activa ? 'Activa' : 'Pausada' }}
+            </button>
+            <button type="button" (click)="eliminar(promo)" class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 flex items-center justify-center hover:bg-red-100 tap-scale" title="Eliminar"><i class="fa-solid fa-trash-can text-xs"></i></button>
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="col-span-full text-center py-12 text-zinc-400 font-bold text-xs">Todavía no hay promociones cargadas</div>
+    }
+  </div>
+</section>
+
+<app-modal-formulario-promocion [abierto]="modalAbierto()" (cerrado)="cerrarModal()" (guardado)="guardar($event)" />

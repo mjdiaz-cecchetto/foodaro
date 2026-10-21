@@ -1,0 +1,31 @@
+@if (posicion() === 'arriba') {
+  <!-- Variante carta pública: píldora arriba al centro -->
+  <div
+    class="fixed top-5 left-1/2 -translate-x-1/2 z-[70] bg-gray-900 dark:bg-dark-surface text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition-all duration-300 border border-gray-800 dark:border-dark-border"
+    [class.opacity-0]="!estado().visible"
+    [class.pointer-events-none]="!estado().visible"
+    [class.opacity-100]="estado().visible"
+    role="status"
+    aria-live="polite"
+  >
+    <i class="fa-solid fa-circle-check text-brand-500"></i>
+    <span>{{ estado().mensaje }}</span>
+  </div>
+} @else {
+  <!-- Variante panel admin: tarjeta abajo a la derecha -->
+  <div
+    class="fixed bottom-6 right-6 z-[70] bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold px-4 py-3 rounded-2xl shadow-modal flex items-center gap-3 transition-all duration-300 transform"
+    [class.opacity-0]="!estado().visible"
+    [class.pointer-events-none]="!estado().visible"
+    [class.translate-y-3]="!estado().visible"
+    [class.opacity-100]="estado().visible"
+    [class.translate-y-0]="estado().visible"
+    role="status"
+    aria-live="polite"
+  >
+    <div class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <span>{{ estado().mensaje }}</span>
+  </div>
+}
