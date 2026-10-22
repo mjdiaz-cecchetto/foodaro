@@ -3,11 +3,14 @@ export interface CredencialesIngreso {
   contrasenia: string;
 }
 
+export type RolUsuario = 'administrador' | 'superadmin';
+
 export interface UsuarioAutenticado {
   id: number;
   nombre: string;
   email: string;
-  rol: 'admin';
+  rol: RolUsuario;
+  local?: { id: number; slug: string; nombre: string };
 }
 
 export interface RespuestaIngreso {

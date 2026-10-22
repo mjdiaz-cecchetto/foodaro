@@ -1,2 +1,2 @@
-export * from './demo-local.mock';
-export * from './locales.mock';
+/** Slug del local de demostración (enlazado desde la landing de la plataforma). */
+export const SLUG_LOCAL_DEMO = 'demolocal';

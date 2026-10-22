@@ -36,8 +36,10 @@ export class LayoutAdminComponente implements OnInit {
   }
 
   cerrarSesion(): void {
-    this.autenticacion.cerrarSesion();
-    this.notificaciones.mostrar('Sesión cerrada');
-    this.router.navigate(this.local.url('auth', 'login'));
+    this.autenticacion.cerrarSesion().subscribe(() => {
+      this.local.cargaCompleta.set(false);
+      this.notificaciones.mostrar('Sesión cerrada');
+      this.router.navigate(this.local.url('auth', 'login'));
+    });
   }
 }

@@ -1,9 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { Producto } from '../../shared/models';
-import { IMAGEN_CATEGORIA_TODO } from '../../shared/mocks';
 import { LocalServicio } from '../../core/services/local.service';
-import { CategoriaCarta, ID_CATEGORIA_TODO, SeccionCarta } from '../interfaces';
+import { CategoriaCarta, ID_CATEGORIA_TODO, IdCategoriaCarta, SeccionCarta } from '../interfaces';
 
 /**
  * Catálogo público del local activo: categorías, productos, promos,
@@ -14,7 +13,7 @@ export class CartaServicio {
   private readonly local = inject(LocalServicio);
 
   readonly categorias = computed<CategoriaCarta[]>(() => [
-    { id: ID_CATEGORIA_TODO, nombre: 'Todo', imagen: this.local.productos()[0]?.imagen ?? IMAGEN_CATEGORIA_TODO },
+    { id: ID_CATEGORIA_TODO, nombre: 'Todo', imagen: this.local.perfil()?.logoUrl ?? this.local.productos()[0]?.imagen ?? '' },
     ...this.local
       .categorias()
       .filter((c) => c.activa)
@@ -26,7 +25,7 @@ export class CartaServicio {
 
   readonly promociones = computed(() => this.local.promociones().filter((p) => p.activa));
 
-  readonly categoriaActiva = signal<string>(ID_CATEGORIA_TODO);
+  readonly categoriaActiva = signal<IdCategoriaCarta>(ID_CATEGORIA_TODO);
   readonly busqueda = signal<string>('');
 
   readonly productosFiltrados = computed(() => {
@@ -62,7 +61,7 @@ export class CartaServicio {
   /** Cantidad total de productos visibles con la búsqueda actual. */
   readonly cantidadVisible = computed(() => this.secciones().reduce((acc, s) => acc + s.productos.length, 0));
 
-  seleccionarCategoria(id: string): void {
+  seleccionarCategoria(id: IdCategoriaCarta): void {
     this.categoriaActiva.set(id);
   }
 

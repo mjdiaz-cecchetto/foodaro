@@ -6,6 +6,7 @@ import { PromocionesAdminServicio } from '../../services/promociones-admin.servi
 import { ValorFormularioPromocion } from '../../interfaces';
 import { EncabezadoPaginaComponente } from '../../components/encabezado-pagina/encabezado-pagina.component';
 import { ModalFormularioPromocionComponente } from '../../components/modal-formulario-promocion/modal-formulario-promocion.component';
+import { mensajeDeError } from '../../../shared/utils/api';
 
 /** Promociones y cupones que se muestran en el carrusel de la carta. */
 @Component({
@@ -31,20 +32,28 @@ export class PaginaPromocionesComponente {
   }
 
   guardar(valor: ValorFormularioPromocion): void {
-    this.promocionesAdmin.crear(valor);
-    this.notificaciones.mostrar('Promoción creada');
-    this.cerrarModal();
+    this.promocionesAdmin.crear(valor).subscribe({
+      next: () => {
+        this.notificaciones.mostrar('Promoción creada');
+        this.cerrarModal();
+      },
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo crear la promoción')),
+    });
   }
 
   alternarEstado(promo: Promocion): void {
-    const actualizada = this.promocionesAdmin.alternarEstado(promo.id);
-    if (actualizada) this.notificaciones.mostrar(`Promoción ${actualizada.activa ? 'activada' : 'pausada'}`);
+    this.promocionesAdmin.alternarEstado(promo.id).subscribe({
+      next: (actualizada) => this.notificaciones.mostrar(`Promoción ${actualizada.activa ? 'activada' : 'pausada'}`),
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err)),
+    });
   }
 
   eliminar(promo: Promocion): void {
     if (confirm(`¿Eliminar la promoción "${promo.titulo}"?`)) {
-      this.promocionesAdmin.eliminar(promo.id);
-      this.notificaciones.mostrar('Promoción eliminada');
+      this.promocionesAdmin.eliminar(promo.id).subscribe({
+        next: () => this.notificaciones.mostrar('Promoción eliminada'),
+        error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar la promoción')),
+      });
     }
   }
 }

@@ -44,11 +44,28 @@ export interface ConfiguracionLocal {
  * `plantillasOpciones` son grupos reutilizables que el admin aplica a varios productos.
  */
 export interface Local {
+  id?: number;
   slug: string;
   perfil: PerfilLocal;
   configuracion: ConfiguracionLocal;
   categorias: Categoria[];
   productos: Producto[];
   promociones: Promocion[];
-  plantillasOpciones: GrupoOpciones[];
+  /** Solo llega en el panel admin (GET /admin/local). */
+  plantillasOpciones?: GrupoOpciones[];
 }
+
+/** Perfil vacío para renderizar antes de resolver el local. */
+export const PERFIL_LOCAL_VACIO: PerfilLocal = {
+  nombre: '',
+  eslogan: '',
+  logoUrl: '',
+  portadaUrl: '',
+  direccion: '',
+  referenciaDireccion: '',
+  mapsUrl: '',
+  rubro: '',
+  estado: '',
+  horarios: { lunesAJueves: '', viernesYSabado: '', domingo: '' },
+  contacto: { whatsapp: '', instagram: '', tiktok: '', telefono: '' },
+};

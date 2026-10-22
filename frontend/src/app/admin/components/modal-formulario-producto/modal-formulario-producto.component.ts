@@ -32,7 +32,7 @@ export class ModalFormularioProductoComponente {
 
   readonly formulario = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
-    categoriaId: ['', Validators.required],
+    categoriaId: [0, [Validators.required, Validators.min(1)]],
     precio: [0, [Validators.required, Validators.min(0)]],
     tiempoPreparacion: [''],
     etiqueta: [''],
@@ -51,7 +51,7 @@ export class ModalFormularioProductoComponente {
       this.gruposOpciones.set(structuredClone(p?.gruposOpciones ?? []));
       this.formulario.reset({
         nombre: p?.nombre ?? '',
-        categoriaId: p?.categoriaId ?? this.categorias()[0]?.id ?? '',
+        categoriaId: p?.categoriaId ?? this.categorias()[0]?.id ?? 0,
         precio: p?.precio ?? 0,
         tiempoPreparacion: p?.tiempoPreparacion ?? '',
         etiqueta: p?.etiqueta ?? '',
@@ -84,6 +84,7 @@ export class ModalFormularioProductoComponente {
     const v = this.formulario.getRawValue();
     this.guardado.emit({
       ...v,
+      categoriaId: Number(v.categoriaId),
       precio: Number(v.precio),
       gruposOpciones: this.gruposOpciones().map((g) => ({
         ...g,

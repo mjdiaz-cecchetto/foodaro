@@ -6,6 +6,7 @@ import { CatalogoAdminServicio } from '../../services/catalogo-admin.service';
 import { ValorFormularioCategoria } from '../../interfaces';
 import { EncabezadoPaginaComponente } from '../../components/encabezado-pagina/encabezado-pagina.component';
 import { ModalFormularioCategoriaComponente } from '../../components/modal-formulario-categoria/modal-formulario-categoria.component';
+import { mensajeDeError } from '../../../shared/utils/api';
 
 /** ABM de categorías de la carta. */
 @Component({
@@ -39,24 +40,27 @@ export class PaginaCategoriasComponente {
 
   guardar(valor: ValorFormularioCategoria): void {
     const actual = this.editando();
-    if (actual) {
-      this.catalogo.actualizarCategoria(actual.id, valor);
-      this.notificaciones.mostrar('Categoría actualizada');
-    } else {
-      this.catalogo.crearCategoria(valor);
-      this.notificaciones.mostrar('Categoría creada');
-    }
-    this.cerrarModal();
+    const peticion = actual ? this.catalogo.actualizarCategoria(actual.id, valor) : this.catalogo.crearCategoria(valor);
+    peticion.subscribe({
+      next: () => {
+        this.notificaciones.mostrar(actual ? 'Categoría actualizada' : 'Categoría creada');
+        this.cerrarModal();
+      },
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar la categoría')),
+    });
   }
 
   eliminar(categoria: Categoria): void {
     const asociados = this.catalogo.cantidadProductosPorCategoria(categoria.id);
-    const aviso = asociados
-      ? `Esta categoría tiene ${asociados} producto(s). ¿Eliminarla igualmente?`
-      : '¿Eliminar esta categoría?';
-    if (confirm(aviso)) {
-      this.catalogo.eliminarCategoria(categoria.id);
-      this.notificaciones.mostrar('Categoría eliminada');
+    if (asociados) {
+      this.notificaciones.mostrar(`Tiene ${asociados} producto(s): movelos o eliminalos antes de borrar la categoría`);
+      return;
+    }
+    if (confirm('¿Eliminar esta categoría?')) {
+      this.catalogo.eliminarCategoria(categoria.id).subscribe({
+        next: () => this.notificaciones.mostrar('Categoría eliminada'),
+        error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar la categoría')),
+      });
     }
   }
 }

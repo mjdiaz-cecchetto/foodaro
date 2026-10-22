@@ -1,8 +1,8 @@
 /** Opción elegida por el cliente dentro de un grupo de un producto. */
 export interface OpcionElegida {
-  grupoId: string;
+  grupoId: number;
   grupoNombre: string;
-  opcionId: string;
+  opcionId: number;
   etiqueta: string;
   precioAdicional: number;
 }

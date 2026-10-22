@@ -1,28 +1,48 @@
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { map, Observable } from 'rxjs';
 
 import { formatearMoneda } from '../../shared/utils/moneda';
+import { RespuestaApi } from '../../shared/utils/api';
 import { LocalServicio } from '../../core/services/local.service';
-import { BorradorPedido, ETIQUETAS_MEDIO_PAGO, ETIQUETAS_MODO_ENTREGA, ItemCarrito } from '../interfaces';
+import {
+  BorradorPedido,
+  ETIQUETAS_MEDIO_PAGO,
+  ETIQUETAS_MODO_ENTREGA,
+  ItemCarrito,
+  PedidoApi,
+  PedidoRegistrado,
+} from '../interfaces';
 import { LocalPublicoServicio } from './local-publico.service';
 
 /**
- * Arma el pedido y lo envía al WhatsApp del local como mensaje prolijo.
- * Más adelante también lo registrará en el API Laravel.
+ * Registra el pedido en el API (que recalcula los importes) y lo envía al
+ * WhatsApp del local como mensaje prolijo con el número asignado.
  */
 @Injectable({ providedIn: 'root' })
 export class PedidoServicio {
+  private readonly http = inject(HttpClient);
   private readonly localPublico = inject(LocalPublicoServicio);
   private readonly local = inject(LocalServicio);
 
+  /** POST /locales/{slug}/pedidos */
+  registrar(pedido: BorradorPedido): Observable<PedidoRegistrado> {
+    return this.http
+      .post<RespuestaApi<PedidoRegistrado>>(this.local.urlApiPublica('pedidos'), this.aPayload(pedido))
+      .pipe(map((r) => r.data));
+  }
+
   /** Texto del pedido con formato de WhatsApp (negritas con *). */
-  armarMensaje(pedido: BorradorPedido): string {
+  armarMensaje(pedido: BorradorPedido, registrado?: PedidoRegistrado): string {
     const perfil = this.localPublico.perfil();
     const config = this.local.configuracion();
+    const totales = registrado?.totales ?? pedido.totales;
     const dinero = (n: number) => formatearMoneda(n, config.moneda);
     const sep = '━━━━━━━━━━━━━━━';
     const lineas: string[] = [];
 
-    lineas.push(`🧾 *NUEVO PEDIDO · ${perfil.nombre}*`);
+    const numero = registrado ? ` #${String(registrado.numero).padStart(4, '0')}` : '';
+    lineas.push(`🧾 *NUEVO PEDIDO${numero} · ${perfil.nombre}*`);
     lineas.push(sep);
     lineas.push('*Detalle:*');
     for (const item of pedido.items) {
@@ -30,14 +50,14 @@ export class PedidoServicio {
       if (item.notas) lineas.push(`   📝 ${item.notas}`);
     }
     lineas.push(sep);
-    lineas.push(`Subtotal: ${dinero(pedido.totales.subtotal)}`);
-    if (pedido.totales.descuento > 0) {
-      lineas.push(`Descuento${pedido.codigoPromo ? ` ${pedido.codigoPromo}` : ''}: -${dinero(pedido.totales.descuento)}`);
+    lineas.push(`Subtotal: ${dinero(totales.subtotal)}`);
+    if (totales.descuento > 0) {
+      lineas.push(`Descuento${pedido.codigoPromo ? ` ${pedido.codigoPromo}` : ''}: -${dinero(totales.descuento)}`);
     }
-    if (pedido.totales.cargoServicio > 0) {
-      lineas.push(`${config.etiquetaCargoServicio}: ${dinero(pedido.totales.cargoServicio)}`);
+    if (totales.cargoServicio > 0) {
+      lineas.push(`${config.etiquetaCargoServicio}: ${dinero(totales.cargoServicio)}`);
     }
-    lineas.push(`*TOTAL: ${dinero(pedido.totales.total)}*`);
+    lineas.push(`*TOTAL: ${dinero(totales.total)}*`);
     lineas.push(sep);
 
     const icono = pedido.modoEntrega === 'envio' ? '🛵' : '🏪';
@@ -64,14 +84,32 @@ export class PedidoServicio {
   }
 
   /** URL de WhatsApp del local con el pedido precargado. */
-  urlWhatsApp(pedido: BorradorPedido): string {
+  urlWhatsApp(pedido: BorradorPedido, registrado?: PedidoRegistrado): string {
     const telefono = this.localPublico.perfil().contacto.whatsapp.replace(/\D/g, '');
-    return `https://wa.me/${telefono}?text=${encodeURIComponent(this.armarMensaje(pedido))}`;
+    return `https://wa.me/${telefono}?text=${encodeURIComponent(this.armarMensaje(pedido, registrado))}`;
   }
 
   /** Abre WhatsApp en una pestaña nueva con el pedido. */
-  enviarPorWhatsApp(pedido: BorradorPedido): void {
-    window.open(this.urlWhatsApp(pedido), '_blank', 'noopener');
+  abrirWhatsApp(pedido: BorradorPedido, registrado?: PedidoRegistrado): void {
+    window.open(this.urlWhatsApp(pedido, registrado), '_blank', 'noopener');
+  }
+
+  private aPayload(pedido: BorradorPedido): PedidoApi {
+    return {
+      items: pedido.items.map((i) => ({
+        productoId: i.productoId,
+        cantidad: i.cantidad,
+        notas: i.notas,
+        opciones: i.opciones.map((o) => ({ opcionId: o.opcionId })),
+      })),
+      codigoPromo: pedido.codigoPromo,
+      modoEntrega: pedido.modoEntrega,
+      cliente: pedido.cliente,
+      direccion: pedido.direccion,
+      medioPago: pedido.medioPago,
+      montoEfectivo: pedido.montoEfectivo,
+      comentarios: pedido.comentarios,
+    };
   }
 
   private describirOpciones(item: ItemCarrito): string {

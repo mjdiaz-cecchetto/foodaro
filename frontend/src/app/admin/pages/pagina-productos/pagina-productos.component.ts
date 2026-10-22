@@ -7,6 +7,7 @@ import { CatalogoAdminServicio } from '../../services/catalogo-admin.service';
 import { ValorFormularioProducto } from '../../interfaces';
 import { EncabezadoPaginaComponente } from '../../components/encabezado-pagina/encabezado-pagina.component';
 import { ModalFormularioProductoComponente } from '../../components/modal-formulario-producto/modal-formulario-producto.component';
+import { mensajeDeError } from '../../../shared/utils/api';
 
 /** Tabla de productos con búsqueda, filtro por categoría, disponibilidad y ABM. */
 @Component({
@@ -22,7 +23,7 @@ export class PaginaProductosComponente {
 
   readonly categorias = this.catalogo.categorias;
   readonly busqueda = signal('');
-  readonly filtroCategoria = signal('todas');
+  readonly filtroCategoria = signal<number | 'todas'>('todas');
 
   readonly filtrados = computed(() => {
     this.catalogo.productos();
@@ -37,7 +38,8 @@ export class PaginaProductosComponente {
   }
 
   alFiltrarCategoria(event: Event): void {
-    this.filtroCategoria.set((event.target as HTMLSelectElement).value);
+    const valor = (event.target as HTMLSelectElement).value;
+    this.filtroCategoria.set(valor === 'todas' ? 'todas' : Number(valor));
   }
 
   abrirAlta(): void {
@@ -56,27 +58,30 @@ export class PaginaProductosComponente {
 
   guardar(valor: ValorFormularioProducto): void {
     const actual = this.editando();
-    if (actual) {
-      this.catalogo.actualizarProducto(actual.id, valor);
-      this.notificaciones.mostrar('Producto actualizado');
-    } else {
-      this.catalogo.crearProducto(valor);
-      this.notificaciones.mostrar('Producto agregado a la carta');
-    }
-    this.cerrarModal();
+    const peticion = actual ? this.catalogo.actualizarProducto(actual.id, valor) : this.catalogo.crearProducto(valor);
+    peticion.subscribe({
+      next: () => {
+        this.notificaciones.mostrar(actual ? 'Producto actualizado' : 'Producto agregado a la carta');
+        this.cerrarModal();
+      },
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar el producto')),
+    });
   }
 
   alternarDisponibilidad(producto: Producto): void {
-    const actualizado = this.catalogo.alternarDisponibilidad(producto.id);
-    if (actualizado) {
-      this.notificaciones.mostrar(`${actualizado.nombre}: ${actualizado.disponible ? 'disponible en la carta' : 'marcado como agotado'}`);
-    }
+    this.catalogo.alternarDisponibilidad(producto.id).subscribe({
+      next: (actualizado) =>
+        this.notificaciones.mostrar(`${actualizado.nombre}: ${actualizado.disponible ? 'disponible en la carta' : 'marcado como agotado'}`),
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err)),
+    });
   }
 
   eliminar(producto: Producto): void {
     if (confirm(`¿Eliminar "${producto.nombre}" de la carta?`)) {
-      this.catalogo.eliminarProducto(producto.id);
-      this.notificaciones.mostrar('Producto eliminado');
+      this.catalogo.eliminarProducto(producto.id).subscribe({
+        next: () => this.notificaciones.mostrar('Producto eliminado'),
+        error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar el producto')),
+      });
     }
   }
 }

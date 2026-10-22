@@ -1,9 +1,14 @@
 import { Categoria, Producto } from '../../shared/models';
 
-/** Categoría tal como se muestra en el carrusel (incluye la pseudo "Todo"). */
-export type CategoriaCarta = Pick<Categoria, 'id' | 'nombre' | 'imagen'>;
+export const ID_CATEGORIA_TODO = 'todo' as const;
 
-export const ID_CATEGORIA_TODO = 'todo';
+/** Id de categoría en el carrusel: numérico (API) o la pseudo-categoría "Todo". */
+export type IdCategoriaCarta = number | typeof ID_CATEGORIA_TODO;
+
+/** Categoría tal como se muestra en el carrusel (incluye la pseudo "Todo"). */
+export interface CategoriaCarta extends Pick<Categoria, 'nombre' | 'imagen'> {
+  id: IdCategoriaCarta;
+}
 
 /** Bloque de la carta: una categoría con sus productos visibles. */
 export interface SeccionCarta {

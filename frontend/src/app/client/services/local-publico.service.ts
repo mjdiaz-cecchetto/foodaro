@@ -1,7 +1,6 @@
 import { computed, inject, Injectable } from '@angular/core';
 
-import { PerfilLocal } from '../../shared/models';
-import { LOCAL_DEMO } from '../../shared/mocks';
+import { PERFIL_LOCAL_VACIO, PerfilLocal } from '../../shared/models';
 import { LocalServicio } from '../../core/services/local.service';
 
 /** Perfil público del local activo y utilidades para compartirlo (QR, WhatsApp, enlaces). */
@@ -9,8 +8,8 @@ import { LocalServicio } from '../../core/services/local.service';
 export class LocalPublicoServicio {
   private readonly local = inject(LocalServicio);
 
-  /** Siempre devuelve un perfil: el del local resuelto o el demo por defecto. */
-  readonly perfil = computed<PerfilLocal>(() => this.local.perfil() ?? LOCAL_DEMO.perfil);
+  /** Siempre devuelve un perfil (vacío hasta que el guard resuelve el local). */
+  readonly perfil = computed<PerfilLocal>(() => this.local.perfil() ?? PERFIL_LOCAL_VACIO);
 
   /** URL compartible de la carta (origen + ruta actual). */
   urlCompartible(): string {

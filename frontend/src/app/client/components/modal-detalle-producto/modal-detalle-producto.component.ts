@@ -38,7 +38,7 @@ export class ModalDetalleProductoComponente {
   readonly cantidad = signal(1);
   readonly notas = signal('');
   /** Opciones elegidas por grupo: grupoId → ids de opciones. */
-  readonly seleccion = signal<Record<string, string[]>>({});
+  readonly seleccion = signal<Record<number, number[]>>({});
 
   readonly nombreCategoria = computed(() => {
     const p = this.producto();
@@ -91,11 +91,11 @@ export class ModalDetalleProductoComponente {
     });
   }
 
-  estaElegida(grupoId: string, opcionId: string): boolean {
+  estaElegida(grupoId: number, opcionId: number): boolean {
     return (this.seleccion()[grupoId] ?? []).includes(opcionId);
   }
 
-  cantidadElegida(grupoId: string): number {
+  cantidadElegida(grupoId: number): number {
     return (this.seleccion()[grupoId] ?? []).length;
   }
 
@@ -154,8 +154,8 @@ export class ModalDetalleProductoComponente {
     this.cerrado.emit();
   }
 
-  private seleccionInicial(producto: Producto | null): Record<string, string[]> {
-    const inicial: Record<string, string[]> = {};
+  private seleccionInicial(producto: Producto | null): Record<number, number[]> {
+    const inicial: Record<number, number[]> = {};
     for (const g of producto?.gruposOpciones ?? []) {
       const porDefecto = g.opciones.filter((o) => o.porDefecto).map((o) => o.id);
       inicial[g.id] = g.tipo === 'unica' ? porDefecto.slice(0, 1) : porDefecto.slice(0, g.maximo ?? porDefecto.length);

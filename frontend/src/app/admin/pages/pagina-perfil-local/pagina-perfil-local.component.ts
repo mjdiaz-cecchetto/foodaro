@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -7,6 +7,7 @@ import { NotificacionesServicio } from '../../../core/services/notificaciones.se
 import { LocalAdminServicio } from '../../services/local-admin.service';
 import { EncabezadoPaginaComponente } from '../../components/encabezado-pagina/encabezado-pagina.component';
 import { VistaPreviaCabeceraComponente } from '../../components/vista-previa-cabecera/vista-previa-cabecera.component';
+import { mensajeDeError } from '../../../shared/utils/api';
 
 /** Datos del local: identidad, imágenes, ubicación, horarios y contacto. */
 @Component({
@@ -45,6 +46,7 @@ export class PaginaPerfilLocalComponente {
   private readonly valorFormulario = toSignal(this.formulario.valueChanges, { initialValue: this.formulario.getRawValue() });
 
   readonly vistaPrevia = computed<PerfilLocal>(() => this.aPerfil());
+  readonly guardando = signal(false);
 
   readonly claseCampo =
     'w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500';
@@ -55,8 +57,17 @@ export class PaginaPerfilLocalComponente {
       this.notificaciones.mostrar('Revisá los campos obligatorios');
       return;
     }
-    this.localAdmin.guardar(this.aPerfil());
-    this.notificaciones.mostrar('Datos del local actualizados');
+    this.guardando.set(true);
+    this.localAdmin.guardar(this.aPerfil()).subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.notificaciones.mostrar('Datos del local actualizados');
+      },
+      error: (err: unknown) => {
+        this.guardando.set(false);
+        this.notificaciones.mostrar(mensajeDeError(err, 'No se pudieron guardar los datos'));
+      },
+    });
   }
 
   private aPerfil(): PerfilLocal {

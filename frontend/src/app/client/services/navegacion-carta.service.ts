@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 
-import { ID_CATEGORIA_TODO, PREFIJO_SECCION_CATEGORIA } from '../interfaces';
+import { ID_CATEGORIA_TODO, IdCategoriaCarta, PREFIJO_SECCION_CATEGORIA } from '../interfaces';
 import { CartaServicio } from './carta.service';
 
 /**
@@ -22,7 +22,7 @@ export class NavegacionCartaServicio {
   }
 
   /** Selecciona la categoría y lleva la vista hasta su sección (o al inicio para "Todo"). */
-  irACategoria(id: string): void {
+  irACategoria(id: IdCategoriaCarta): void {
     this.carta.seleccionarCategoria(id);
     this.bloqueoHasta = Date.now() + 900;
 
@@ -44,7 +44,7 @@ export class NavegacionCartaServicio {
     if (!secciones.length) return;
 
     const limite = this.desplazamientoFijo() + 16;
-    let activa = ID_CATEGORIA_TODO;
+    let activa: IdCategoriaCarta = ID_CATEGORIA_TODO;
 
     for (const s of secciones) {
       const el = document.getElementById(PREFIJO_SECCION_CATEGORIA + s.categoria.id);

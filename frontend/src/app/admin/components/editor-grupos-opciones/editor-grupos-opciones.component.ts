@@ -1,5 +1,8 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 
+import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
+import { mensajeDeError } from '../../../shared/utils/api';
+
 import { GrupoOpciones, OpcionProducto, TipoSeleccion } from '../../../shared/models';
 import { CatalogoAdminServicio } from '../../services/catalogo-admin.service';
 
@@ -17,57 +20,71 @@ import { CatalogoAdminServicio } from '../../services/catalogo-admin.service';
 })
 export class EditorGruposOpcionesComponente {
   private readonly catalogo = inject(CatalogoAdminServicio);
+  private readonly notificaciones = inject(NotificacionesServicio);
 
   readonly grupos = input.required<GrupoOpciones[]>();
   readonly cambiado = output<GrupoOpciones[]>();
 
   readonly plantillas = this.catalogo.plantillasOpciones;
   /** Id del grupo expandido para editar. */
-  readonly expandido = signal<string | null>(null);
+  readonly expandido = signal<number | null>(null);
 
   readonly claseCampo =
     'bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/20';
 
-  yaAgregada(plantillaId: string): boolean {
-    return this.grupos().some((g) => g.id === plantillaId);
+  /** Una plantilla ya está en el producto si hay un grupo con el mismo nombre. */
+  yaAgregada(plantillaId: number): boolean {
+    const plantilla = this.plantillas().find((p) => p.id === plantillaId);
+    return !!plantilla && this.grupos().some((g) => g.nombre.trim().toLowerCase() === plantilla.nombre.trim().toLowerCase());
+  }
+
+  /** Ids temporales negativos para registros aún no guardados (el API asigna los definitivos). */
+  private idTemporal(): number {
+    return -Date.now() - Math.floor(Math.random() * 1000);
   }
 
   agregarDesdePlantilla(event: Event): void {
     const select = event.target as HTMLSelectElement;
-    const plantilla = this.plantillas().find((p) => p.id === select.value);
+    const plantilla = this.plantillas().find((p) => p.id === Number(select.value));
     select.value = '';
     if (!plantilla || this.yaAgregada(plantilla.id)) return;
-    this.emitir([...this.grupos(), structuredClone(plantilla)]);
-    this.expandido.set(plantilla.id);
+    // Copia con ids temporales: el grupo del producto es independiente de la plantilla
+    const copia: GrupoOpciones = {
+      ...structuredClone(plantilla),
+      id: this.idTemporal(),
+      opciones: plantilla.opciones.map((o) => ({ ...o, id: this.idTemporal() })),
+    };
+    this.emitir([...this.grupos(), copia]);
+    this.expandido.set(copia.id);
   }
 
   agregarGrupoNuevo(): void {
-    const id = `grupo-${Date.now()}`;
+    const id = this.idTemporal();
     const nuevo: GrupoOpciones = {
       id,
       nombre: 'Nuevo grupo',
       tipo: 'unica',
       obligatorio: false,
-      opciones: [{ id: `${id}-1`, etiqueta: 'Opción 1', precioAdicional: 0, porDefecto: true }],
+      opciones: [{ id: this.idTemporal(), etiqueta: 'Opción 1', precioAdicional: 0, porDefecto: true }],
     };
     this.emitir([...this.grupos(), nuevo]);
     this.expandido.set(id);
   }
 
-  quitarGrupo(grupoId: string): void {
+  quitarGrupo(grupoId: number): void {
     this.emitir(this.grupos().filter((g) => g.id !== grupoId));
     if (this.expandido() === grupoId) this.expandido.set(null);
   }
 
-  alternarExpandido(grupoId: string): void {
+  alternarExpandido(grupoId: number): void {
     this.expandido.update((actual) => (actual === grupoId ? null : grupoId));
   }
 
-  actualizarGrupo(grupoId: string, cambios: Partial<GrupoOpciones>): void {
+  actualizarGrupo(grupoId: number, cambios: Partial<GrupoOpciones>): void {
     this.emitir(this.grupos().map((g) => (g.id === grupoId ? { ...g, ...cambios } : g)));
   }
 
-  cambiarTipo(grupoId: string, tipo: TipoSeleccion): void {
+  cambiarTipo(grupoId: number, tipo: TipoSeleccion): void {
     const grupo = this.grupos().find((g) => g.id === grupoId);
     if (!grupo) return;
     // En selección única solo puede haber una opción por defecto
@@ -85,14 +102,14 @@ export class EditorGruposOpcionesComponente {
     this.actualizarGrupo(grupoId, { tipo, opciones, maximo: tipo === 'unica' ? undefined : grupo.maximo });
   }
 
-  agregarOpcion(grupoId: string): void {
+  agregarOpcion(grupoId: number): void {
     const grupo = this.grupos().find((g) => g.id === grupoId);
     if (!grupo) return;
-    const opcion: OpcionProducto = { id: `${grupoId}-${Date.now()}`, etiqueta: '', precioAdicional: 0 };
+    const opcion: OpcionProducto = { id: this.idTemporal(), etiqueta: '', precioAdicional: 0 };
     this.actualizarGrupo(grupoId, { opciones: [...grupo.opciones, opcion] });
   }
 
-  actualizarOpcion(grupoId: string, opcionId: string, cambios: Partial<OpcionProducto>): void {
+  actualizarOpcion(grupoId: number, opcionId: number, cambios: Partial<OpcionProducto>): void {
     const grupo = this.grupos().find((g) => g.id === grupoId);
     if (!grupo) return;
     let opciones = grupo.opciones.map((o) => (o.id === opcionId ? { ...o, ...cambios } : o));
@@ -102,19 +119,25 @@ export class EditorGruposOpcionesComponente {
     this.actualizarGrupo(grupoId, { opciones });
   }
 
-  quitarOpcion(grupoId: string, opcionId: string): void {
+  quitarOpcion(grupoId: number, opcionId: number): void {
     const grupo = this.grupos().find((g) => g.id === grupoId);
     if (!grupo || grupo.opciones.length <= 1) return;
     this.actualizarGrupo(grupoId, { opciones: grupo.opciones.filter((o) => o.id !== opcionId) });
   }
 
-  guardarComoPlantilla(grupoId: string): void {
+  guardarComoPlantilla(grupoId: number): void {
     const grupo = this.grupos().find((g) => g.id === grupoId);
-    if (grupo) this.catalogo.guardarPlantilla(grupo);
+    if (!grupo || !grupo.nombre.trim()) return;
+    this.catalogo.guardarPlantilla(grupo).subscribe({
+      next: (plantilla) => this.notificaciones.mostrar(`Plantilla "${plantilla.nombre}" guardada para el local`),
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar la plantilla')),
+    });
   }
 
-  esPlantilla(grupoId: string): boolean {
-    return this.plantillas().some((p) => p.id === grupoId);
+  /** Hay una plantilla del local con el mismo nombre que el grupo. */
+  esPlantilla(grupoId: number): boolean {
+    const grupo = this.grupos().find((g) => g.id === grupoId);
+    return !!grupo && this.plantillas().some((p) => p.nombre.trim().toLowerCase() === grupo.nombre.trim().toLowerCase());
   }
 
   valorTexto(event: Event): string {

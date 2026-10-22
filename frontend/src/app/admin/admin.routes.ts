@@ -1,8 +1,11 @@
 import { Routes } from '@angular/router';
 
+import { localAdminGuardia } from '../core/guards/local-admin.guard';
+
 export const RUTAS_ADMIN: Routes = [
   {
     path: '',
+    canActivate: [localAdminGuardia],
     loadComponent: () => import('./layout/layout-admin/layout-admin.component').then((m) => m.LayoutAdminComponente),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'perfil' },

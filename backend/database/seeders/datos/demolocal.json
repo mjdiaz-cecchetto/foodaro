@@ -1,0 +1,2270 @@
+{
+  "slug": "demolocal",
+  "perfil": {
+    "nombre": "Demo Local",
+    "eslogan": "Resto Bar de demostración · Pizzas a la piedra, empanadas, burgers y parrilla.",
+    "logoUrl": "https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=240&q=80",
+    "portadaUrl": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1400&q=80",
+    "direccion": "Av. Belgrano (S) 1850, Santiago del Estero",
+    "referenciaDireccion": "A dos cuadras de la Plaza Libertad",
+    "mapsUrl": "https://maps.google.com/?q=Av.+Belgrano+Sur+1850,+Santiago+del+Estero",
+    "rubro": "Pizzas · Empanadas · Parrilla",
+    "estado": "Abierto Hoy • Cierra 00:30",
+    "horarios": {
+      "lunesAJueves": "12:00 - 15:00 | 20:00 - 00:00",
+      "viernesYSabado": "12:00 - 15:30 | 20:00 - 01:30",
+      "domingo": "12:00 - 16:00 | 20:00 - 00:00"
+    },
+    "contacto": {
+      "whatsapp": "+54 9 385 311-5268",
+      "instagram": "@demolocal",
+      "tiktok": "@demolocal",
+      "telefono": "+54 385 421-7788"
+    }
+  },
+  "configuracion": {
+    "moneda": "ARS",
+    "cargoServicio": 0,
+    "etiquetaCargoServicio": "Servicio / empaque"
+  },
+  "plantillasOpciones": [
+    {
+      "id": "tamanio-pizza",
+      "nombre": "Tamaño",
+      "tipo": "unica",
+      "obligatorio": true,
+      "opciones": [
+        {
+          "id": "p6",
+          "etiqueta": "6 porciones",
+          "precioAdicional": 0,
+          "porDefecto": true
+        },
+        {
+          "id": "p12",
+          "etiqueta": "12 porciones",
+          "precioAdicional": 4500
+        }
+      ]
+    },
+    {
+      "id": "extras-pizza",
+      "nombre": "Extras",
+      "tipo": "multiple",
+      "obligatorio": false,
+      "maximo": 3,
+      "opciones": [
+        {
+          "id": "muzza",
+          "etiqueta": "Extra muzzarella",
+          "precioAdicional": 2500
+        },
+        {
+          "id": "borde",
+          "etiqueta": "Borde relleno",
+          "precioAdicional": 3000
+        },
+        {
+          "id": "picante",
+          "etiqueta": "Salsa picante casera",
+          "precioAdicional": 800
+        }
+      ]
+    },
+    {
+      "id": "cantidad-empanadas",
+      "nombre": "Cantidad",
+      "tipo": "unica",
+      "obligatorio": true,
+      "opciones": [
+        {
+          "id": "media",
+          "etiqueta": "Media docena (6)",
+          "precioAdicional": 0,
+          "porDefecto": true
+        },
+        {
+          "id": "docena",
+          "etiqueta": "Docena (12)",
+          "precioAdicional": 8500
+        }
+      ]
+    },
+    {
+      "id": "coccion-empanadas",
+      "nombre": "Cocción",
+      "tipo": "unica",
+      "obligatorio": false,
+      "opciones": [
+        {
+          "id": "horno",
+          "etiqueta": "Al horno",
+          "precioAdicional": 0,
+          "porDefecto": true
+        },
+        {
+          "id": "fritas",
+          "etiqueta": "Fritas",
+          "precioAdicional": 0
+        }
+      ]
+    },
+    {
+      "id": "extras-burger",
+      "nombre": "Extras",
+      "tipo": "multiple",
+      "obligatorio": false,
+      "maximo": 4,
+      "opciones": [
+        {
+          "id": "medallon",
+          "etiqueta": "Medallón extra",
+          "precioAdicional": 3200
+        },
+        {
+          "id": "cheddar",
+          "etiqueta": "Doble cheddar",
+          "precioAdicional": 1200
+        },
+        {
+          "id": "panceta",
+          "etiqueta": "Panceta",
+          "precioAdicional": 1500
+        },
+        {
+          "id": "huevo",
+          "etiqueta": "Huevo frito",
+          "precioAdicional": 900
+        },
+        {
+          "id": "mayo",
+          "etiqueta": "Mayonesa extra",
+          "precioAdicional": 500
+        }
+      ]
+    },
+    {
+      "id": "guarnicion",
+      "nombre": "Guarnición",
+      "tipo": "unica",
+      "obligatorio": true,
+      "opciones": [
+        {
+          "id": "fritas",
+          "etiqueta": "Papas fritas",
+          "precioAdicional": 0,
+          "porDefecto": true
+        },
+        {
+          "id": "pure",
+          "etiqueta": "Puré de papas",
+          "precioAdicional": 0
+        },
+        {
+          "id": "ensalada",
+          "etiqueta": "Ensalada mixta",
+          "precioAdicional": 0
+        },
+        {
+          "id": "rusticas",
+          "etiqueta": "Papas rústicas",
+          "precioAdicional": 1200
+        }
+      ]
+    },
+    {
+      "id": "salsa-pastas",
+      "nombre": "Salsa",
+      "tipo": "unica",
+      "obligatorio": true,
+      "opciones": [
+        {
+          "id": "fileto",
+          "etiqueta": "Fileto",
+          "precioAdicional": 0,
+          "porDefecto": true
+        },
+        {
+          "id": "bolognesa",
+          "etiqueta": "Bolognesa",
+          "precioAdicional": 1500
+        },
+        {
+          "id": "crema",
+          "etiqueta": "Crema",
+          "precioAdicional": 1500
+        },
+        {
+          "id": "mixta",
+          "etiqueta": "Mixta",
+          "precioAdicional": 1800
+        }
+      ]
+    },
+    {
+      "id": "punto-carne",
+      "nombre": "Punto de cocción",
+      "tipo": "unica",
+      "obligatorio": true,
+      "opciones": [
+        {
+          "id": "jugoso",
+          "etiqueta": "Jugoso",
+          "precioAdicional": 0
+        },
+        {
+          "id": "apunto",
+          "etiqueta": "A punto",
+          "precioAdicional": 0,
+          "porDefecto": true
+        },
+        {
+          "id": "cocido",
+          "etiqueta": "Bien cocido",
+          "precioAdicional": 0
+        }
+      ]
+    },
+    {
+      "id": "sabor-gaseosa",
+      "nombre": "Sabor",
+      "tipo": "unica",
+      "obligatorio": true,
+      "opciones": [
+        {
+          "id": "coca",
+          "etiqueta": "Coca-Cola",
+          "precioAdicional": 0,
+          "porDefecto": true
+        },
+        {
+          "id": "cocazero",
+          "etiqueta": "Coca-Cola Zero",
+          "precioAdicional": 0
+        },
+        {
+          "id": "sprite",
+          "etiqueta": "Sprite",
+          "precioAdicional": 0
+        },
+        {
+          "id": "fanta",
+          "etiqueta": "Fanta",
+          "precioAdicional": 0
+        }
+      ]
+    },
+    {
+      "id": "sabor-helado",
+      "nombre": "Sabores (elegí hasta 2)",
+      "tipo": "multiple",
+      "obligatorio": true,
+      "maximo": 2,
+      "opciones": [
+        {
+          "id": "ddl",
+          "etiqueta": "Dulce de leche granizado",
+          "precioAdicional": 0
+        },
+        {
+          "id": "choc",
+          "etiqueta": "Chocolate",
+          "precioAdicional": 0
+        },
+        {
+          "id": "frutilla",
+          "etiqueta": "Frutilla a la crema",
+          "precioAdicional": 0
+        },
+        {
+          "id": "limon",
+          "etiqueta": "Limón",
+          "precioAdicional": 0
+        }
+      ]
+    }
+  ],
+  "categorias": [
+    {
+      "id": "pizzas",
+      "nombre": "Pizzas",
+      "imagen": "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "empanadas",
+      "nombre": "Empanadas",
+      "imagen": "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "hamburguesas",
+      "nombre": "Burgers",
+      "imagen": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "milanesas",
+      "nombre": "Milanesas",
+      "imagen": "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "pastas",
+      "nombre": "Pastas",
+      "imagen": "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "parrilla",
+      "nombre": "Parrilla",
+      "imagen": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "picadas",
+      "nombre": "Picadas",
+      "imagen": "https://images.unsplash.com/photo-1452195100486-9cc805987862?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "postres",
+      "nombre": "Postres",
+      "imagen": "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "bebidas",
+      "nombre": "Bebidas",
+      "imagen": "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    },
+    {
+      "id": "tragos",
+      "nombre": "Tragos & Cervezas",
+      "imagen": "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?auto=format&fit=crop&w=160&q=80",
+      "activa": true
+    }
+  ],
+  "productos": [
+    {
+      "id": 101,
+      "nombre": "Muzzarella",
+      "categoriaId": "pizzas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 12500,
+      "etiqueta": "Clásica",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Salsa de tomate casera, muzzarella de primera, orégano y aceitunas verdes. Masa a la piedra fermentada 24 hs.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "nombre": "Napolitana",
+      "categoriaId": "pizzas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 14500,
+      "etiqueta": "Favorita",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Muzzarella, rodajas de tomate fresco, ajo, perejil y un hilo de aceite de oliva.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "nombre": "Fugazzeta rellena",
+      "categoriaId": "pizzas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "20-25 min",
+      "precio": 16800,
+      "etiqueta": "La más pedida",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Doble masa rellena de muzzarella, cubierta con cebolla dorada, orégano y aceitunas.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "nombre": "Calabresa",
+      "categoriaId": "pizzas",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 15900,
+      "etiqueta": "Picantita",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Muzzarella, longaniza calabresa en rodajas, morrón asado y aceitunas negras.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "nombre": "Jamón y morrones",
+      "categoriaId": "pizzas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 15500,
+      "etiqueta": "Clásica",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Muzzarella, jamón cocido natural, morrones asados y aceitunas verdes.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 106,
+      "nombre": "Cuatro quesos",
+      "categoriaId": "pizzas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 17200,
+      "etiqueta": "Premium",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Muzzarella, roquefort, provolone y parmesano con un toque de miel de caña.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 107,
+      "nombre": "Rúcula y jamón crudo",
+      "categoriaId": "pizzas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 18900,
+      "etiqueta": "Premium",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Muzzarella, jamón crudo serrano, rúcula fresca, parmesano en escamas y oliva.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 108,
+      "nombre": "Especial de la casa",
+      "categoriaId": "pizzas",
+      "calificacion": 5,
+      "tiempoPreparacion": "20-25 min",
+      "precio": 19500,
+      "etiqueta": "De la casa",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Muzzarella, jamón, morrones, huevo duro, aceitunas y palmitos con salsa golf.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 109,
+      "nombre": "Provolone y panceta",
+      "categoriaId": "pizzas",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 17800,
+      "etiqueta": "Nueva",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Muzzarella, provolone gratinado, panceta crocante y cebolla morada.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 110,
+      "nombre": "Anchoas",
+      "categoriaId": "pizzas",
+      "calificacion": 4.6,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 16200,
+      "etiqueta": "Clásica",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Salsa de tomate, muzzarella, filetes de anchoa, ajo y orégano.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 111,
+      "nombre": "Vegetariana",
+      "categoriaId": "pizzas",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 15800,
+      "etiqueta": "Veggie",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Muzzarella, berenjena grillada, zucchini, champiñones, tomates cherry y albahaca.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        },
+        {
+          "id": "extras-pizza",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 3,
+          "opciones": [
+            {
+              "id": "muzza",
+              "etiqueta": "Extra muzzarella",
+              "precioAdicional": 2500
+            },
+            {
+              "id": "borde",
+              "etiqueta": "Borde relleno",
+              "precioAdicional": 3000
+            },
+            {
+              "id": "picante",
+              "etiqueta": "Salsa picante casera",
+              "precioAdicional": 800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 112,
+      "nombre": "Pizza de cancha",
+      "categoriaId": "pizzas",
+      "calificacion": 4.5,
+      "tiempoPreparacion": "10 min",
+      "precio": 7500,
+      "etiqueta": "Sin queso",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "La clásica de cancha: salsa de tomate abundante, orégano, ají molido y aceite. Sin queso.",
+      "gruposOpciones": [
+        {
+          "id": "tamanio-pizza",
+          "nombre": "Tamaño",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "p6",
+              "etiqueta": "6 porciones",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "p12",
+              "etiqueta": "12 porciones",
+              "precioAdicional": 4500
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 201,
+      "nombre": "Empanadas santiagueñas",
+      "categoriaId": "empanadas",
+      "calificacion": 5,
+      "tiempoPreparacion": "20-25 min",
+      "precio": 9500,
+      "etiqueta": "Tradición",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Carne cortada a cuchillo, cebolla, huevo y comino. Fritas en grasa como manda la receta santiagueña.",
+      "gruposOpciones": [
+        {
+          "id": "cantidad-empanadas",
+          "nombre": "Cantidad",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "media",
+              "etiqueta": "Media docena (6)",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "docena",
+              "etiqueta": "Docena (12)",
+              "precioAdicional": 8500
+            }
+          ]
+        },
+        {
+          "id": "coccion-empanadas",
+          "nombre": "Cocción",
+          "tipo": "unica",
+          "obligatorio": false,
+          "opciones": [
+            {
+              "id": "horno",
+              "etiqueta": "Al horno",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "fritas",
+              "etiqueta": "Fritas",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 202,
+      "nombre": "Empanadas de pollo",
+      "categoriaId": "empanadas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "20-25 min",
+      "precio": 9000,
+      "etiqueta": "Al horno",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Pollo desmenuzado, cebolla de verdeo, morrón y especias. Al horno de barro.",
+      "gruposOpciones": [
+        {
+          "id": "cantidad-empanadas",
+          "nombre": "Cantidad",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "media",
+              "etiqueta": "Media docena (6)",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "docena",
+              "etiqueta": "Docena (12)",
+              "precioAdicional": 8500
+            }
+          ]
+        },
+        {
+          "id": "coccion-empanadas",
+          "nombre": "Cocción",
+          "tipo": "unica",
+          "obligatorio": false,
+          "opciones": [
+            {
+              "id": "horno",
+              "etiqueta": "Al horno",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "fritas",
+              "etiqueta": "Fritas",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 203,
+      "nombre": "Empanadas de jamón y queso",
+      "categoriaId": "empanadas",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "20-25 min",
+      "precio": 8800,
+      "etiqueta": "Al horno",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Jamón cocido y muzzarella fundida con un toque de orégano.",
+      "gruposOpciones": [
+        {
+          "id": "cantidad-empanadas",
+          "nombre": "Cantidad",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "media",
+              "etiqueta": "Media docena (6)",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "docena",
+              "etiqueta": "Docena (12)",
+              "precioAdicional": 8500
+            }
+          ]
+        },
+        {
+          "id": "coccion-empanadas",
+          "nombre": "Cocción",
+          "tipo": "unica",
+          "obligatorio": false,
+          "opciones": [
+            {
+              "id": "horno",
+              "etiqueta": "Al horno",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "fritas",
+              "etiqueta": "Fritas",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 204,
+      "nombre": "Empanadas árabes",
+      "categoriaId": "empanadas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "20-25 min",
+      "precio": 9500,
+      "etiqueta": "Especial",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Carne, tomate, cebolla y jugo de limón en masa abierta triangular.",
+      "gruposOpciones": [
+        {
+          "id": "cantidad-empanadas",
+          "nombre": "Cantidad",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "media",
+              "etiqueta": "Media docena (6)",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "docena",
+              "etiqueta": "Docena (12)",
+              "precioAdicional": 8500
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 205,
+      "nombre": "Empanadas surtidas",
+      "categoriaId": "empanadas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "25 min",
+      "precio": 9800,
+      "etiqueta": "Para compartir",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Elegí hasta 3 gustos: carne, pollo, jamón y queso, humita, verdura o caprese. Indicá los gustos en las notas.",
+      "gruposOpciones": [
+        {
+          "id": "cantidad-empanadas",
+          "nombre": "Cantidad",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "media",
+              "etiqueta": "Media docena (6)",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "docena",
+              "etiqueta": "Docena (12)",
+              "precioAdicional": 8500
+            }
+          ]
+        },
+        {
+          "id": "coccion-empanadas",
+          "nombre": "Cocción",
+          "tipo": "unica",
+          "obligatorio": false,
+          "opciones": [
+            {
+              "id": "horno",
+              "etiqueta": "Al horno",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "fritas",
+              "etiqueta": "Fritas",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 301,
+      "nombre": "Demo Burger simple",
+      "categoriaId": "hamburguesas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "15 min",
+      "precio": 11500,
+      "etiqueta": "Clásica",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Medallón de 150 g, cheddar, lechuga, tomate, cebolla y salsa de la casa en pan de papa. Con papas.",
+      "gruposOpciones": [
+        {
+          "id": "extras-burger",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 4,
+          "opciones": [
+            {
+              "id": "medallon",
+              "etiqueta": "Medallón extra",
+              "precioAdicional": 3200
+            },
+            {
+              "id": "cheddar",
+              "etiqueta": "Doble cheddar",
+              "precioAdicional": 1200
+            },
+            {
+              "id": "panceta",
+              "etiqueta": "Panceta",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "huevo",
+              "etiqueta": "Huevo frito",
+              "precioAdicional": 900
+            },
+            {
+              "id": "mayo",
+              "etiqueta": "Mayonesa extra",
+              "precioAdicional": 500
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 302,
+      "nombre": "Doble cheddar & bacon",
+      "categoriaId": "hamburguesas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 14900,
+      "etiqueta": "Top",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Doble medallón smash, doble cheddar, panceta crocante y cebolla caramelizada. Con papas.",
+      "gruposOpciones": [
+        {
+          "id": "extras-burger",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 4,
+          "opciones": [
+            {
+              "id": "medallon",
+              "etiqueta": "Medallón extra",
+              "precioAdicional": 3200
+            },
+            {
+              "id": "cheddar",
+              "etiqueta": "Doble cheddar",
+              "precioAdicional": 1200
+            },
+            {
+              "id": "panceta",
+              "etiqueta": "Panceta",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "huevo",
+              "etiqueta": "Huevo frito",
+              "precioAdicional": 900
+            },
+            {
+              "id": "mayo",
+              "etiqueta": "Mayonesa extra",
+              "precioAdicional": 500
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 303,
+      "nombre": "Criolla",
+      "categoriaId": "hamburguesas",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "15 min",
+      "precio": 13200,
+      "etiqueta": "Argenta",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Medallón, provoleta, huevo frito, morrón asado y chimichurri. Con papas.",
+      "gruposOpciones": [
+        {
+          "id": "extras-burger",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 4,
+          "opciones": [
+            {
+              "id": "medallon",
+              "etiqueta": "Medallón extra",
+              "precioAdicional": 3200
+            },
+            {
+              "id": "cheddar",
+              "etiqueta": "Doble cheddar",
+              "precioAdicional": 1200
+            },
+            {
+              "id": "panceta",
+              "etiqueta": "Panceta",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "huevo",
+              "etiqueta": "Huevo frito",
+              "precioAdicional": 900
+            },
+            {
+              "id": "mayo",
+              "etiqueta": "Mayonesa extra",
+              "precioAdicional": 500
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 304,
+      "nombre": "Veggie de garbanzos",
+      "categoriaId": "hamburguesas",
+      "calificacion": 4.6,
+      "tiempoPreparacion": "15 min",
+      "precio": 12200,
+      "etiqueta": "Veggie",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Medallón de garbanzos y espinaca, queso, rúcula, tomate y mayonesa de ajo. Con batatas.",
+      "gruposOpciones": [
+        {
+          "id": "extras-burger",
+          "nombre": "Extras",
+          "tipo": "multiple",
+          "obligatorio": false,
+          "maximo": 4,
+          "opciones": [
+            {
+              "id": "medallon",
+              "etiqueta": "Medallón extra",
+              "precioAdicional": 3200
+            },
+            {
+              "id": "cheddar",
+              "etiqueta": "Doble cheddar",
+              "precioAdicional": 1200
+            },
+            {
+              "id": "panceta",
+              "etiqueta": "Panceta",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "huevo",
+              "etiqueta": "Huevo frito",
+              "precioAdicional": 900
+            },
+            {
+              "id": "mayo",
+              "etiqueta": "Mayonesa extra",
+              "precioAdicional": 500
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 401,
+      "nombre": "Milanesa napolitana",
+      "categoriaId": "milanesas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "20 min",
+      "precio": 16500,
+      "etiqueta": "La más pedida",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Milanesa de ternera, salsa de tomate, jamón y muzzarella gratinada.",
+      "gruposOpciones": [
+        {
+          "id": "guarnicion",
+          "nombre": "Guarnición",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "fritas",
+              "etiqueta": "Papas fritas",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "pure",
+              "etiqueta": "Puré de papas",
+              "precioAdicional": 0
+            },
+            {
+              "id": "ensalada",
+              "etiqueta": "Ensalada mixta",
+              "precioAdicional": 0
+            },
+            {
+              "id": "rusticas",
+              "etiqueta": "Papas rústicas",
+              "precioAdicional": 1200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 402,
+      "nombre": "Milanesa a caballo",
+      "categoriaId": "milanesas",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "20 min",
+      "precio": 15800,
+      "etiqueta": "Clásica",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Milanesa de ternera con dos huevos fritos.",
+      "gruposOpciones": [
+        {
+          "id": "guarnicion",
+          "nombre": "Guarnición",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "fritas",
+              "etiqueta": "Papas fritas",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "pure",
+              "etiqueta": "Puré de papas",
+              "precioAdicional": 0
+            },
+            {
+              "id": "ensalada",
+              "etiqueta": "Ensalada mixta",
+              "precioAdicional": 0
+            },
+            {
+              "id": "rusticas",
+              "etiqueta": "Papas rústicas",
+              "precioAdicional": 1200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 403,
+      "nombre": "Suprema de pollo",
+      "categoriaId": "milanesas",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "20 min",
+      "precio": 14200,
+      "etiqueta": "Clásica",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Pechuga de pollo empanada con pan rallado casero.",
+      "gruposOpciones": [
+        {
+          "id": "guarnicion",
+          "nombre": "Guarnición",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "fritas",
+              "etiqueta": "Papas fritas",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "pure",
+              "etiqueta": "Puré de papas",
+              "precioAdicional": 0
+            },
+            {
+              "id": "ensalada",
+              "etiqueta": "Ensalada mixta",
+              "precioAdicional": 0
+            },
+            {
+              "id": "rusticas",
+              "etiqueta": "Papas rústicas",
+              "precioAdicional": 1200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 404,
+      "nombre": "Milanesa XL (para 2)",
+      "categoriaId": "milanesas",
+      "calificacion": 5,
+      "tiempoPreparacion": "25 min",
+      "precio": 26500,
+      "etiqueta": "Para compartir",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Milanesa XL con cheddar, panceta, cebolla caramelizada y huevo. Con papas con cheddar.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 501,
+      "nombre": "Ñoquis de papa",
+      "categoriaId": "pastas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 12800,
+      "etiqueta": "Caseros",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Ñoquis caseros de papa, con la salsa que elijas.",
+      "gruposOpciones": [
+        {
+          "id": "salsa-pastas",
+          "nombre": "Salsa",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "fileto",
+              "etiqueta": "Fileto",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "bolognesa",
+              "etiqueta": "Bolognesa",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "crema",
+              "etiqueta": "Crema",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "mixta",
+              "etiqueta": "Mixta",
+              "precioAdicional": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 502,
+      "nombre": "Sorrentinos de jamón y queso",
+      "categoriaId": "pastas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 14500,
+      "etiqueta": "Caseros",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Sorrentinos artesanales con la salsa que elijas.",
+      "gruposOpciones": [
+        {
+          "id": "salsa-pastas",
+          "nombre": "Salsa",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "fileto",
+              "etiqueta": "Fileto",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "bolognesa",
+              "etiqueta": "Bolognesa",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "crema",
+              "etiqueta": "Crema",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "mixta",
+              "etiqueta": "Mixta",
+              "precioAdicional": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 503,
+      "nombre": "Ravioles de verdura y ricota",
+      "categoriaId": "pastas",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "15-20 min",
+      "precio": 13500,
+      "etiqueta": "Caseros",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Ravioles caseros con la salsa que elijas.",
+      "gruposOpciones": [
+        {
+          "id": "salsa-pastas",
+          "nombre": "Salsa",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "fileto",
+              "etiqueta": "Fileto",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "bolognesa",
+              "etiqueta": "Bolognesa",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "crema",
+              "etiqueta": "Crema",
+              "precioAdicional": 1500
+            },
+            {
+              "id": "mixta",
+              "etiqueta": "Mixta",
+              "precioAdicional": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 504,
+      "nombre": "Lasaña de carne",
+      "categoriaId": "pastas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "25 min",
+      "precio": 15900,
+      "etiqueta": "De la casa",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Capas de pasta fresca, bolognesa, salsa blanca y muzzarella gratinada.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 601,
+      "nombre": "Bife de chorizo (400 g)",
+      "categoriaId": "parrilla",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "25-30 min",
+      "precio": 24500,
+      "etiqueta": "Premium",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Bife de chorizo a la parrilla con chimichurri.",
+      "gruposOpciones": [
+        {
+          "id": "punto-carne",
+          "nombre": "Punto de cocción",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "jugoso",
+              "etiqueta": "Jugoso",
+              "precioAdicional": 0
+            },
+            {
+              "id": "apunto",
+              "etiqueta": "A punto",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "cocido",
+              "etiqueta": "Bien cocido",
+              "precioAdicional": 0
+            }
+          ]
+        },
+        {
+          "id": "guarnicion",
+          "nombre": "Guarnición",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "fritas",
+              "etiqueta": "Papas fritas",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "pure",
+              "etiqueta": "Puré de papas",
+              "precioAdicional": 0
+            },
+            {
+              "id": "ensalada",
+              "etiqueta": "Ensalada mixta",
+              "precioAdicional": 0
+            },
+            {
+              "id": "rusticas",
+              "etiqueta": "Papas rústicas",
+              "precioAdicional": 1200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 602,
+      "nombre": "Entraña",
+      "categoriaId": "parrilla",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "25 min",
+      "precio": 22800,
+      "etiqueta": "Premium",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Entraña tierna con salsa criolla.",
+      "gruposOpciones": [
+        {
+          "id": "punto-carne",
+          "nombre": "Punto de cocción",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "jugoso",
+              "etiqueta": "Jugoso",
+              "precioAdicional": 0
+            },
+            {
+              "id": "apunto",
+              "etiqueta": "A punto",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "cocido",
+              "etiqueta": "Bien cocido",
+              "precioAdicional": 0
+            }
+          ]
+        },
+        {
+          "id": "guarnicion",
+          "nombre": "Guarnición",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "fritas",
+              "etiqueta": "Papas fritas",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "pure",
+              "etiqueta": "Puré de papas",
+              "precioAdicional": 0
+            },
+            {
+              "id": "ensalada",
+              "etiqueta": "Ensalada mixta",
+              "precioAdicional": 0
+            },
+            {
+              "id": "rusticas",
+              "etiqueta": "Papas rústicas",
+              "precioAdicional": 1200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 603,
+      "nombre": "Parrillada para 2",
+      "categoriaId": "parrilla",
+      "calificacion": 5,
+      "tiempoPreparacion": "35-40 min",
+      "precio": 39800,
+      "etiqueta": "Para compartir",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Asado, vacío, chorizo, morcilla, pollo y provoleta. Con ensalada mixta y papas.",
+      "gruposOpciones": [
+        {
+          "id": "punto-carne",
+          "nombre": "Punto de cocción",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "jugoso",
+              "etiqueta": "Jugoso",
+              "precioAdicional": 0
+            },
+            {
+              "id": "apunto",
+              "etiqueta": "A punto",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "cocido",
+              "etiqueta": "Bien cocido",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 604,
+      "nombre": "Choripán",
+      "categoriaId": "parrilla",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "10-15 min",
+      "precio": 6500,
+      "etiqueta": "Clásico",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Chorizo a la parrilla en pan francés con chimichurri y salsa criolla.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 605,
+      "nombre": "Provoleta",
+      "categoriaId": "parrilla",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "10 min",
+      "precio": 7800,
+      "etiqueta": "Entrada",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Provolone a la parrilla con orégano, ají molido y tomates cherry.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 701,
+      "nombre": "Picada de la casa (para 2)",
+      "categoriaId": "picadas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "15 min",
+      "precio": 19500,
+      "etiqueta": "Para compartir",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1452195100486-9cc805987862?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Quesos, fiambres, aceitunas, maní, papas fritas y pan casero.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 702,
+      "nombre": "Tabla de quesos y fiambres (para 4)",
+      "categoriaId": "picadas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "15 min",
+      "precio": 32000,
+      "etiqueta": "Para compartir",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Selección de quesos, salame, jamón crudo, bondiola, frutos secos y grisines.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 703,
+      "nombre": "Papas con cheddar y panceta",
+      "categoriaId": "picadas",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "10-15 min",
+      "precio": 9800,
+      "etiqueta": "Favorita",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Papas fritas bañadas en cheddar fundido con panceta crocante y verdeo.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 801,
+      "nombre": "Flan casero con dulce de leche",
+      "categoriaId": "postres",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "5 min",
+      "precio": 5500,
+      "etiqueta": "Clásico",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Flan de huevo casero con dulce de leche y crema. Mixto si querés.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 802,
+      "nombre": "Tiramisú",
+      "categoriaId": "postres",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "5 min",
+      "precio": 6800,
+      "etiqueta": "De la casa",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Capas de vainillas al café, crema de mascarpone y cacao.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 803,
+      "nombre": "Volcán de chocolate",
+      "categoriaId": "postres",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "10 min",
+      "precio": 7200,
+      "etiqueta": "Caliente",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Bizcocho tibio con centro líquido de chocolate y helado de crema americana.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 804,
+      "nombre": "Helado artesanal (2 bochas)",
+      "categoriaId": "postres",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "5 min",
+      "precio": 4800,
+      "etiqueta": "Fresco",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Helado artesanal de elaboración propia.",
+      "gruposOpciones": [
+        {
+          "id": "sabor-helado",
+          "nombre": "Sabores (elegí hasta 2)",
+          "tipo": "multiple",
+          "obligatorio": true,
+          "maximo": 2,
+          "opciones": [
+            {
+              "id": "ddl",
+              "etiqueta": "Dulce de leche granizado",
+              "precioAdicional": 0
+            },
+            {
+              "id": "choc",
+              "etiqueta": "Chocolate",
+              "precioAdicional": 0
+            },
+            {
+              "id": "frutilla",
+              "etiqueta": "Frutilla a la crema",
+              "precioAdicional": 0
+            },
+            {
+              "id": "limon",
+              "etiqueta": "Limón",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 901,
+      "nombre": "Gaseosa 500 ml",
+      "categoriaId": "bebidas",
+      "calificacion": 4.6,
+      "tiempoPreparacion": "2 min",
+      "precio": 2800,
+      "etiqueta": "Fría",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Línea Coca-Cola bien fría.",
+      "gruposOpciones": [
+        {
+          "id": "sabor-gaseosa",
+          "nombre": "Sabor",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "coca",
+              "etiqueta": "Coca-Cola",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "cocazero",
+              "etiqueta": "Coca-Cola Zero",
+              "precioAdicional": 0
+            },
+            {
+              "id": "sprite",
+              "etiqueta": "Sprite",
+              "precioAdicional": 0
+            },
+            {
+              "id": "fanta",
+              "etiqueta": "Fanta",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 902,
+      "nombre": "Gaseosa 1,5 L",
+      "categoriaId": "bebidas",
+      "calificacion": 4.6,
+      "tiempoPreparacion": "2 min",
+      "precio": 4500,
+      "etiqueta": "Para compartir",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Línea Coca-Cola de 1,5 litros.",
+      "gruposOpciones": [
+        {
+          "id": "sabor-gaseosa",
+          "nombre": "Sabor",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "coca",
+              "etiqueta": "Coca-Cola",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "cocazero",
+              "etiqueta": "Coca-Cola Zero",
+              "precioAdicional": 0
+            },
+            {
+              "id": "sprite",
+              "etiqueta": "Sprite",
+              "precioAdicional": 0
+            },
+            {
+              "id": "fanta",
+              "etiqueta": "Fanta",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 903,
+      "nombre": "Agua mineral 500 ml",
+      "categoriaId": "bebidas",
+      "calificacion": 4.5,
+      "tiempoPreparacion": "2 min",
+      "precio": 2200,
+      "etiqueta": "Fría",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Con o sin gas.",
+      "gruposOpciones": [
+        {
+          "id": "gas-agua",
+          "nombre": "Tipo",
+          "tipo": "unica",
+          "obligatorio": true,
+          "opciones": [
+            {
+              "id": "singas",
+              "etiqueta": "Sin gas",
+              "precioAdicional": 0,
+              "porDefecto": true
+            },
+            {
+              "id": "congas",
+              "etiqueta": "Con gas",
+              "precioAdicional": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 904,
+      "nombre": "Limonada con menta y jengibre (jarra)",
+      "categoriaId": "bebidas",
+      "calificacion": 4.9,
+      "tiempoPreparacion": "5 min",
+      "precio": 5900,
+      "etiqueta": "Casera",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Jarra de 1 litro de limonada natural con menta fresca y jengibre.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 1001,
+      "nombre": "Cerveza artesanal IPA (pinta)",
+      "categoriaId": "tragos",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "3 min",
+      "precio": 5500,
+      "etiqueta": "Tirada",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "IPA de producción local, 6,5 % de alcohol. Pinta de 473 ml.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 1002,
+      "nombre": "Cerveza Quilmes 1 L",
+      "categoriaId": "tragos",
+      "calificacion": 4.5,
+      "tiempoPreparacion": "2 min",
+      "precio": 5200,
+      "etiqueta": "Clásica",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Botella de litro bien fría.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 1003,
+      "nombre": "Fernet con Coca",
+      "categoriaId": "tragos",
+      "calificacion": 5,
+      "tiempoPreparacion": "3 min",
+      "precio": 6500,
+      "etiqueta": "El de siempre",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Fernet Branca con Coca-Cola, mucho hielo. Vaso de 500 ml.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 1004,
+      "nombre": "Aperol Spritz",
+      "categoriaId": "tragos",
+      "calificacion": 4.8,
+      "tiempoPreparacion": "5 min",
+      "precio": 7200,
+      "etiqueta": "Refrescante",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Aperol, espumante y soda con rodaja de naranja.",
+      "gruposOpciones": []
+    },
+    {
+      "id": 1005,
+      "nombre": "Copa de vino Malbec",
+      "categoriaId": "tragos",
+      "calificacion": 4.7,
+      "tiempoPreparacion": "2 min",
+      "precio": 4900,
+      "etiqueta": "Mendoza",
+      "disponible": true,
+      "imagen": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=700&q=80",
+      "descripcion": "Malbec de bodega mendocina. Consultá la botella del mes.",
+      "gruposOpciones": []
+    }
+  ],
+  "promociones": [
+    {
+      "id": 1,
+      "titulo": "2 muzzarellas grandes + gaseosa 1,5 L",
+      "descuento": 20,
+      "codigo": "DEMO20",
+      "activa": true,
+      "imagen": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": 2,
+      "titulo": "Docena de empanadas + cerveza 1 L",
+      "descuento": 15,
+      "codigo": "EMPA15",
+      "activa": true,
+      "imagen": "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": 3,
+      "titulo": "Happy hour: tragos al 2x1 de 20 a 22 hs",
+      "descuento": 50,
+      "codigo": "HAPPY2X1",
+      "activa": true,
+      "imagen": "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?auto=format&fit=crop&w=600&q=80"
+    }
+  ]
+}

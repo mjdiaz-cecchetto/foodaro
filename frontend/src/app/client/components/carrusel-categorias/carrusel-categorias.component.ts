@@ -2,7 +2,7 @@ import { AfterViewInit, Component, effect, ElementRef, inject, viewChild } from 
 
 import { CartaServicio } from '../../services/carta.service';
 import { NavegacionCartaServicio } from '../../services/navegacion-carta.service';
-import { ID_CATEGORIA_TODO } from '../../interfaces';
+import { ID_CATEGORIA_TODO, IdCategoriaCarta } from '../../interfaces';
 
 /**
  * Carrusel horizontal de categorías, fijo debajo del encabezado.
@@ -46,7 +46,7 @@ export class CarruselCategoriasComponente implements AfterViewInit {
     window.addEventListener('resize', () => this.medirDesplazamiento(), { passive: true });
   }
 
-  seleccionar(id: string): void {
+  seleccionar(id: IdCategoriaCarta): void {
     this.navegacion.irACategoria(id);
   }
 

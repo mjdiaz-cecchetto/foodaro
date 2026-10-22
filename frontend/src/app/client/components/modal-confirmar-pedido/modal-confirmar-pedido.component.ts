@@ -10,6 +10,7 @@ import { UiClienteServicio } from '../../services/ui-cliente.service';
 import { LocalPublicoServicio } from '../../services/local-publico.service';
 import { BorradorPedido, ETIQUETAS_MEDIO_PAGO, ETIQUETAS_MODO_ENTREGA, MedioPago, ModoEntrega } from '../../interfaces';
 import { ResumenTotalesComponente } from '../resumen-totales/resumen-totales.component';
+import { mensajeDeError } from '../../../shared/utils/api';
 
 type Paso = 1 | 2 | 3 | 4;
 
@@ -44,6 +45,8 @@ export class ModalConfirmarPedidoComponente {
   readonly paso = signal<Paso>(1);
   readonly enviando = signal(false);
   readonly enviado = signal(false);
+  readonly errorEnvio = signal<string | null>(null);
+  readonly numeroPedido = signal<number | null>(null);
 
   readonly titulosPaso: Record<Paso, string> = {
     1: '¿Cómo lo recibís?',
@@ -86,6 +89,8 @@ export class ModalConfirmarPedidoComponente {
         this.paso.set(1);
         this.enviado.set(false);
         this.enviando.set(false);
+        this.errorEnvio.set(null);
+        this.numeroPedido.set(null);
       }
     });
   }
@@ -137,14 +142,26 @@ export class ModalConfirmarPedidoComponente {
     return c.invalid && c.touched;
   }
 
+  /** Registra el pedido en el API y luego abre WhatsApp con el número asignado. */
   confirmar(): void {
-    if (!this.formulario.valid || this.carrito.estaVacio()) return;
+    if (!this.formulario.valid || this.carrito.estaVacio() || this.enviando()) return;
     this.enviando.set(true);
+    this.errorEnvio.set(null);
     const pedido = this.armarPedido();
-    this.pedidoServicio.enviarPorWhatsApp(pedido);
-    this.enviado.set(true);
-    this.enviando.set(false);
-    this.notificaciones.mostrar('¡Pedido enviado! Te esperamos en WhatsApp');
+
+    this.pedidoServicio.registrar(pedido).subscribe({
+      next: (registrado) => {
+        this.numeroPedido.set(registrado.numero);
+        this.pedidoServicio.abrirWhatsApp(pedido, registrado);
+        this.enviado.set(true);
+        this.enviando.set(false);
+        this.notificaciones.mostrar(`¡Pedido #${registrado.numero} registrado! Te esperamos en WhatsApp`);
+      },
+      error: (err: unknown) => {
+        this.enviando.set(false);
+        this.errorEnvio.set(mensajeDeError(err, 'No se pudo registrar el pedido'));
+      },
+    });
   }
 
   finalizar(): void {

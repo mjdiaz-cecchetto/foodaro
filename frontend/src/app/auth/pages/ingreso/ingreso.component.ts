@@ -7,8 +7,9 @@ import { AlternarTemaComponente } from '../../../shared/components/alternar-tema
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { LocalServicio } from '../../../core/services/local.service';
 import { AutenticacionServicio } from '../../services/autenticacion.service';
+import { mensajeDeError } from '../../../shared/utils/api';
 
-/** Inicio de sesión del encargado del local (mock: cualquier contraseña). */
+/** Inicio de sesión del encargado del local contra el API. */
 @Component({
   selector: 'app-ingreso',
   standalone: true,
@@ -28,7 +29,7 @@ export class IngresoComponente implements OnInit {
   readonly enlacePortada = this.local.url();
 
   readonly formulario = this.fb.nonNullable.group({
-    email: ['admin@foodaro.net', [Validators.required, Validators.email]],
+    email: ['', [Validators.required, Validators.email]],
     contrasenia: ['', [Validators.required]],
   });
 
@@ -57,8 +58,8 @@ export class IngresoComponente implements OnInit {
         this.notificaciones.mostrar('¡Bienvenido al panel de tu local!');
         this.router.navigateByUrl(this.urlRetorno());
       },
-      error: (err: { message?: string }) => {
-        this.error.set(err?.message ?? 'No se pudo iniciar sesión');
+      error: (err: unknown) => {
+        this.error.set(mensajeDeError(err, 'No se pudo iniciar sesión'));
         this.cargando.set(false);
       },
     });

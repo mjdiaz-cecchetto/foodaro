@@ -1,17 +1,22 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable } from '@angular/core';
+import { map, Observable, tap } from 'rxjs';
 
+import { environment } from '../../../environments/environment';
 import { Categoria, GrupoOpciones, Producto } from '../../shared/models';
+import { RespuestaApi } from '../../shared/utils/api';
 import { LocalServicio } from '../../core/services/local.service';
 import { ValorFormularioCategoria, ValorFormularioProducto } from '../interfaces';
 
 /**
- * ABM en memoria de categorías, productos y plantillas de opciones del local activo.
- * Opera sobre las señales del LocalServicio (misma fuente que la carta);
- * luego delegará en el API Laravel.
+ * ABM de categorías, productos y plantillas de opciones del local activo contra el API.
+ * Cada operación actualiza las señales del LocalServicio (misma fuente que la carta).
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogoAdminServicio {
+  private readonly http = inject(HttpClient);
   private readonly local = inject(LocalServicio);
+  private readonly api = `${environment.apiUrl}/admin`;
 
   readonly categorias = this.local.categorias;
   readonly productos = this.local.productos;
@@ -22,38 +27,38 @@ export class CatalogoAdminServicio {
 
   /* ------------------------------ Categorías ------------------------------ */
 
-  cantidadProductosPorCategoria(categoriaId: string): number {
+  cantidadProductosPorCategoria(categoriaId: number): number {
     return this.productos().filter((p) => p.categoriaId === categoriaId).length;
   }
 
-  nombreCategoria(categoriaId: string): string {
-    return this.categorias().find((c) => c.id === categoriaId)?.nombre ?? categoriaId;
+  nombreCategoria(categoriaId: number): string {
+    return this.categorias().find((c) => c.id === categoriaId)?.nombre ?? '—';
   }
 
-  crearCategoria(valor: ValorFormularioCategoria): Categoria {
-    const categoria: Categoria = {
-      id: this.generarSlug(valor.nombre),
-      nombre: valor.nombre.trim(),
-      imagen: valor.imagen.trim(),
-      activa: true,
-    };
-    this.categorias.update((lista) => [...lista, categoria]);
-    return categoria;
-  }
-
-  actualizarCategoria(id: string, valor: ValorFormularioCategoria): void {
-    this.categorias.update((lista) =>
-      lista.map((c) => (c.id === id ? { ...c, nombre: valor.nombre.trim(), imagen: valor.imagen.trim() } : c)),
+  crearCategoria(valor: ValorFormularioCategoria): Observable<Categoria> {
+    return this.http.post<RespuestaApi<Categoria>>(`${this.api}/categorias`, valor).pipe(
+      map((r) => r.data),
+      tap((categoria) => this.categorias.update((lista) => [...lista, categoria])),
     );
   }
 
-  eliminarCategoria(id: string): void {
-    this.categorias.update((lista) => lista.filter((c) => c.id !== id));
+  actualizarCategoria(id: number, valor: ValorFormularioCategoria): Observable<Categoria> {
+    return this.http.put<RespuestaApi<Categoria>>(`${this.api}/categorias/${id}`, valor).pipe(
+      map((r) => r.data),
+      tap((categoria) => this.categorias.update((lista) => lista.map((c) => (c.id === id ? categoria : c)))),
+    );
+  }
+
+  /** El API responde 409 si la categoría tiene productos. */
+  eliminarCategoria(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/categorias/${id}`).pipe(
+      tap(() => this.categorias.update((lista) => lista.filter((c) => c.id !== id))),
+    );
   }
 
   /* ------------------------------- Productos ------------------------------ */
 
-  filtrarProductos(busqueda: string, categoriaId: string): Producto[] {
+  filtrarProductos(busqueda: string, categoriaId: number | 'todas'): Producto[] {
     const texto = busqueda.trim().toLowerCase();
     return this.productos().filter((p) => {
       const coincideTexto = p.nombre.toLowerCase().includes(texto) || p.descripcion.toLowerCase().includes(texto);
@@ -62,57 +67,57 @@ export class CatalogoAdminServicio {
     });
   }
 
-  crearProducto(valor: ValorFormularioProducto): Producto {
-    const producto: Producto = {
-      id: Date.now(),
-      ...valor,
-      nombre: valor.nombre.trim(),
-      tiempoPreparacion: valor.tiempoPreparacion.trim() || '15 min',
-      etiqueta: valor.etiqueta.trim(),
-      calificacion: 5.0,
-      disponible: true,
-    };
-    this.productos.update((lista) => [producto, ...lista]);
-    return producto;
-  }
-
-  actualizarProducto(id: number, valor: ValorFormularioProducto): void {
-    this.productos.update((lista) => lista.map((p) => (p.id === id ? { ...p, ...valor } : p)));
-  }
-
-  alternarDisponibilidad(id: number): Producto | undefined {
-    let actualizado: Producto | undefined;
-    this.productos.update((lista) =>
-      lista.map((p) => {
-        if (p.id !== id) return p;
-        actualizado = { ...p, disponible: !p.disponible };
-        return actualizado;
-      }),
+  crearProducto(valor: ValorFormularioProducto): Observable<Producto> {
+    return this.http.post<RespuestaApi<Producto>>(`${this.api}/productos`, valor).pipe(
+      map((r) => r.data),
+      tap((producto) => this.productos.update((lista) => [producto, ...lista])),
     );
-    return actualizado;
   }
 
-  eliminarProducto(id: number): void {
-    this.productos.update((lista) => lista.filter((p) => p.id !== id));
+  actualizarProducto(id: number, valor: ValorFormularioProducto): Observable<Producto> {
+    return this.http.put<RespuestaApi<Producto>>(`${this.api}/productos/${id}`, valor).pipe(
+      map((r) => r.data),
+      tap((producto) => this.productos.update((lista) => lista.map((p) => (p.id === id ? producto : p)))),
+    );
+  }
+
+  alternarDisponibilidad(id: number): Observable<Producto> {
+    return this.http.patch<RespuestaApi<Producto>>(`${this.api}/productos/${id}/disponibilidad`, {}).pipe(
+      map((r) => r.data),
+      tap((producto) => this.productos.update((lista) => lista.map((p) => (p.id === id ? producto : p)))),
+    );
+  }
+
+  eliminarProducto(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/productos/${id}`).pipe(
+      tap(() => this.productos.update((lista) => lista.filter((p) => p.id !== id))),
+    );
   }
 
   /* ------------------------- Plantillas de opciones ----------------------- */
 
-  /** Guarda un grupo como plantilla reutilizable del local (reemplaza si ya existe el id). */
-  guardarPlantilla(grupo: GrupoOpciones): void {
-    this.plantillasOpciones.update((lista) => {
-      const existe = lista.some((g) => g.id === grupo.id);
-      return existe ? lista.map((g) => (g.id === grupo.id ? structuredClone(grupo) : g)) : [...lista, structuredClone(grupo)];
-    });
+  /** Crea o actualiza una plantilla del local a partir de un grupo (se compara por nombre). */
+  guardarPlantilla(grupo: GrupoOpciones): Observable<GrupoOpciones> {
+    const existente = this.plantillasOpciones().find((p) => p.nombre.trim().toLowerCase() === grupo.nombre.trim().toLowerCase());
+    const cuerpo = { nombre: grupo.nombre, tipo: grupo.tipo, obligatorio: grupo.obligatorio, maximo: grupo.maximo ?? null, opciones: grupo.opciones };
+
+    const peticion = existente
+      ? this.http.put<RespuestaApi<GrupoOpciones>>(`${this.api}/plantillas-opciones/${existente.id}`, cuerpo)
+      : this.http.post<RespuestaApi<GrupoOpciones>>(`${this.api}/plantillas-opciones`, cuerpo);
+
+    return peticion.pipe(
+      map((r) => r.data),
+      tap((plantilla) =>
+        this.plantillasOpciones.update((lista) =>
+          existente ? lista.map((p) => (p.id === existente.id ? plantilla : p)) : [...lista, plantilla],
+        ),
+      ),
+    );
   }
 
-  generarSlug(texto: string): string {
-    return texto
-      .toLowerCase()
-      .trim()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+  eliminarPlantilla(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/plantillas-opciones/${id}`).pipe(
+      tap(() => this.plantillasOpciones.update((lista) => lista.filter((p) => p.id !== id))),
+    );
   }
 }

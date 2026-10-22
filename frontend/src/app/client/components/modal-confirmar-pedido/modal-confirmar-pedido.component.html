@@ -31,7 +31,7 @@
       @if (enviado()) {
         <div class="text-center py-6">
           <div class="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 flex items-center justify-center mx-auto mb-4"><i class="fa-brands fa-whatsapp text-3xl"></i></div>
-          <p class="font-bold text-gray-900 dark:text-white">Se abrió WhatsApp con tu pedido</p>
+          <p class="font-bold text-gray-900 dark:text-white">Pedido #{{ numeroPedido() }} · se abrió WhatsApp</p>
           <p class="text-sm text-gray-500 dark:text-dark-muted mt-1">Enviá el mensaje a <span class="font-bold">{{ nombreLocal() }}</span> para que lo empiecen a preparar.</p>
         </div>
       } @else {
@@ -182,9 +182,17 @@
           Continuar <i class="fa-solid fa-arrow-right text-xs"></i>
         </button>
       } @else {
+        @if (errorEnvio()) {
+          <p class="mb-2 text-[11px] font-semibold text-brand-600 text-center"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ errorEnvio() }}</p>
+        }
         <button type="submit" [disabled]="enviando() || formulario.invalid" class="w-full h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 tap-scale transition flex items-center justify-center gap-2">
-          <i class="fa-brands fa-whatsapp text-lg"></i>
-          Enviar pedido por WhatsApp
+          @if (enviando()) {
+            <i class="fa-solid fa-circle-notch fa-spin text-base"></i>
+            Registrando pedido...
+          } @else {
+            <i class="fa-brands fa-whatsapp text-lg"></i>
+            Enviar pedido por WhatsApp
+          }
         </button>
       }
     </div>

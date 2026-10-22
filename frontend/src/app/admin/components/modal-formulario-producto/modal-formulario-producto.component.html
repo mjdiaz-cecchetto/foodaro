@@ -27,7 +27,7 @@
             <div>
               <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Categoría</label>
               <select formControlName="categoriaId" [class]="claseCampo + ' font-semibold'">
-                @for (c of categorias(); track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
+                @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
               </select>
             </div>
           </div>

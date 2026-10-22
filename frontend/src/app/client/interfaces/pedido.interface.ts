@@ -28,6 +28,26 @@ export interface BorradorPedido {
   comentarios: string;
 }
 
+/** Cuerpo que se envía a POST /locales/{slug}/pedidos. */
+export interface PedidoApi {
+  items: { productoId: number; cantidad: number; notas: string; opciones: { opcionId: number }[] }[];
+  codigoPromo: string | null;
+  modoEntrega: ModoEntrega;
+  cliente: DatosCliente;
+  direccion: DireccionEntrega | null;
+  medioPago: MedioPago;
+  montoEfectivo: number | null;
+  comentarios: string;
+}
+
+/** Pedido registrado por el API (resumen que usa la confirmación). */
+export interface PedidoRegistrado {
+  id: number;
+  numero: number;
+  estado: string;
+  totales: TotalesCarrito;
+}
+
 export const ETIQUETAS_MODO_ENTREGA: Record<ModoEntrega, string> = {
   retiro: 'Retiro en el local',
   envio: 'Envío a domicilio',
