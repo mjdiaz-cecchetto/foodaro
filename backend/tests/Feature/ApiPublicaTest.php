@@ -26,6 +26,10 @@ class ApiPublicaTest extends TestCase
             ->assertJsonPath('data.slug', 'demolocal')
             ->assertJsonPath('data.perfil.nombre', 'Demo Local')
             ->assertJsonPath('data.configuracion.cargoServicio', 0.0)
+            ->assertJsonPath('data.perfil.contacto.whatsappPedidos', '+54 9 385 311-5268')
+            ->assertJsonCount(7, 'data.perfil.horarios.semana')
+            ->assertJsonPath('data.perfil.horarios.semana.4.franjas.1.hasta', '01:30')
+            ->assertJsonPath('data.perfil.horarios.excepciones.0.cerrado', true)
             ->assertJsonCount(10, 'data.categorias')
             ->assertJsonCount(50, 'data.productos')
             ->assertJsonCount(3, 'data.promociones')
@@ -146,6 +150,32 @@ class ApiPublicaTest extends TestCase
         $this->withToken($token)->deleteJson("/api/admin/categorias/{$categoria['id']}")->assertStatus(409);
         $this->withToken($token)->deleteJson("/api/admin/productos/{$producto['id']}")->assertNoContent();
         $this->withToken($token)->deleteJson("/api/admin/categorias/{$categoria['id']}")->assertNoContent();
+    }
+
+    public function test_actualiza_horarios_con_dias_cerrados_y_excepciones(): void
+    {
+        $token = $this->postJson('/api/auth/ingreso', ['email' => 'admin@demolocal.com', 'contrasenia' => 'demo1234'])->json('data.token');
+        $perfil = $this->withToken($token)->getJson('/api/admin/local')->json('data.perfil');
+
+        $perfil['horarios']['semana'][0] = ['dia' => 1, 'abierto' => false, 'franjas' => []]; // lunes cerrado
+        $perfil['horarios']['excepciones'] = [
+            ['fecha' => now()->addDays(3)->toDateString(), 'cerrado' => true, 'motivo' => 'Feriado', 'franjas' => []],
+            ['fecha' => now()->addDays(4)->toDateString(), 'cerrado' => false, 'motivo' => null, 'franjas' => [['desde' => '18:00', 'hasta' => '23:00']]],
+        ];
+
+        $this->withToken($token)->putJson('/api/admin/local', ['perfil' => $perfil])
+            ->assertOk()
+            ->assertJsonPath('data.perfil.horarios.semana.0.abierto', false)
+            ->assertJsonCount(2, 'data.perfil.horarios.excepciones')
+            ->assertJsonPath('data.perfil.horarios.excepciones.1.franjas.0.hasta', '23:00');
+
+        // Un día abierto sin franjas es inválido
+        $perfil['horarios']['semana'][1] = ['dia' => 2, 'abierto' => true, 'franjas' => []];
+        $this->withToken($token)->putJson('/api/admin/local', ['perfil' => $perfil])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['perfil.horarios.semana.1.franjas']);
+
+        $this->assertDatabaseCount('excepciones_horario', 2);
     }
 
     public function test_un_admin_no_puede_tocar_recursos_de_otro_local(): void

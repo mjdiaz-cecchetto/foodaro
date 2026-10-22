@@ -6,15 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ActualizarLocalRequest;
 use App\Http\Resources\LocalResource;
 use App\Models\Local;
+use App\Services\HorariosServicio;
 use Illuminate\Http\Request;
 
 /** Datos del local del usuario autenticado. */
 class LocalAdminController extends Controller
 {
+    public function __construct(private readonly HorariosServicio $horarios) {}
+
     /** GET /api/admin/local — local completo (incluye plantillas de opciones y productos no disponibles). */
     public function show(Request $request): LocalResource
     {
         $local = $this->localDe($request)->load([
+            'horarios',
+            'excepcionesHorario',
             'categorias',
             'productos.gruposOpciones.opciones',
             'promociones',
@@ -40,11 +45,8 @@ class LocalAdminController extends Controller
             'direccion' => $p['direccion'] ?? null,
             'referencia_direccion' => $p['referenciaDireccion'] ?? null,
             'maps_url' => $p['mapsUrl'] ?? null,
-            'estado' => $p['estado'] ?? $local->estado,
-            'horario_lunes_a_jueves' => $p['horarios']['lunesAJueves'] ?? null,
-            'horario_viernes_y_sabado' => $p['horarios']['viernesYSabado'] ?? null,
-            'horario_domingo' => $p['horarios']['domingo'] ?? null,
             'whatsapp' => $p['contacto']['whatsapp'],
+            'whatsapp_pedidos' => $p['contacto']['whatsappPedidos'],
             'instagram' => $p['contacto']['instagram'] ?? null,
             'tiktok' => $p['contacto']['tiktok'] ?? null,
             'telefono' => $p['contacto']['telefono'] ?? null,
@@ -61,7 +63,11 @@ class LocalAdminController extends Controller
         }
         $local->save();
 
-        return new LocalResource($local);
+        if (isset($p['horarios'])) {
+            $this->horarios->guardar($local, $p['horarios']['semana'] ?? [], $p['horarios']['excepciones'] ?? []);
+        }
+
+        return new LocalResource($local->load(['horarios', 'excepcionesHorario']));
     }
 
     private function localDe(Request $request): Local

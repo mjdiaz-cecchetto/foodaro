@@ -1,16 +1,20 @@
-<div class="bg-[#F8F9FA] dark:bg-surface-darker text-zinc-900 dark:text-zinc-100 min-h-screen flex flex-col md:flex-row transition-colors duration-200">
-
-  <!-- Barra superior (solo móvil) -->
-  <app-barra-superior-admin (alternarMenu)="alternarBarraLateral()" />
+<!-- Pantalla completa: la barra lateral y el encabezado quedan fijos; solo el contenido hace scroll -->
+<div class="h-screen overflow-hidden bg-[#F8F9FA] dark:bg-surface-darker text-zinc-900 dark:text-zinc-100 flex transition-colors duration-200">
 
   <!-- Fondo del drawer móvil -->
   <div (click)="cerrarBarraLateral()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity" [class.hidden]="!barraLateralAbierta()"></div>
 
-  <!-- Navegación lateral -->
-  <app-barra-lateral-admin [abierta]="barraLateralAbierta()" (navegado)="cerrarBarraLateral()" (cerrarSesion)="cerrarSesion()" />
+  <!-- Navegación lateral (fija) -->
+  <app-barra-lateral-admin [abierta]="barraLateralAbierta()" (navegado)="cerrarBarraLateral()" />
 
-  <!-- Contenido -->
-  <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full custom-scroll">
-    <router-outlet />
-  </main>
+  <!-- Columna derecha: encabezado fijo + contenido con scroll propio -->
+  <div class="flex-1 min-w-0 h-full flex flex-col">
+    <app-barra-superior-admin (alternarMenu)="alternarBarraLateral()" (cerrarSesion)="cerrarSesion()" />
+
+    <main class="flex-1 min-h-0 overflow-y-auto custom-scroll">
+      <div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
 </div>

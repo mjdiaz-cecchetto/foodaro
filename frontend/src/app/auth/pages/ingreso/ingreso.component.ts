@@ -74,7 +74,10 @@ export class IngresoComponente implements OnInit {
     return c.invalid && (c.touched || c.dirty);
   }
 
+  /** Vuelve a la URL pedida solo si es una pantalla del panel; si no, al inicio del admin. */
   private urlRetorno(): string {
-    return this.ruta.snapshot.queryParamMap.get('volverA') ?? this.local.ruta('admin');
+    const admin = this.local.ruta('admin');
+    const volverA = this.ruta.snapshot.queryParamMap.get('volverA');
+    return volverA && volverA.startsWith(admin) ? volverA : admin;
   }
 }

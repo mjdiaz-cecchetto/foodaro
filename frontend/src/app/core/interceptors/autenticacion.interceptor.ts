@@ -9,7 +9,9 @@ import { LocalServicio } from '../services/local.service';
 
 /**
  * Agrega el Bearer token a las peticiones al API y, si el servidor responde 401
- * en una ruta del panel, limpia la sesión y redirige al login del local.
+ * (token vencido o inválido), limpia la sesión y redirige al login del local.
+ * Si hay una navegación en curso (el 401 vino de un guard) no redirige acá:
+ * el guard decide el destino y conserva la URL a la que se quería entrar.
  */
 export const autenticacionInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
   const autenticacion = inject(AutenticacionServicio);
@@ -25,7 +27,9 @@ export const autenticacionInterceptor: HttpInterceptorFn = (peticion, siguiente)
       if (error instanceof HttpErrorResponse && error.status === 401 && esApi && !peticion.url.includes('/auth/ingreso')) {
         autenticacion.limpiarSesion();
         locales.cargaCompleta.set(false);
-        router.navigate(locales.url('auth', 'login'), { queryParams: { volverA: router.url } });
+        if (!router.getCurrentNavigation()) {
+          router.navigate(locales.url('auth', 'login'), { queryParams: { volverA: router.url } });
+        }
       }
       return throwError(() => error);
     }),

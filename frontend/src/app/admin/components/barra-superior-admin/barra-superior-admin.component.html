@@ -1,21 +1,41 @@
-<header class="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-surface-dark border-b border-zinc-200 dark:border-surface-borderDark sticky top-0 z-40">
-  <div class="flex items-center gap-2 min-w-0">
-    <button type="button" (click)="alternarMenu.emit()" class="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-surface-cardDark" aria-label="Abrir menú">
+@let p = perfil();
+<header class="shrink-0 h-16 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 bg-white dark:bg-surface-dark border-b border-zinc-200 dark:border-surface-borderDark z-30">
+
+  <!-- Izquierda: menú (móvil) + identidad del local -->
+  <div class="flex items-center gap-3 min-w-0">
+    <button type="button" (click)="alternarMenu.emit()" class="md:hidden w-10 h-10 -ml-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-surface-cardDark flex items-center justify-center" aria-label="Abrir menú">
       <i class="fa-solid fa-bars text-lg"></i>
     </button>
-    <app-logo variante="isotipo" tamanio="sm" [href]="'/'" />
-    <span class="font-extrabold text-sm truncate">{{ perfil().nombre }}</span>
-    <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 shrink-0">Admin</span>
+    @if (p.logoUrl) {
+      <img [src]="p.logoUrl" alt="" class="w-9 h-9 rounded-xl object-cover ring-2 ring-brand-500/20 shrink-0" />
+    }
+    <div class="min-w-0 leading-tight">
+      <h1 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white truncate">{{ p.nombre || 'Mi local' }}</h1>
+      <p class="hidden sm:block text-[11px] text-zinc-400 truncate">Panel de administración · <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Carta activa</span></p>
+    </div>
   </div>
 
+  <!-- Derecha: tema, carta, usuario y salir -->
   <div class="flex items-center gap-2 shrink-0">
     <app-alternar-tema
-      claseBoton="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark flex items-center justify-center text-zinc-600 dark:text-amber-400 tap-scale"
-      claseIcono=""
+      claseBoton="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark border border-zinc-200/60 dark:border-surface-borderDark text-zinc-600 dark:text-amber-400 flex items-center justify-center tap-scale"
+      claseIcono="text-sm"
       (alternado)="alAlternarTema($event)"
     />
-    <a [href]="enlaceCarta()" target="_blank" class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-bold flex items-center justify-center" title="Ver carta">
-      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+    <a [href]="enlaceCarta()" target="_blank" class="h-9 px-3 rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-bold hidden sm:flex items-center gap-2 tap-scale" title="Ver carta en vivo">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i><span class="hidden lg:inline">Ver carta</span>
     </a>
+
+    <div class="hidden md:flex items-center gap-2 pl-3 ml-1 border-l border-zinc-200 dark:border-surface-borderDark">
+      <span class="w-8 h-8 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-black flex items-center justify-center uppercase">{{ (usuario()?.nombre || 'A').charAt(0) }}</span>
+      <div class="leading-tight hidden lg:block">
+        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate max-w-[140px]">{{ usuario()?.nombre }}</p>
+        <p class="text-[10px] text-zinc-400 truncate max-w-[140px]">{{ usuario()?.email }}</p>
+      </div>
+    </div>
+
+    <button type="button" (click)="cerrarSesion.emit()" class="h-9 px-3 rounded-xl text-zinc-500 hover:text-brand-600 hover:bg-zinc-100 dark:hover:bg-surface-cardDark text-xs font-bold flex items-center gap-2 transition" title="Cerrar sesión">
+      <i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline">Salir</span>
+    </button>
   </div>
 </header>

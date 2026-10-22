@@ -6,6 +6,7 @@ use App\Enums\RolUsuario;
 use App\Models\Local;
 use App\Models\Usuario;
 use App\Services\GruposOpcionesServicio;
+use App\Services\HorariosServicio;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -39,11 +40,8 @@ class LocalDemoSeeder extends Seeder
                 'direccion' => $p['direccion'],
                 'referencia_direccion' => $p['referenciaDireccion'],
                 'maps_url' => $p['mapsUrl'],
-                'estado' => $p['estado'],
-                'horario_lunes_a_jueves' => $p['horarios']['lunesAJueves'],
-                'horario_viernes_y_sabado' => $p['horarios']['viernesYSabado'],
-                'horario_domingo' => $p['horarios']['domingo'],
                 'whatsapp' => $p['contacto']['whatsapp'],
+                'whatsapp_pedidos' => $p['contacto']['whatsappPedidos'] ?? $p['contacto']['whatsapp'],
                 'instagram' => $p['contacto']['instagram'],
                 'tiktok' => $p['contacto']['tiktok'],
                 'telefono' => $p['contacto']['telefono'],
@@ -52,6 +50,8 @@ class LocalDemoSeeder extends Seeder
                 'etiqueta_cargo_servicio' => $c['etiquetaCargoServicio'],
                 'activo' => true,
             ]);
+
+            app(HorariosServicio::class)->guardar($local, $p['horarios']['semana'], $p['horarios']['excepciones']);
 
             Usuario::create([
                 'local_id' => $local->id,

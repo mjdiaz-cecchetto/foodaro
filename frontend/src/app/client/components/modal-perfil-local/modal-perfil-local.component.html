@@ -13,7 +13,7 @@
     <div>
       <div class="flex items-center gap-2">
         <h3 class="text-xl font-black text-gray-900 dark:text-white">{{ p.nombre }}</h3>
-        <span class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>{{ p.estado }}</span>
+        <span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold" [class]="p.abiertoAhora ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-dark-muted'"><span class="w-1.5 h-1.5 rounded-full" [class]="p.abiertoAhora ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"></span>{{ p.estado }}</span>
       </div>
       <p class="text-sm text-gray-500 dark:text-dark-muted mt-0.5">{{ p.eslogan }}</p>
     </div>
@@ -26,14 +26,11 @@
       </div>
       <i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-400 mt-1"></i>
     </a>
+    <app-mapa-ubicacion [mapsUrl]="p.mapsUrl" [direccion]="p.direccion" clase="h-40 rounded-2xl" />
 
     <section>
       <h4 class="text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider mb-2"><i class="fa-regular fa-clock mr-1.5"></i>Horarios</h4>
-      <dl class="rounded-2xl border border-gray-100 dark:border-dark-border divide-y divide-gray-100 dark:divide-dark-border text-sm">
-        <div class="flex justify-between px-4 py-2.5"><dt class="text-gray-600 dark:text-dark-muted">Lunes a Jueves</dt><dd class="font-bold text-gray-900 dark:text-white">{{ p.horarios.lunesAJueves }}</dd></div>
-        <div class="flex justify-between px-4 py-2.5"><dt class="text-gray-600 dark:text-dark-muted">Viernes y Sábado</dt><dd class="font-bold text-gray-900 dark:text-white">{{ p.horarios.viernesYSabado }}</dd></div>
-        <div class="flex justify-between px-4 py-2.5"><dt class="text-gray-600 dark:text-dark-muted">Domingo</dt><dd class="font-bold text-gray-900 dark:text-white">{{ p.horarios.domingo }}</dd></div>
-      </dl>
+      <app-lista-horarios [horarios]="p.horarios" densidad="compacta" />
     </section>
 
     <section>

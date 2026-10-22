@@ -7,6 +7,8 @@ import { LocalServicio } from '../../../core/services/local.service';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { LocalPublicoServicio } from '../../services/local-publico.service';
 import { CartaServicio } from '../../services/carta.service';
+import { ListaHorariosComponente } from '../../components/lista-horarios/lista-horarios.component';
+import { MapaUbicacionComponente } from '../../../shared/components/mapa-ubicacion/mapa-ubicacion.component';
 
 /**
  * Portada del local (foodaro.net/<slug>): banner con identidad, accesos a
@@ -15,7 +17,7 @@ import { CartaServicio } from '../../services/carta.service';
 @Component({
   selector: 'app-portada-local',
   standalone: true,
-  imports: [RouterLink, LogoComponente, AlternarTemaComponente],
+  imports: [RouterLink, LogoComponente, AlternarTemaComponente, ListaHorariosComponente, MapaUbicacionComponente],
   templateUrl: './portada-local.component.html',
   styleUrl: './portada-local.component.scss',
 })

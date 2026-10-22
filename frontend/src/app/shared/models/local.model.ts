@@ -1,14 +1,40 @@
 import { Categoria, GrupoOpciones, Producto, Promocion } from './catalogo.model';
 
-/** Horarios de atención del local (texto libre por franja). */
+/** Franja horaria "HH:MM"–"HH:MM". Si `hasta` <= `desde`, termina al día siguiente (20:00–01:30). */
+export interface FranjaHoraria {
+  desde: string;
+  hasta: string;
+}
+
+/** Día de la semana ISO: 1 = lunes … 7 = domingo. */
+export type DiaSemana = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+/** Horario habitual de un día de la semana. */
+export interface HorarioDia {
+  dia: DiaSemana;
+  abierto: boolean;
+  franjas: FranjaHoraria[];
+}
+
+/** Excepción para una fecha puntual (YYYY-MM-DD): cerrado o con horario especial. */
+export interface ExcepcionHorario {
+  fecha: string;
+  cerrado: boolean;
+  motivo: string | null;
+  franjas: FranjaHoraria[];
+}
+
+/** Horarios de atención: semana habitual (7 días) + excepciones por fecha. */
 export interface Horarios {
-  lunesAJueves: string;
-  viernesYSabado: string;
-  domingo: string;
+  semana: HorarioDia[];
+  excepciones: ExcepcionHorario[];
 }
 
 export interface Contacto {
+  /** WhatsApp público de contacto (se muestra en la carta). */
   whatsapp: string;
+  /** WhatsApp al que llegan los pedidos armados (puede ser otro número). */
+  whatsappPedidos: string;
   instagram: string;
   tiktok: string;
   telefono: string;
@@ -24,8 +50,9 @@ export interface PerfilLocal {
   referenciaDireccion: string;
   mapsUrl: string;
   rubro: string;
-  /** Texto del estado actual: "Abierto Hoy • Cierra 00:30". */
+  /** Texto del estado actual calculado por el API: "Abierto · Cierra 00:30". */
   estado: string;
+  abiertoAhora: boolean;
   horarios: Horarios;
   contacto: Contacto;
 }
@@ -66,6 +93,7 @@ export const PERFIL_LOCAL_VACIO: PerfilLocal = {
   mapsUrl: '',
   rubro: '',
   estado: '',
-  horarios: { lunesAJueves: '', viernesYSabado: '', domingo: '' },
-  contacto: { whatsapp: '', instagram: '', tiktok: '', telefono: '' },
+  abiertoAhora: false,
+  horarios: { semana: [], excepciones: [] },
+  contacto: { whatsapp: '', whatsappPedidos: '', instagram: '', tiktok: '', telefono: '' },
 };

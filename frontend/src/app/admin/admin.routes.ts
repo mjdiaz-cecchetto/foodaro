@@ -8,7 +8,12 @@ export const RUTAS_ADMIN: Routes = [
     canActivate: [localAdminGuardia],
     loadComponent: () => import('./layout/layout-admin/layout-admin.component').then((m) => m.LayoutAdminComponente),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'perfil' },
+      { path: '', pathMatch: 'full', redirectTo: 'inicio' },
+      {
+        path: 'inicio',
+        loadComponent: () => import('./pages/pagina-inicio/pagina-inicio.component').then((m) => m.PaginaInicioComponente),
+        title: 'Foodaro Admin • Inicio',
+      },
       {
         path: 'perfil',
         loadComponent: () =>

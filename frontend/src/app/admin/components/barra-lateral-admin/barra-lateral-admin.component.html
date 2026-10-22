@@ -1,25 +1,18 @@
 @let p = perfil();
 <aside
-  class="fixed md:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-surface-dark border-r border-zinc-200 dark:border-surface-borderDark flex flex-col justify-between transform md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"
+  class="fixed md:static inset-y-0 left-0 z-50 w-64 h-full bg-white dark:bg-surface-dark border-r border-zinc-200 dark:border-surface-borderDark flex flex-col transform md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"
   [class.-translate-x-full]="!abierta()"
 >
-  <div>
-    <!-- Identidad: isotipo de Foodaro + local (escritorio) -->
-    <div class="p-5 border-b border-zinc-100 dark:border-surface-borderDark hidden md:flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5 min-w-0">
-        <app-logo variante="isotipo" tamanio="sm" [href]="'/'" />
-        <div class="min-w-0">
-          <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider leading-none">Panel de</p>
-          <h4 class="text-sm font-extrabold text-zinc-900 dark:text-white truncate mt-0.5">Administración</h4>
-        </div>
-      </div>
-      <app-alternar-tema
-        claseBoton="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark border border-zinc-200/60 dark:border-surface-borderDark text-zinc-600 dark:text-amber-400 flex items-center justify-center tap-scale hover:opacity-90 shrink-0"
-        claseIcono="text-sm"
-        (alternado)="alAlternarTema($event)"
-      />
+  <!-- Marca -->
+  <div class="h-16 shrink-0 px-5 border-b border-zinc-100 dark:border-surface-borderDark flex items-center gap-2.5">
+    <app-logo variante="isotipo" tamanio="sm" [href]="'/'" />
+    <div class="min-w-0">
+      <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider leading-none">Panel de</p>
+      <h4 class="text-sm font-extrabold text-zinc-900 dark:text-white truncate mt-0.5">Administración</h4>
     </div>
+  </div>
 
+  <div class="flex-1 min-h-0 overflow-y-auto custom-scroll">
     <!-- Tarjeta del local -->
     <div class="px-5 py-4 border-b border-zinc-100 dark:border-surface-borderDark">
       <a [href]="enlacePortada()" target="_blank" class="flex items-center gap-3 p-2 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark/70 border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition">
@@ -65,16 +58,12 @@
     </nav>
   </div>
 
-  <!-- Acciones inferiores -->
-  <div class="p-5 border-t border-zinc-100 dark:border-surface-borderDark space-y-3">
+  <!-- Acciones inferiores (fijas) -->
+  <div class="shrink-0 p-5 border-t border-zinc-100 dark:border-surface-borderDark space-y-3">
     <a [href]="enlaceCarta()" target="_blank" class="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-black dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold flex items-center justify-center gap-2 tap-scale shadow-sm transition">
       <i class="fa-solid fa-arrow-up-right-from-square"></i>
       <span>Abrir carta digital</span>
     </a>
-    <button type="button" (click)="cerrarSesion.emit()" class="w-full py-2 px-4 rounded-xl text-zinc-500 hover:text-brand-600 hover:bg-zinc-50 dark:hover:bg-surface-cardDark text-[11px] font-bold flex items-center justify-center gap-2 transition">
-      <i class="fa-solid fa-right-from-bracket"></i>
-      <span>Cerrar sesión</span>
-    </button>
     <p class="text-[10px] text-zinc-400 text-center font-medium">Hecho con <span class="font-brand text-sm align-middle">foodaro</span></p>
   </div>
 </aside>

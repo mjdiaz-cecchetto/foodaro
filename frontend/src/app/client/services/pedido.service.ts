@@ -83,9 +83,10 @@ export class PedidoServicio {
     return lineas.join('\n');
   }
 
-  /** URL de WhatsApp del local con el pedido precargado. */
+  /** URL de WhatsApp (número que recibe los pedidos) con el pedido precargado. */
   urlWhatsApp(pedido: BorradorPedido, registrado?: PedidoRegistrado): string {
-    const telefono = this.localPublico.perfil().contacto.whatsapp.replace(/\D/g, '');
+    const contacto = this.localPublico.perfil().contacto;
+    const telefono = (contacto.whatsappPedidos || contacto.whatsapp).replace(/\D/g, '');
     return `https://wa.me/${telefono}?text=${encodeURIComponent(this.armarMensaje(pedido, registrado))}`;
   }
 

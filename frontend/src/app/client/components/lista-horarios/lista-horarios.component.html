@@ -1,0 +1,25 @@
+@let compacta = densidad() === 'compacta';
+<dl class="rounded-2xl border border-gray-100 dark:border-dark-border divide-y divide-gray-100 dark:divide-dark-border" [class]="compacta ? 'text-xs' : 'text-sm'">
+  @for (d of semana(); track d.dia) {
+    <div class="flex justify-between gap-3 px-4" [class]="(compacta ? 'py-2' : 'py-2.5') + (d.dia === hoy ? ' bg-brand-50/60 dark:bg-brand-900/15' : '')">
+      <dt class="flex items-center gap-2" [class]="d.dia === hoy ? 'font-bold text-brand-600' : 'text-gray-600 dark:text-dark-muted'">
+        {{ NOMBRES[d.dia] }}
+        @if (d.dia === hoy) { <span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded bg-brand-600 text-white">Hoy</span> }
+      </dt>
+      <dd class="font-bold text-right" [class]="d.abierto ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-dark-muted'">
+        {{ d.abierto ? formatearFranjas(d.franjas) : 'Cerrado' }}
+      </dd>
+    </div>
+  }
+</dl>
+
+@if (proximasExcepciones().length) {
+  <ul class="mt-3 space-y-1.5">
+    @for (e of proximasExcepciones(); track e.fecha) {
+      <li class="flex items-start gap-2 px-3 py-2 rounded-xl text-[11px] font-semibold" [class]="e.cerrado ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'">
+        <i class="fa-solid mt-0.5" [class]="e.cerrado ? 'fa-ban' : 'fa-clock'"></i>
+        <span><span class="capitalize">{{ formatearFechaCorta(e.fecha) }}</span>: {{ e.cerrado ? 'cerrado' : formatearFranjas(e.franjas) }}{{ e.motivo ? ' · ' + e.motivo : '' }}</span>
+      </li>
+    }
+  </ul>
+}

@@ -12,9 +12,8 @@ class Local extends Model
 
     protected $fillable = [
         'slug', 'nombre', 'eslogan', 'rubro', 'logo_url', 'portada_url',
-        'direccion', 'referencia_direccion', 'maps_url', 'estado',
-        'horario_lunes_a_jueves', 'horario_viernes_y_sabado', 'horario_domingo',
-        'whatsapp', 'instagram', 'tiktok', 'telefono',
+        'direccion', 'referencia_direccion', 'maps_url',
+        'whatsapp', 'whatsapp_pedidos', 'instagram', 'tiktok', 'telefono',
         'moneda', 'cargo_servicio', 'etiqueta_cargo_servicio', 'activo',
     ];
 
@@ -55,5 +54,17 @@ class Local extends Model
     public function pedidos(): HasMany
     {
         return $this->hasMany(Pedido::class);
+    }
+
+    /** Franjas semanales ordenadas por día y orden. */
+    public function horarios(): HasMany
+    {
+        return $this->hasMany(Horario::class)->orderBy('dia_semana')->orderBy('orden');
+    }
+
+    /** Excepciones por fecha (se exponen solo las de hoy en adelante). */
+    public function excepcionesHorario(): HasMany
+    {
+        return $this->hasMany(ExcepcionHorario::class)->orderBy('fecha')->orderBy('desde');
     }
 }

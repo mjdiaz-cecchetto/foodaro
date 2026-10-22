@@ -2,23 +2,20 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { LogoComponente } from '../../../shared/components/logo/logo.component';
-import { AlternarTemaComponente } from '../../../shared/components/alternar-tema/alternar-tema.component';
-import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { LocalServicio } from '../../../core/services/local.service';
 import { CatalogoAdminServicio } from '../../services/catalogo-admin.service';
 import { LocalAdminServicio } from '../../services/local-admin.service';
 import { ItemNavegacionAdmin } from '../../interfaces';
 
-/** Barra lateral del admin: isotipo + identidad del local, navegación y accesos. */
+/** Barra lateral fija del admin: marca, tarjeta del local, navegación y acceso a la carta. */
 @Component({
   selector: 'app-barra-lateral-admin',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, LogoComponente, AlternarTemaComponente],
+  imports: [RouterLink, RouterLinkActive, LogoComponente],
   templateUrl: './barra-lateral-admin.component.html',
   styleUrl: './barra-lateral-admin.component.scss',
 })
 export class BarraLateralAdminComponente {
-  private readonly notificaciones = inject(NotificacionesServicio);
   private readonly catalogo = inject(CatalogoAdminServicio);
   private readonly localAdmin = inject(LocalAdminServicio);
   private readonly local = inject(LocalServicio);
@@ -26,13 +23,13 @@ export class BarraLateralAdminComponente {
   /** Abierta en móvil (drawer). En escritorio siempre visible. */
   readonly abierta = input<boolean>(false);
   readonly navegado = output<void>();
-  readonly cerrarSesion = output<void>();
 
   readonly perfil = this.localAdmin.perfil;
   readonly enlaceCarta = computed(() => this.local.ruta('pedido'));
   readonly enlacePortada = computed(() => this.local.ruta());
 
   readonly items: ItemNavegacionAdmin[] = [
+    { ruta: 'inicio', etiqueta: 'Inicio', icono: 'fa-house', indicador: 'flecha' },
     { ruta: 'perfil', etiqueta: 'Datos del Local', icono: 'fa-store', indicador: 'flecha' },
     { ruta: 'categorias', etiqueta: 'Categorías', icono: 'fa-shapes', indicador: 'contador' },
     { ruta: 'productos', etiqueta: 'Productos', icono: 'fa-utensils', indicador: 'contador' },
@@ -46,7 +43,4 @@ export class BarraLateralAdminComponente {
     return item.ruta === 'categorias' ? this.catalogo.cantidadCategorias() : this.catalogo.cantidadProductos();
   }
 
-  alAlternarTema(oscuro: boolean): void {
-    this.notificaciones.mostrar(`Modo ${oscuro ? 'Oscuro' : 'Claro'} activado`);
-  }
 }

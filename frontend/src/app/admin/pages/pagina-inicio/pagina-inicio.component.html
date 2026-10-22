@@ -1,0 +1,130 @@
+@let p = inicio.perfil();
+@let progreso = inicio.progreso();
+<section class="space-y-6">
+
+  <!-- Bienvenida -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-4 min-w-0">
+      @if (p?.logoUrl) {
+        <img [src]="p?.logoUrl" alt="" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-brand-500/20 shadow-sm shrink-0" />
+      }
+      <div class="min-w-0">
+        <p class="text-xs font-bold text-brand-600 uppercase tracking-wider">{{ saludo }}</p>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white truncate">{{ p?.nombre }}</h1>
+        <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Así está tu carta hoy. Todo lo que cambies acá se ve al instante en la carta.</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <a [href]="inicio.urlPedido()" target="_blank" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs sm:text-sm shadow-coral tap-scale flex items-center gap-2 transition">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i><span>Ver carta en vivo</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Indicadores -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    @for (ind of inicio.indicadores(); track ind.etiqueta) {
+      <a [routerLink]="'../' + ind.ruta" class="bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition group">
+        <div class="flex items-start justify-between">
+          <span class="w-10 h-10 rounded-2xl flex items-center justify-center text-base" [class]="ind.estilo"><i class="fa-solid" [class]="ind.icono"></i></span>
+          <i class="fa-solid fa-arrow-right text-xs text-zinc-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition"></i>
+        </div>
+        <p class="text-3xl font-black text-zinc-900 dark:text-white mt-3 leading-none">{{ ind.valor }}</p>
+        <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300 mt-1.5">{{ ind.etiqueta }}</p>
+        <p class="text-[11px] text-zinc-400 mt-0.5">{{ ind.detalle }}</p>
+      </a>
+    }
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Puesta a punto -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark">
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Puesta a punto</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ progreso.hechos }} de {{ progreso.total }} pasos listos</p>
+          </div>
+          <span class="text-2xl font-black" [class]="progreso.porcentaje === 100 ? 'text-emerald-500' : 'text-zinc-900 dark:text-white'">{{ progreso.porcentaje }}%</span>
+        </div>
+        <div class="h-2 rounded-full bg-zinc-100 dark:bg-surface-cardDark overflow-hidden mb-4">
+          <div class="h-full rounded-full transition-all duration-500" [class]="progreso.porcentaje === 100 ? 'bg-emerald-500' : 'bg-brand-600'" [style.width.%]="progreso.porcentaje"></div>
+        </div>
+        <ul class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+          @for (paso of inicio.pasos(); track paso.id) {
+            <li>
+              <a [routerLink]="'../' + paso.ruta" class="flex items-center gap-3 py-3 group">
+                <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0" [class]="paso.completo ? 'bg-emerald-500 text-white' : 'border-2 border-zinc-300 dark:border-zinc-600 text-transparent'"><i class="fa-solid fa-check"></i></span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-bold" [class]="paso.completo ? 'text-zinc-400 line-through decoration-zinc-300' : 'text-zinc-900 dark:text-white'">{{ paso.titulo }}</p>
+                  <p class="text-[11px] text-zinc-400">{{ paso.descripcion }}</p>
+                </div>
+                @if (!paso.completo) {
+                  <span class="text-[11px] font-bold text-brand-600 opacity-0 group-hover:opacity-100 transition">Completar <i class="fa-solid fa-arrow-right ml-1"></i></span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Agotados -->
+      @if (inicio.agotados().length) {
+        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-extrabold text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2"><i class="fa-solid fa-ban text-zinc-400"></i>Agotados ahora</h3>
+            <a routerLink="../productos" class="text-[11px] font-bold text-brand-600">Ver productos</a>
+          </div>
+          <ul class="flex flex-wrap gap-2">
+            @for (prod of inicio.agotados(); track prod.id) {
+              <li class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark">
+                <img [src]="prod.imagen" alt="" class="w-7 h-7 rounded-lg object-cover grayscale" />
+                <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">{{ prod.nombre }}</span>
+                <button type="button" (click)="reponer(prod)" class="text-[10px] font-bold text-emerald-600 hover:underline ml-1" title="Volver a poner en carta">Reponer</button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Accesos rápidos -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        @for (a of inicio.accesos; track a.titulo) {
+          <a [routerLink]="'../' + a.ruta" class="bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition flex items-start gap-3">
+            <span class="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 flex items-center justify-center shrink-0"><i class="fa-solid" [class]="a.icono"></i></span>
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-zinc-900 dark:text-white">{{ a.titulo }}</p>
+              <p class="text-[11px] text-zinc-400">{{ a.descripcion }}</p>
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+
+    <!-- Compartir la carta -->
+    <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark flex flex-col">
+      <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600 mb-1">Compartí tu carta</h3>
+      <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-4">Imprimí el QR para las mesas o pegá el enlace en Instagram y WhatsApp.</p>
+
+      <div class="bg-white rounded-2xl p-3 border border-zinc-100 shadow-soft mx-auto">
+        <img [src]="inicio.urlImagenQr(200)" alt="QR de la carta" width="200" height="200" class="rounded-lg" />
+      </div>
+
+      <div class="mt-4 space-y-2 text-xs">
+        <div class="flex items-center gap-2 p-2 pl-3 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-100 dark:border-surface-borderDark">
+          <i class="fa-solid fa-link text-zinc-400"></i>
+          <span class="flex-1 truncate font-medium text-zinc-700 dark:text-zinc-300">{{ inicio.urlCarta() }}</span>
+          <button type="button" (click)="copiar(inicio.urlCarta())" class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-surface-dark font-bold shadow-sm tap-scale">Copiar</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" (click)="copiar(inicio.urlMenu())" class="py-2.5 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold tap-scale"><i class="fa-solid fa-book-open mr-1.5 text-zinc-400"></i>Link solo carta</button>
+          <button type="button" (click)="copiar(inicio.urlPedido())" class="py-2.5 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold tap-scale"><i class="fa-solid fa-bag-shopping mr-1.5 text-zinc-400"></i>Link con pedidos</button>
+        </div>
+        <a [href]="inicio.urlDescargaQr()" download="qr-carta.png" target="_blank" rel="noopener" class="w-full py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold flex items-center justify-center gap-2 tap-scale">
+          <i class="fa-solid fa-download"></i>Descargar QR para imprimir
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

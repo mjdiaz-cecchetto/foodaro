@@ -27,8 +27,8 @@
     <section class="relative overflow-hidden rounded-3xl bg-neutral-900 shadow-card h-64 sm:h-80">
       <img [src]="p.portadaUrl" alt="" class="absolute inset-0 w-full h-full object-cover opacity-90" />
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10"></div>
-      <div class="absolute top-4 left-5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/90 text-white text-xs font-bold backdrop-blur-md shadow-md">
-        <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>{{ p.estado }}
+      <div class="absolute top-4 left-5 flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-xs font-bold backdrop-blur-md shadow-md" [class]="p.abiertoAhora ? 'bg-emerald-500/90' : 'bg-zinc-800/80'">
+        <span class="w-2 h-2 rounded-full bg-white" [class.animate-pulse]="p.abiertoAhora"></span>{{ p.estado }}
       </div>
       <div class="absolute bottom-5 left-5 right-5 sm:left-7 sm:right-7 flex items-end gap-4 z-10">
         <img [src]="p.logoUrl" alt="Logo" class="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl object-cover ring-2 ring-white/90 shadow-xl bg-white shrink-0" />
@@ -80,15 +80,12 @@
             <p class="text-xs text-gray-500 dark:text-dark-muted">{{ p.referenciaDireccion }}</p>
           </div>
         </a>
+        <app-mapa-ubicacion [mapsUrl]="p.mapsUrl" [direccion]="p.direccion" clase="h-44 rounded-2xl" />
 
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <h4 class="text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider mb-2"><i class="fa-regular fa-clock mr-1.5"></i>Horarios</h4>
-            <dl class="text-sm space-y-1.5">
-              <div class="flex justify-between"><dt class="text-gray-600 dark:text-dark-muted">Lun a Jue</dt><dd class="font-bold">{{ p.horarios.lunesAJueves }}</dd></div>
-              <div class="flex justify-between"><dt class="text-gray-600 dark:text-dark-muted">Vie y Sáb</dt><dd class="font-bold">{{ p.horarios.viernesYSabado }}</dd></div>
-              <div class="flex justify-between"><dt class="text-gray-600 dark:text-dark-muted">Domingo</dt><dd class="font-bold">{{ p.horarios.domingo }}</dd></div>
-            </dl>
+            <app-lista-horarios [horarios]="p.horarios" densidad="compacta" />
           </div>
           <div>
             <h4 class="text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider mb-2"><i class="fa-regular fa-comments mr-1.5"></i>Contacto</h4>
