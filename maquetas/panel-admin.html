@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es-AR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodaro Admin • Catálogo & Modificadores</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#FFF1F0',
+              500: '#FF3B30',
+              600: '#E0261B',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            caveat: ['"Caveat"', 'cursive'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Font Awesome 6 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=JetBrains+Mono:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    button { touch-action: manipulation; }
+  </style>
+</head>
+
+<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased min-h-screen">
+
+  <div class="flex min-h-screen">
+    
+    <!-- SIDEBAR PERSISTENTE -->
+    <aside class="hidden lg:flex flex-col w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 justify-between shrink-0">
+      <div class="space-y-6">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-brand-500 text-white flex items-center justify-center font-caveat text-2xl font-bold shadow-md shadow-brand-500/20">f</div>
+          <div>
+            <span class="font-caveat text-2xl font-bold text-brand-500">foodaro</span>
+            <p class="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">Admin Panel</p>
+          </div>
+        </div>
+
+        <nav class="space-y-1 text-xs font-bold">
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <i class="fa-solid fa-store w-4"></i> Local & Perfil
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 border border-brand-500/20">
+            <i class="fa-solid fa-boxes-stacked w-4"></i> Catálogo & Productos
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <i class="fa-solid fa-chart-line w-4"></i> Ventas & Reportes
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <i class="fa-solid fa-ticket w-4"></i> Promociones & Cupones
+          </a>
+        </nav>
+      </div>
+
+      <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
+        <span class="text-zinc-400 font-mono text-[11px]">v2.4 Pro</span>
+        <button onclick="toggleDarkMode()" class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-amber-400 flex items-center justify-center cursor-pointer">
+          <i id="themeIcon" class="fa-solid fa-moon"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL FLUIDO (SIN MAX-W RÍGIDO) -->
+    <main class="flex-1 flex flex-col min-w-0">
+      
+      <!-- TOPBAR -->
+      <header class="sticky top-0 z-30 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Catálogo & Modificadores</h1>
+          <p class="text-xs text-zinc-500">Gestión de productos, variantes por porción/talle, adicionales y pausa de stock en vivo.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="openProductModal()" class="bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md shadow-brand-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Nuevo Producto</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ÁREA DE TRABAJO RESPONSIVA Y FLUIDA -->
+      <div class="p-4 sm:p-8 w-full flex flex-col lg:flex-row gap-6 items-start flex-1">
+        
+        <!-- SIDEBAR DE CATEGORÍAS (STICKY EN DESKTOP, HORIZONTAL EN MÓVIL) -->
+        <aside class="w-full lg:w-72 shrink-0 bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm lg:sticky lg:top-24 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">Categorías</span>
+            <button onclick="addCategoryPrompt()" class="text-brand-500 hover:text-brand-600 text-xs font-bold flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-plus text-[10px]"></i> Nueva
+            </button>
+          </div>
+
+          <div id="categoryList" class="flex flex-row lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0"></div>
+        </aside>
+
+        <!-- CONTENIDO DEL CATÁLOGO (GRID FLUIDA HASTA 6 COLUMNAS EN ULTRA-WIDE) -->
+        <div class="flex-1 w-full space-y-4">
+          
+          <!-- Barra de Búsqueda y Filtros Rápidos -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm">
+            <div class="relative flex-1 min-w-[220px]">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-xs"></i>
+              <input type="text" id="catalogSearch" oninput="filterCatalog(this.value)" placeholder="Buscar producto por nombre o descripción..." class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+            </div>
+
+            <span id="productCounterBadge" class="text-[11px] font-mono font-bold px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">0 productos</span>
+          </div>
+
+          <!-- Grilla Adaptativa -->
+          <div id="productsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1920px]:grid-cols-6 gap-5"></div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ==================== MODAL SLIDE-OVER: PRODUCTO + MODIFICADORES ==================== -->
+  <div id="productModalBackdrop" onclick="closeProductModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-200"></div>
+
+  <div id="productModal" class="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 flex flex-col justify-between hidden transform translate-x-full transition-transform duration-200">
+    
+    <div class="space-y-5 overflow-y-auto pr-1 no-scrollbar flex-1">
+      
+      <!-- Header Modal -->
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div>
+          <h3 id="modalTitle" class="text-base font-extrabold text-zinc-900 dark:text-white">Nuevo Producto</h3>
+          <p class="text-[11px] text-zinc-400">Configuración general y grupos de variantes asociadas</p>
+        </div>
+        <button onclick="closeProductModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <form id="productForm" onsubmit="handleProductSubmit(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="formProductId">
+
+        <!-- Fila 1: Nombre & Categoría -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre</label>
+            <input type="text" id="formName" required placeholder="Ej: Pizza Napolitana / Sándwich Milanesa" class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-semibold focus:outline-none focus:ring-1 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Categoría</label>
+            <select id="formCategory" class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-semibold focus:outline-none focus:ring-1 focus:ring-brand-500"></select>
+          </div>
+        </div>
+
+        <!-- Fila 2: Precio Base & URL Imagen -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Precio Base ($ ARS)</label>
+            <input type="number" id="formPrice" required placeholder="12500" class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-mono font-bold focus:outline-none focus:ring-1 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">URL Foto (Unsplash/Directo)</label>
+            <input type="url" id="formImage" placeholder="https://images.unsplash.com/..." class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-brand-500">
+          </div>
+        </div>
+
+        <!-- Fila 3: Descripción -->
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Descripción Breve</label>
+          <textarea id="formDesc" rows="2" placeholder="Detalle de ingredientes, acompañamiento o variantes..." class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-medium focus:outline-none focus:ring-1 focus:ring-brand-500"></textarea>
+        </div>
+
+        <!-- Modificadores -->
+        <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-extrabold text-xs text-zinc-900 dark:text-white uppercase tracking-wider">Grupos de Adicionales & Variantes</span>
+              <p class="text-[11px] text-zinc-400">Mitades de pizza, docenas de empanadas, extras o talles</p>
+            </div>
+            <button type="button" onclick="addGroupToModal()" class="text-brand-500 hover:text-brand-600 text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-brand-50 dark:bg-brand-500/10 px-2.5 py-1 rounded-lg">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Sumar Grupo</span>
+            </button>
+          </div>
+
+          <div id="modalModifierGroups" class="space-y-3"></div>
+        </div>
+
+        <!-- Estado de Publicación -->
+        <div class="pt-3 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="formAvailable" checked class="w-4 h-4 rounded text-brand-500 focus:ring-brand-500">
+            <span class="font-bold text-xs">Publicado en Carta / Terminal POS</span>
+          </label>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-md shadow-brand-500/25 active:scale-95 transition-all cursor-pointer">
+            Guardar Producto y Modificadores
+          </button>
+        </div>
+      </form>
+
+    </div>
+
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    let categories = [
+      { id: 'all', name: 'Todos los ítems', icon: 'fa-border-all' },
+      { id: 'burgers', name: 'Hamburguesas & Sándwiches', icon: 'fa-burger' },
+      { id: 'pizzas', name: 'Pizzas a la Piedra', icon: 'fa-pizza-slice' },
+      { id: 'empanadas', name: 'Empanadas Tradicionales', icon: 'fa-bread-slice' },
+      { id: 'bebidas', name: 'Bebidas & Cervezas', icon: 'fa-wine-bottle' }
+    ];
+
+    let products = [
+      {
+        id: 1,
+        cat: 'burgers',
+        name: 'Doble Smash Angus Burger',
+        price: 13800,
+        desc: 'Doble medallón 110g, queso cheddar fundido y salsa secreta en pan brioche artesanal.',
+        available: true,
+        img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
+        modifierGroups: [
+          {
+            id: 101,
+            title: 'Adicionales de Sándwich',
+            type: 'multiple',
+            required: false,
+            options: [
+              { name: 'Panceta Ahumada Crispy', price: 1800 },
+              { name: 'Medallón Extra de Carne', price: 3200 },
+              { name: 'Cheddar Doble Fundido', price: 1500 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 2,
+        cat: 'pizzas',
+        name: 'Pizza Margherita Di Bufala',
+        price: 16900,
+        desc: 'Masa madre 48hs leudado, salsa pomodoro italiana, albahaca y mozzarella fresca.',
+        available: true,
+        img: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80',
+        modifierGroups: [
+          {
+            id: 201,
+            title: 'Porción / Formato',
+            type: 'single',
+            required: true,
+            options: [
+              { name: 'Pizza Entera (8 Porciones)', price: 0 },
+              { name: 'Media Pizza (Mitad)', price: -3500 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 3,
+        cat: 'empanadas',
+        name: 'Empanadas de Carne a Cuchillo',
+        price: 2100,
+        desc: 'Lomo tierno cortado a cuchillo, huevo de campo y cebolla de verdeo frita.',
+        available: true,
+        img: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=600&q=80',
+        modifierGroups: [
+          {
+            id: 301,
+            title: 'Cantidad / Presentación',
+            type: 'single',
+            required: true,
+            options: [
+              { name: 'Por Unidad', price: 0 },
+              { name: 'Docena Completa (12u)', price: 18900 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 4,
+        cat: 'bebidas',
+        name: 'Cerveza Patagonia IPA 500cc',
+        price: 4200,
+        desc: 'Tirada en copa helada con lúpulos patagónicos frescos.',
+        available: true,
+        img: 'https://images.unsplash.com/photo-1608270119293-19965fc12ea0?auto=format&fit=crop&w=600&q=80',
+        modifierGroups: [
+          {
+            id: 401,
+            title: 'Temperatura',
+            type: 'single',
+            required: false,
+            options: [
+              { name: 'Bien Helada', price: 0 },
+              { name: 'Temperatura Bodega', price: 0 }
+            ]
+          }
+        ]
+      }
+    ];
+
+    let activeCategory = 'all';
+    let currentEditGroups = [];
+
+    function formatARS(val) {
+      return '$ ' + new Intl.NumberFormat('es-AR').format(val);
+    }
+
+    function renderCategories() {
+      const container = document.getElementById('categoryList');
+      container.innerHTML = categories.map(c => `
+        <button onclick="setCategoryFilter('${c.id}')" class="w-full shrink-0 flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${activeCategory === c.id ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}">
+          <div class="flex items-center gap-2.5">
+            <i class="fa-solid ${c.icon} w-3.5"></i>
+            <span class="whitespace-nowrap">${c.name}</span>
+          </div>
+          <span class="text-[10px] font-mono opacity-80 ml-2">${c.id === 'all' ? products.length : products.filter(p => p.cat === c.id).length}</span>
+        </button>
+      `).join('');
+
+      const formCat = document.getElementById('formCategory');
+      formCat.innerHTML = categories.filter(c => c.id !== 'all').map(c => `
+        <option value="${c.id}">${c.name}</option>
+      `).join('');
+    }
+
+    function setCategoryFilter(catId) {
+      activeCategory = catId;
+      renderCategories();
+      renderProducts();
+    }
+
+    function renderProducts(filtered = null) {
+      const items = filtered || (activeCategory === 'all' ? products : products.filter(p => p.cat === activeCategory));
+      const container = document.getElementById('productsContainer');
+      document.getElementById('productCounterBadge').innerText = `${items.length} productos`;
+
+      if (!items.length) {
+        container.innerHTML = `
+          <div class="col-span-full p-12 text-center bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 text-zinc-400 text-xs">
+            No se encontraron productos en esta categoría o búsqueda.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map(p => {
+        const groupsCount = p.modifierGroups ? p.modifierGroups.length : 0;
+        return `
+          <div class="bg-white dark:bg-zinc-900 rounded-3xl border ${p.available ? 'border-zinc-200/80 dark:border-zinc-800' : 'border-dashed border-zinc-300 dark:border-zinc-700 opacity-70'} p-4 shadow-sm flex flex-col justify-between space-y-3 transition-all hover:shadow-md">
+            
+            <div class="space-y-3">
+              <!-- CONTENEDOR DE IMAGEN CON RATIO FORZADO 16:10 Y FALLBACK -->
+              <div class="w-full aspect-[16/10] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 relative flex items-center justify-center">
+                <img 
+                  src="${p.img}" 
+                  alt="${p.name}" 
+                  class="w-full h-full object-cover"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                >
+                <div class="hidden absolute inset-0 items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-400 text-xs flex-col gap-1">
+                  <i class="fa-solid fa-image text-xl"></i>
+                  <span class="text-[10px] font-mono">Sin foto</span>
+                </div>
+
+                <!-- BADGE DISPONIBILIDAD -->
+                <span class="absolute top-2.5 left-2.5 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full backdrop-blur-md shadow-sm ${p.available ? 'bg-emerald-500 text-white' : 'bg-zinc-900/90 text-zinc-300'}">
+                  ${p.available ? 'EN CARTA' : 'PAUSADO'}
+                </span>
+
+                <!-- BADGE MODIFICADORES -->
+                ${groupsCount > 0 ? `
+                  <span class="absolute bottom-2.5 left-2.5 text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-zinc-950/80 text-amber-400 border border-zinc-800/80 backdrop-blur-sm flex items-center gap-1">
+                    <i class="fa-solid fa-sliders text-[9px]"></i> ${groupsCount} grupos
+                  </span>
+                ` : ''}
+              </div>
+
+              <!-- INFO PRODUCTO -->
+              <div class="space-y-1">
+                <div class="flex items-baseline justify-between gap-2">
+                  <span class="text-[10px] font-mono font-bold uppercase text-zinc-400 truncate">${categories.find(c => c.id === p.cat)?.name || 'General'}</span>
+                  <span class="font-mono text-base font-black text-brand-500 shrink-0">${formatARS(p.price)}</span>
+                </div>
+                <h4 class="text-sm font-bold text-zinc-900 dark:text-white truncate" title="${p.name}">${p.name}</h4>
+                <p class="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">${p.desc}</p>
+              </div>
+            </div>
+
+            <!-- FOOTER CARD -->
+            <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+              <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" onchange="toggleStock(${p.id})" ${p.available ? 'checked' : ''} class="sr-only peer">
+                <div class="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 relative"></div>
+                <span class="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">${p.available ? 'Activo' : 'Agotado'}</span>
+              </label>
+
+              <button onclick="editProduct(${p.id})" class="text-zinc-400 hover:text-brand-500 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer" title="Editar Producto">
+                <i class="fa-solid fa-pen-to-square text-sm"></i>
+              </button>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleStock(id) {
+      const prod = products.find(p => p.id === id);
+      if (prod) {
+        prod.available = !prod.available;
+        renderProducts();
+      }
+    }
+
+    function filterCatalog(term) {
+      const q = term.toLowerCase().trim();
+      const filtered = products.filter(p => p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q));
+      renderProducts(filtered);
+    }
+
+    function addCategoryPrompt() {
+      const name = prompt('Nombre de la nueva categoría:');
+      if (name && name.trim()) {
+        const id = name.toLowerCase().replace(/\s+/g, '-');
+        categories.push({ id: id, name: name.trim(), icon: 'fa-tag' });
+        renderCategories();
+      }
+    }
+
+    // ==================== LÓGICA DE MODIFICADORES EN MODAL ====================
+    function renderModalModifiers() {
+      const container = document.getElementById('modalModifierGroups');
+      if (!currentEditGroups.length) {
+        container.innerHTML = `
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-dashed border-zinc-200 dark:border-zinc-700 text-center text-zinc-400 text-xs">
+            Sin variantes adicionales. El producto se venderá con su precio base.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = currentEditGroups.map((g, gIdx) => `
+        <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700 space-y-3">
+          
+          <div class="flex items-center justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700 pb-2">
+            <input type="text" value="${g.title}" onchange="updateGroupTitle(${gIdx}, this.value)" placeholder="Título del Grupo (ej: Extras, Salsas, Tamaño)" class="flex-1 font-bold text-xs bg-transparent text-zinc-900 dark:text-white focus:outline-none border-b border-dashed border-zinc-300 dark:border-zinc-600">
+
+            <div class="flex items-center gap-2">
+              <select onchange="updateGroupType(${gIdx}, this.value)" class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-0.5 text-[10px] font-bold">
+                <option value="single" ${g.type === 'single' ? 'selected' : ''}>Única (Radio)</option>
+                <option value="multiple" ${g.type === 'multiple' ? 'selected' : ''}>Múltiple (Check)</option>
+              </select>
+
+              <label class="flex items-center gap-1 text-[10px] font-bold text-zinc-500 cursor-pointer">
+                <input type="checkbox" onchange="toggleGroupReq(${gIdx})" ${g.required ? 'checked' : ''} class="w-3 h-3 rounded text-brand-500">
+                <span>Obligatorio</span>
+              </label>
+
+              <button type="button" onclick="removeGroupFromModal(${gIdx})" class="text-zinc-400 hover:text-rose-500 text-xs p-1">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Opciones -->
+          <div class="space-y-1.5">
+            ${g.options.map((opt, oIdx) => `
+              <div class="flex items-center gap-2">
+                <input type="text" value="${opt.name}" onchange="updateOptionName(${gIdx}, ${oIdx}, this.value)" placeholder="Nombre de la opción..." class="flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2.5 py-1 text-xs text-zinc-800 dark:text-zinc-200">
+                
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] font-mono text-zinc-400">$</span>
+                  <input type="number" value="${opt.price}" onchange="updateOptionPrice(${gIdx}, ${oIdx}, this.value)" placeholder="0" class="w-20 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-xs font-mono font-bold text-right">
+                </div>
+
+                <button type="button" onclick="removeOptionFromModal(${gIdx}, ${oIdx})" class="text-zinc-400 hover:text-rose-500 text-xs p-1">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            `).join('')}
+          </div>
+
+          <button type="button" onclick="addOptionToGroup(${gIdx})" class="text-[11px] font-bold text-brand-500 hover:text-brand-600 flex items-center gap-1 cursor-pointer">
+            <i class="fa-solid fa-plus text-[9px]"></i>
+            <span>Agregar opción</span>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function addGroupToModal() {
+      currentEditGroups.push({
+        id: Date.now(),
+        title: 'Nuevo Grupo de Opciones',
+        type: 'multiple',
+        required: false,
+        options: [{ name: 'Opción 1', price: 0 }]
+      });
+      renderModalModifiers();
+    }
+
+    function removeGroupFromModal(idx) {
+      currentEditGroups.splice(idx, 1);
+      renderModalModifiers();
+    }
+
+    function updateGroupTitle(idx, val) {
+      currentEditGroups[idx].title = val;
+    }
+
+    function updateGroupType(idx, val) {
+      currentEditGroups[idx].type = val;
+    }
+
+    function toggleGroupReq(idx) {
+      currentEditGroups[idx].required = !currentEditGroups[idx].required;
+    }
+
+    function addOptionToGroup(gIdx) {
+      currentEditGroups[gIdx].options.push({ name: 'Nueva variante', price: 0 });
+      renderModalModifiers();
+    }
+
+    function removeOptionFromModal(gIdx, oIdx) {
+      if (currentEditGroups[gIdx].options.length > 1) {
+        currentEditGroups[gIdx].options.splice(oIdx, 1);
+        renderModalModifiers();
+      } else {
+        alert('El grupo debe contener al menos una opción.');
+      }
+    }
+
+    function updateOptionName(gIdx, oIdx, val) {
+      currentEditGroups[gIdx].options[oIdx].name = val;
+    }
+
+    function updateOptionPrice(gIdx, oIdx, val) {
+      currentEditGroups[gIdx].options[oIdx].price = Number(val);
+    }
+
+    // ==================== APERTURA Y CIERRE DEL MODAL ====================
+    function openProductModal() {
+      document.getElementById('modalTitle').innerText = 'Nuevo Producto';
+      document.getElementById('formProductId').value = '';
+      document.getElementById('productForm').reset();
+      document.getElementById('formAvailable').checked = true;
+      currentEditGroups = [];
+      renderModalModifiers();
+
+      const d = document.getElementById('productModal');
+      const b = document.getElementById('productModalBackdrop');
+      b.classList.remove('hidden');
+      d.classList.remove('hidden');
+      setTimeout(() => {
+        b.classList.remove('opacity-0');
+        d.classList.remove('translate-x-full');
+      }, 10);
+    }
+
+    function editProduct(id) {
+      const prod = products.find(p => p.id === id);
+      if (!prod) return;
+
+      document.getElementById('modalTitle').innerText = 'Editar Producto';
+      document.getElementById('formProductId').value = prod.id;
+      document.getElementById('formName').value = prod.name;
+      document.getElementById('formCategory').value = prod.cat;
+      document.getElementById('formPrice').value = prod.price;
+      document.getElementById('formImage').value = prod.img;
+      document.getElementById('formDesc').value = prod.desc;
+      document.getElementById('formAvailable').checked = prod.available;
+
+      currentEditGroups = JSON.parse(JSON.stringify(prod.modifierGroups || []));
+      renderModalModifiers();
+
+      const d = document.getElementById('productModal');
+      const b = document.getElementById('productModalBackdrop');
+      b.classList.remove('hidden');
+      d.classList.remove('hidden');
+      setTimeout(() => {
+        b.classList.remove('opacity-0');
+        d.classList.remove('translate-x-full');
+      }, 10);
+    }
+
+    function closeProductModal() {
+      const d = document.getElementById('productModal');
+      const b = document.getElementById('productModalBackdrop');
+      b.classList.add('opacity-0');
+      d.classList.add('translate-x-full');
+      setTimeout(() => {
+        b.classList.add('hidden');
+        d.classList.add('hidden');
+      }, 200);
+    }
+
+    function handleProductSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('formProductId').value;
+      const name = document.getElementById('formName').value.trim();
+      const cat = document.getElementById('formCategory').value;
+      const price = Number(document.getElementById('formPrice').value);
+      const img = document.getElementById('formImage').value.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+      const desc = document.getElementById('formDesc').value.trim();
+      const available = document.getElementById('formAvailable').checked;
+
+      const productPayload = {
+        name,
+        cat,
+        price,
+        img,
+        desc,
+        available,
+        modifierGroups: JSON.parse(JSON.stringify(currentEditGroups))
+      };
+
+      if (id) {
+        const idx = products.findIndex(p => p.id == id);
+        if (idx !== -1) {
+          products[idx] = { id: Number(id), ...productPayload };
+        }
+      } else {
+        products.unshift({ id: Date.now(), ...productPayload });
+      }
+
+      closeProductModal();
+      renderCategories();
+      renderProducts();
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    }
+
+    // Inicialización del catálogo
+    renderCategories();
+    renderProducts();
+  </script>
+</body>
+</html>

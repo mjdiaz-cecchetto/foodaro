@@ -18,7 +18,7 @@ class LocalPublicoController extends Controller
                 'horarios',
                 'excepcionesHorario',
                 'categorias' => fn ($q) => $q->where('activa', true),
-                'productos' => fn ($q) => $q->where('disponible', true)->with('gruposOpciones.opciones'),
+                'productos' => fn ($q) => $q->with('gruposOpciones.opciones'),
                 'promociones' => fn ($q) => $q->where('activa', true),
             ])
             ->firstOrFail();

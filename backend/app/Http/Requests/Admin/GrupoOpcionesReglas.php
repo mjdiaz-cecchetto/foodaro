@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\ModoPrecio;
 use App\Enums\TipoSeleccion;
 use Illuminate\Validation\Rule;
 
@@ -15,6 +16,7 @@ class GrupoOpcionesReglas
             $campo => ['sometimes', 'array', 'max:20'],
             "{$campo}.*.nombre" => ['required', 'string', 'min:1', 'max:100'],
             "{$campo}.*.tipo" => ['required', Rule::enum(TipoSeleccion::class)],
+            "{$campo}.*.modoPrecio" => ['sometimes', Rule::enum(ModoPrecio::class)],
             "{$campo}.*.obligatorio" => ['sometimes', 'boolean'],
             "{$campo}.*.maximo" => ['nullable', 'integer', 'min:1', 'max:50'],
             "{$campo}.*.opciones" => ['required', 'array', 'min:1', 'max:50'],
@@ -30,6 +32,7 @@ class GrupoOpcionesReglas
         return [
             'nombre' => ['required', 'string', 'min:1', 'max:100'],
             'tipo' => ['required', Rule::enum(TipoSeleccion::class)],
+            'modoPrecio' => ['sometimes', Rule::enum(ModoPrecio::class)],
             'obligatorio' => ['sometimes', 'boolean'],
             'maximo' => ['nullable', 'integer', 'min:1', 'max:50'],
             'opciones' => ['required', 'array', 'min:1', 'max:50'],

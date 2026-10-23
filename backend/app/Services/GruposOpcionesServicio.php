@@ -65,6 +65,7 @@ class GruposOpcionesServicio
         return [
             'nombre' => trim($datos['nombre']),
             'tipo' => $tipo,
+            'modo_precio' => $datos['modoPrecio'] ?? 'adicional',
             'obligatorio' => (bool) ($datos['obligatorio'] ?? false),
             // El máximo solo tiene sentido en selección múltiple
             'maximo' => $tipo === 'multiple' && ! empty($datos['maximo']) ? (int) $datos['maximo'] : null,
@@ -73,19 +74,13 @@ class GruposOpcionesServicio
 
     private function crearOpciones(GrupoOpciones $grupo, array $opciones): void
     {
-        $hayDefecto = false;
+        $esInformativo = ($grupo->modo_precio?->value ?? 'adicional') === 'informativo';
         foreach (array_values($opciones) as $orden => $opcion) {
-            $porDefecto = (bool) ($opcion['porDefecto'] ?? false);
-            // En selección única solo puede haber una opción por defecto
-            if ($porDefecto && $grupo->tipo->value === 'unica') {
-                if ($hayDefecto) {
-                    $porDefecto = false;
-                }
-                $hayDefecto = true;
-            }
+            // Si el grupo es obligatorio, el primer ítem queda marcado por defecto en la carta
+            $porDefecto = $grupo->obligatorio && $orden === 0;
             $grupo->opciones()->create([
                 'etiqueta' => trim($opcion['etiqueta']),
-                'precio_adicional' => (float) ($opcion['precioAdicional'] ?? 0),
+                'precio_adicional' => $esInformativo ? 0 : (float) ($opcion['precioAdicional'] ?? 0),
                 'por_defecto' => $porDefecto,
                 'orden' => $orden,
             ]);

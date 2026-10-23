@@ -61,7 +61,11 @@ class CatalogoServicio
     public function actualizarProducto(Producto $producto, array $datos): Producto
     {
         return DB::transaction(function () use ($producto, $datos) {
-            $producto->update($this->atributosProducto($datos));
+            $atributos = $this->atributosProducto($datos);
+            if (array_key_exists('disponible', $datos)) {
+                $atributos['disponible'] = (bool) $datos['disponible'];
+            }
+            $producto->update($atributos);
             if (array_key_exists('gruposOpciones', $datos)) {
                 $this->gruposOpciones->sincronizarDeProducto($producto, $datos['gruposOpciones'] ?? []);
             }

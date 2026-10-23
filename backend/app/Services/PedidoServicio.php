@@ -78,6 +78,7 @@ class PedidoServicio
         }
 
         $opcionesElegidas = [];
+        $precioBase = (float) $producto->precio;
         $adicionales = 0.0;
         $idsElegidos = collect($item['opciones'] ?? [])->pluck('opcionId')->map(fn ($id) => (int) $id);
 
@@ -98,18 +99,24 @@ class PedidoServicio
                     "items.{$indice}.opciones" => "«{$grupo->nombre}» admite hasta {$grupo->maximo} opciones.",
                 ]);
             }
+            $modoPrecio = $grupo->modo_precio?->value ?? 'adicional';
             foreach ($delGrupo as $opcion) {
-                $adicionales += (float) $opcion->precio_adicional;
+                $importeOpcion = (float) $opcion->precio_adicional;
+                if ($modoPrecio === 'variante') {
+                    $precioBase = $importeOpcion > 0 ? $importeOpcion : (float) $producto->precio;
+                } elseif ($modoPrecio === 'adicional') {
+                    $adicionales += $importeOpcion;
+                }
                 $opcionesElegidas[] = [
                     'grupo_nombre' => $grupo->nombre,
                     'etiqueta' => $opcion->etiqueta,
-                    'precio_adicional' => (float) $opcion->precio_adicional,
+                    'precio_adicional' => $modoPrecio === 'informativo' ? 0.0 : $importeOpcion,
                 ];
             }
         }
 
         $cantidad = (int) $item['cantidad'];
-        $precioUnitario = (float) $producto->precio + $adicionales;
+        $precioUnitario = $precioBase + $adicionales;
 
         return [
             'total' => round($precioUnitario * $cantidad, 2),

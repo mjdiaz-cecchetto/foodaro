@@ -81,6 +81,36 @@ class ApiPublicaTest extends TestCase
         $this->assertDatabaseCount('pedido_item_opciones', 2);
     }
 
+    public function test_variante_reemplaza_el_precio_base_al_pedir(): void
+    {
+        $local = Local::where('slug', 'demolocal')->firstOrFail();
+        $pizza = $local->productos()->where('nombre', 'Muzzarella')->with('gruposOpciones.opciones')->firstOrFail();
+        $tamanio = $pizza->gruposOpciones->firstWhere('nombre', 'Tamaño');
+        $tamanio->update(['modo_precio' => 'variante']);
+        $mediaPizza = $tamanio->opciones->firstWhere('etiqueta', '6 porciones');
+        $mediaPizza->update(['etiqueta' => '4 porciones (Media pizza)', 'precio_adicional' => 7000]);
+
+        $extras = $pizza->gruposOpciones->firstWhere('nombre', 'Extras');
+        $borde = $extras->opciones->firstWhere('etiqueta', 'Borde relleno'); // +$3.000
+
+        $respuesta = $this->postJson('/api/locales/demolocal/pedidos', [
+            'items' => [[
+                'productoId' => $pizza->id,
+                'cantidad' => 1,
+                'notas' => '',
+                'opciones' => [['opcionId' => $mediaPizza->id], ['opcionId' => $borde->id]],
+            ]],
+            'modoEntrega' => 'retiro',
+            'cliente' => ['nombre' => 'Ana', 'telefono' => '11 4444 5555'],
+            'medioPago' => 'transferencia',
+        ]);
+
+        // Media pizza ($7.000 reemplaza $12.500) + Borde relleno (+$3.000) = $10.000
+        $respuesta->assertCreated()
+            ->assertJsonPath('data.totales.subtotal', fn ($v) => (float) $v === 10000.0)
+            ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 10000.0);
+    }
+
     public function test_rechaza_un_pedido_sin_la_opcion_obligatoria(): void
     {
         $local = Local::where('slug', 'demolocal')->firstOrFail();
@@ -144,8 +174,18 @@ class ApiPublicaTest extends TestCase
         $this->withToken($token)->patchJson("/api/admin/productos/{$producto['id']}/disponibilidad")
             ->assertOk()->assertJsonPath('data.disponible', false);
 
-        // La carta pública no muestra el producto agotado
-        $this->getJson('/api/locales/demolocal')->assertJsonMissing(['nombre' => 'César']);
+        // La carta pública incluye el producto marcado como no disponible (disponible = false), pero no permite pedirlo
+        $carta = $this->getJson('/api/locales/demolocal')->assertOk()->json('data.productos');
+        $cesarEnCarta = collect($carta)->firstWhere('id', $producto['id']);
+        $this->assertNotNull($cesarEnCarta);
+        $this->assertFalse($cesarEnCarta['disponible']);
+
+        $this->postJson('/api/locales/demolocal/pedidos', [
+            'items' => [['productoId' => $producto['id'], 'cantidad' => 1, 'opciones' => []]],
+            'modoEntrega' => 'retiro',
+            'cliente' => ['nombre' => 'Ana', 'telefono' => '11 4444 5555'],
+            'medioPago' => 'transferencia',
+        ])->assertUnprocessable();
 
         $this->withToken($token)->deleteJson("/api/admin/categorias/{$categoria['id']}")->assertStatus(409);
         $this->withToken($token)->deleteJson("/api/admin/productos/{$producto['id']}")->assertNoContent();
