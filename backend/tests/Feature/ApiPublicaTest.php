@@ -25,7 +25,7 @@ class ApiPublicaTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.slug', 'demolocal')
             ->assertJsonPath('data.perfil.nombre', 'Demo Local')
-            ->assertJsonPath('data.configuracion.cargoServicio', 0.0)
+            ->assertJsonPath('data.configuracion.cargoServicio', fn ($v) => (float) $v === 0.0)
             ->assertJsonPath('data.perfil.contacto.whatsappPedidos', '+54 9 385 311-5268')
             ->assertJsonCount(7, 'data.perfil.horarios.semana')
             ->assertJsonPath('data.perfil.horarios.semana.4.franjas.1.hasta', '01:30')
@@ -70,10 +70,10 @@ class ApiPublicaTest extends TestCase
         $respuesta->assertCreated()
             ->assertJsonPath('data.numero', 1)
             ->assertJsonPath('data.estado', 'pendiente')
-            ->assertJsonPath('data.totales.subtotal', 40000.0)
-            ->assertJsonPath('data.totales.descuento', 8000.0)
-            ->assertJsonPath('data.totales.cargoServicio', 0.0)
-            ->assertJsonPath('data.totales.total', 32000.0)
+            ->assertJsonPath('data.totales.subtotal', fn ($v) => (float) $v === 40000.0)
+            ->assertJsonPath('data.totales.descuento', fn ($v) => (float) $v === 8000.0)
+            ->assertJsonPath('data.totales.cargoServicio', fn ($v) => (float) $v === 0.0)
+            ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 32000.0)
             ->assertJsonPath('data.items.0.opciones.0.etiqueta', '12 porciones')
             ->assertJsonPath('data.direccion.calle', 'Av. Corrientes 1234');
 

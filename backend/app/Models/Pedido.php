@@ -13,6 +13,10 @@ class Pedido extends Model
 {
     protected $table = 'pedidos';
 
+    protected $attributes = [
+        'estado' => EstadoPedido::Pendiente,
+    ];
+
     protected $fillable = [
         'local_id', 'numero', 'estado', 'modo_entrega',
         'nombre_cliente', 'telefono_cliente', 'calle', 'piso_depto', 'referencia',

@@ -15,6 +15,11 @@ class Usuario extends Authenticatable
 
     protected $table = 'usuarios';
 
+    protected $attributes = [
+        'rol' => RolUsuario::Administrador,
+        'activo' => true,
+    ];
+
     protected $fillable = ['local_id', 'nombre', 'email', 'password', 'rol', 'activo'];
 
     protected $hidden = ['password', 'remember_token'];
