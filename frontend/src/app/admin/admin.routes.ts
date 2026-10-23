@@ -22,15 +22,14 @@ export const RUTAS_ADMIN: Routes = [
       },
       {
         path: 'categorias',
-        loadComponent: () =>
-          import('./pages/pagina-categorias/pagina-categorias.component').then((m) => m.PaginaCategoriasComponente),
-        title: 'Foodaro Admin • Categorías',
+        redirectTo: 'productos',
+        pathMatch: 'full',
       },
       {
         path: 'productos',
         loadComponent: () =>
           import('./pages/pagina-productos/pagina-productos.component').then((m) => m.PaginaProductosComponente),
-        title: 'Foodaro Admin • Productos',
+        title: 'Foodaro Admin • Gestión de Productos',
       },
       {
         path: 'promociones',

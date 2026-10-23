@@ -1,19 +1,23 @@
 import { Component, computed, inject, signal } from '@angular/core';
 
-import { Producto } from '../../../shared/models';
+import { Categoria, Producto } from '../../../shared/models';
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { CatalogoAdminServicio } from '../../services/catalogo-admin.service';
-import { ValorFormularioProducto } from '../../interfaces';
-import { EncabezadoPaginaComponente } from '../../components/encabezado-pagina/encabezado-pagina.component';
+import { ValorFormularioCategoria, ValorFormularioProducto } from '../../interfaces';
 import { ModalFormularioProductoComponente } from '../../components/modal-formulario-producto/modal-formulario-producto.component';
+import { ModalFormularioCategoriaComponente } from '../../components/modal-formulario-categoria/modal-formulario-categoria.component';
 import { mensajeDeError } from '../../../shared/utils/api';
 
-/** Tabla de productos con búsqueda, filtro por categoría, disponibilidad y ABM. */
+/**
+ * Vista unificada de Gestión de Productos (Catálogo & Modificadores):
+ * barra lateral de categorías con sus imágenes, buscador en vivo, grilla de
+ * tarjetas con switch de activo/agotado y slide-over de producto + grupos de opciones.
+ */
 @Component({
   selector: 'app-pagina-productos',
   standalone: true,
-  imports: [PrecioPipe, EncabezadoPaginaComponente, ModalFormularioProductoComponente],
+  imports: [PrecioPipe, ModalFormularioProductoComponente, ModalFormularioCategoriaComponente],
   templateUrl: './pagina-productos.component.html',
   styleUrl: './pagina-productos.component.scss',
 })
@@ -25,44 +29,116 @@ export class PaginaProductosComponente {
   readonly busqueda = signal('');
   readonly filtroCategoria = signal<number | 'todas'>('todas');
 
+  /** Seguimiento de imágenes rotas para mostrar el placeholder "Sin foto". */
+  readonly imagenesRotas = signal<Record<number, boolean>>({});
+  readonly imagenesCategoriasRotas = signal<Record<number, boolean>>({});
+
   readonly filtrados = computed(() => {
     this.catalogo.productos();
     return this.catalogo.filtrarProductos(this.busqueda(), this.filtroCategoria());
   });
 
-  readonly modalAbierto = signal(false);
-  readonly editando = signal<Producto | null>(null);
+  /* ----------------------- Estado Modal Producto ----------------------- */
+  readonly modalProductoAbierto = signal(false);
+  readonly productoEditando = signal<Producto | null>(null);
+
+  /* ----------------------- Estado Modal Categoría ---------------------- */
+  readonly modalCategoriaAbierto = signal(false);
+  readonly categoriaEditando = signal<Categoria | null>(null);
+
+  /* ----------------------------- Filtros ------------------------------- */
 
   alBuscar(event: Event): void {
     this.busqueda.set((event.target as HTMLInputElement).value);
   }
 
-  alFiltrarCategoria(event: Event): void {
-    const valor = (event.target as HTMLSelectElement).value;
-    this.filtroCategoria.set(valor === 'todas' ? 'todas' : Number(valor));
+  seleccionarCategoria(id: number | 'todas'): void {
+    this.filtroCategoria.set(id);
   }
 
-  abrirAlta(): void {
-    this.editando.set(null);
-    this.modalAbierto.set(true);
+  /* --------------------------- ABM Categorías -------------------------- */
+
+  abrirAltaCategoria(): void {
+    this.categoriaEditando.set(null);
+    this.modalCategoriaAbierto.set(true);
   }
 
-  abrirEdicion(producto: Producto): void {
-    this.editando.set(producto);
-    this.modalAbierto.set(true);
+  abrirEdicionCategoria(categoria: Categoria, event: Event): void {
+    event.stopPropagation();
+    this.categoriaEditando.set(categoria);
+    this.modalCategoriaAbierto.set(true);
   }
 
-  cerrarModal(): void {
-    this.modalAbierto.set(false);
+  cerrarModalCategoria(): void {
+    this.modalCategoriaAbierto.set(false);
   }
 
-  guardar(valor: ValorFormularioProducto): void {
-    const actual = this.editando();
-    const peticion = actual ? this.catalogo.actualizarProducto(actual.id, valor) : this.catalogo.crearProducto(valor);
+  guardarCategoria(valor: ValorFormularioCategoria): void {
+    const actual = this.categoriaEditando();
+    const peticion = actual
+      ? this.catalogo.actualizarCategoria(actual.id, valor)
+      : this.catalogo.crearCategoria(valor);
     peticion.subscribe({
-      next: () => {
-        this.notificaciones.mostrar(actual ? 'Producto actualizado' : 'Producto agregado a la carta');
-        this.cerrarModal();
+      next: (cat) => {
+        this.imagenesCategoriasRotas.update((mapa) => ({ ...mapa, [cat.id]: false }));
+        this.notificaciones.mostrar(actual ? 'Categoría actualizada' : 'Categoría creada');
+        this.cerrarModalCategoria();
+      },
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar la categoría')),
+    });
+  }
+
+  eliminarCategoria(categoria: Categoria, event: Event): void {
+    event.stopPropagation();
+    const asociados = this.catalogo.cantidadProductosPorCategoria(categoria.id);
+    if (asociados) {
+      this.notificaciones.mostrar(`Tiene ${asociados} producto(s): movelos o eliminalos antes de borrar la categoría`);
+      return;
+    }
+    if (confirm(`¿Eliminar la categoría "${categoria.nombre}"?`)) {
+      this.catalogo.eliminarCategoria(categoria.id).subscribe({
+        next: () => {
+          if (this.filtroCategoria() === categoria.id) {
+            this.filtroCategoria.set('todas');
+          }
+          this.notificaciones.mostrar('Categoría eliminada');
+        },
+        error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar la categoría')),
+      });
+    }
+  }
+
+  /* --------------------------- ABM Productos --------------------------- */
+
+  abrirAltaProducto(): void {
+    if (this.categorias().length === 0) {
+      this.notificaciones.mostrar('Creá primero una categoría para agregar productos');
+      this.abrirAltaCategoria();
+      return;
+    }
+    this.productoEditando.set(null);
+    this.modalProductoAbierto.set(true);
+  }
+
+  abrirEdicionProducto(producto: Producto): void {
+    this.productoEditando.set(producto);
+    this.modalProductoAbierto.set(true);
+  }
+
+  cerrarModalProducto(): void {
+    this.modalProductoAbierto.set(false);
+  }
+
+  guardarProducto(valor: ValorFormularioProducto): void {
+    const actual = this.productoEditando();
+    const peticion = actual
+      ? this.catalogo.actualizarProducto(actual.id, valor)
+      : this.catalogo.crearProducto(valor);
+    peticion.subscribe({
+      next: (prod) => {
+        this.imagenesRotas.update((mapa) => ({ ...mapa, [prod.id]: false }));
+        this.notificaciones.mostrar(actual ? 'Producto y modificadores actualizados' : 'Producto agregado a la carta');
+        this.cerrarModalProducto();
       },
       error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar el producto')),
     });
@@ -71,17 +147,37 @@ export class PaginaProductosComponente {
   alternarDisponibilidad(producto: Producto): void {
     this.catalogo.alternarDisponibilidad(producto.id).subscribe({
       next: (actualizado) =>
-        this.notificaciones.mostrar(`${actualizado.nombre}: ${actualizado.disponible ? 'disponible en la carta' : 'marcado como agotado'}`),
+        this.notificaciones.mostrar(
+          `${actualizado.nombre}: ${actualizado.disponible ? 'activo en la carta' : 'pausado / agotado'}`,
+        ),
       error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err)),
     });
   }
 
-  eliminar(producto: Producto): void {
+  eliminarProducto(producto: Producto): void {
     if (confirm(`¿Eliminar "${producto.nombre}" de la carta?`)) {
       this.catalogo.eliminarProducto(producto.id).subscribe({
         next: () => this.notificaciones.mostrar('Producto eliminado'),
         error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar el producto')),
       });
     }
+  }
+
+  /* ------------------------- Imágenes fallback ------------------------- */
+
+  imagenRota(productoId: number): boolean {
+    return !!this.imagenesRotas()[productoId];
+  }
+
+  marcarImagenRota(productoId: number): void {
+    this.imagenesRotas.update((mapa) => ({ ...mapa, [productoId]: true }));
+  }
+
+  imagenCategoriaRota(categoriaId: number): boolean {
+    return !!this.imagenesCategoriasRotas()[categoriaId];
+  }
+
+  marcarImagenCategoriaRota(categoriaId: number): void {
+    this.imagenesCategoriasRotas.update((mapa) => ({ ...mapa, [categoriaId]: true }));
   }
 }

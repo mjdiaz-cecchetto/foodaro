@@ -1,14 +1,27 @@
 @let p = producto();
 <article
   (click)="abrir()"
-  class="group bg-white dark:bg-dark-surface rounded-3xl p-3 shadow-soft border border-gray-100 dark:border-dark-border flex gap-3.5 cursor-pointer hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 tap-scale"
+  class="group bg-white dark:bg-dark-surface rounded-3xl p-3 shadow-soft border flex gap-3.5 transition-all duration-300"
+  [class]="p.disponible
+    ? 'border-gray-100 dark:border-dark-border cursor-pointer hover:shadow-card hover:-translate-y-0.5 tap-scale'
+    : 'border-dashed border-gray-200 dark:border-dark-border opacity-70 cursor-pointer'"
   role="button"
   tabindex="0"
   (keydown.enter)="abrir()"
 >
   <div class="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-100 dark:bg-dark-card">
-    <img [src]="p.imagen" [alt]="p.nombre" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" />
-    @if (p.etiqueta) {
+    <img
+      [src]="p.imagen"
+      [alt]="p.nombre"
+      class="w-full h-full object-cover transition duration-500"
+      [class]="p.disponible ? 'group-hover:scale-110' : 'grayscale-[45%]'"
+      loading="lazy"
+    />
+    @if (!p.disponible) {
+      <span class="absolute top-1.5 left-1.5 bg-gray-900/85 text-white text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-md backdrop-blur-sm">
+        No disponible
+      </span>
+    } @else if (p.etiqueta) {
       <span class="absolute top-1.5 left-1.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide shadow-md">{{ p.etiqueta }}</span>
     }
   </div>
@@ -30,10 +43,16 @@
         <span class="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-none">{{ p.precio | precio }}</span>
       </div>
       <div class="flex items-center gap-2">
-        <span class="text-[10px] text-gray-400 dark:text-dark-muted font-medium"><i class="fa-regular fa-clock mr-1"></i>{{ p.tiempoPreparacion }}</span>
-        @if (ui.pedidosHabilitados()) {
-          <span class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-coral group-hover:bg-brand-700 transition" aria-hidden="true">
-            <i class="fa-solid fa-plus text-xs"></i>
+        @if (p.disponible) {
+          <span class="text-[10px] text-gray-400 dark:text-dark-muted font-medium"><i class="fa-regular fa-clock mr-1"></i>{{ p.tiempoPreparacion }}</span>
+          @if (ui.pedidosHabilitados()) {
+            <span class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-coral group-hover:bg-brand-700 transition" aria-hidden="true">
+              <i class="fa-solid fa-plus text-xs"></i>
+            </span>
+          }
+        } @else {
+          <span class="px-2.5 py-1 rounded-xl bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-dark-muted text-[10px] font-bold">
+            No disponible
           </span>
         }
       </div>

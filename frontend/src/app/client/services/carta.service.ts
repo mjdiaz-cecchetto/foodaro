@@ -20,8 +20,8 @@ export class CartaServicio {
       .map(({ id, nombre, imagen }) => ({ id, nombre, imagen })),
   ]);
 
-  /** Solo productos disponibles: lo que el admin marca "Agotado" no se muestra. */
-  readonly productos = computed<Producto[]>(() => this.local.productos().filter((p) => p.disponible));
+  /** Todos los productos del local (los pausados se muestran como "No disponible" sin opción de agregar). */
+  readonly productos = computed<Producto[]>(() => this.local.productos());
 
   readonly promociones = computed(() => this.local.promociones().filter((p) => p.activa));
 

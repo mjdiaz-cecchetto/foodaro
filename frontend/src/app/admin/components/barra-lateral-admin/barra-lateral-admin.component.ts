@@ -31,16 +31,15 @@ export class BarraLateralAdminComponente {
   readonly items: ItemNavegacionAdmin[] = [
     { ruta: 'inicio', etiqueta: 'Inicio', icono: 'fa-house', indicador: 'flecha' },
     { ruta: 'perfil', etiqueta: 'Datos del Local', icono: 'fa-store', indicador: 'flecha' },
-    { ruta: 'categorias', etiqueta: 'Categorías', icono: 'fa-shapes', indicador: 'contador' },
-    { ruta: 'productos', etiqueta: 'Productos', icono: 'fa-utensils', indicador: 'contador' },
+    { ruta: 'productos', etiqueta: 'Gestión de Productos', icono: 'fa-boxes-stacked', indicador: 'contador' },
     { ruta: 'promociones', etiqueta: 'Promociones', icono: 'fa-tags', indicador: 'punto' },
   ];
 
   readonly claseActiva = 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400';
   readonly claseInactiva = 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-surface-cardDark';
 
-  contadorDe(item: ItemNavegacionAdmin): number {
-    return item.ruta === 'categorias' ? this.catalogo.cantidadCategorias() : this.catalogo.cantidadProductos();
+  contadorDe(_item: ItemNavegacionAdmin): number {
+    return this.catalogo.cantidadProductos();
   }
 
 }

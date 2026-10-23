@@ -1,3 +1,5 @@
+import { ModoPrecioGrupo } from '../../shared/models';
+
 /** Opción elegida por el cliente dentro de un grupo de un producto. */
 export interface OpcionElegida {
   grupoId: number;
@@ -5,6 +7,7 @@ export interface OpcionElegida {
   opcionId: number;
   etiqueta: string;
   precioAdicional: number;
+  modoPrecio?: ModoPrecioGrupo;
 }
 
 /** Línea de la comanda. Una por combinación de producto + opciones + notas. */

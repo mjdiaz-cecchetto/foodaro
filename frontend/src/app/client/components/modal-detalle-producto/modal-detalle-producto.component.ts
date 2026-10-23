@@ -51,10 +51,18 @@ export class ModalDetalleProductoComponente {
     const sel = this.seleccion();
     const elegidas: OpcionElegida[] = [];
     for (const g of p.gruposOpciones) {
+      const modoPrecio = g.modoPrecio ?? 'adicional';
       for (const id of sel[g.id] ?? []) {
         const o = g.opciones.find((op) => op.id === id);
         if (o) {
-          elegidas.push({ grupoId: g.id, grupoNombre: g.nombre, opcionId: o.id, etiqueta: o.etiqueta, precioAdicional: o.precioAdicional });
+          elegidas.push({
+            grupoId: g.id,
+            grupoNombre: g.nombre,
+            opcionId: o.id,
+            etiqueta: o.etiqueta,
+            precioAdicional: modoPrecio === 'informativo' ? 0 : o.precioAdicional,
+            modoPrecio,
+          });
         }
       }
     }
@@ -64,7 +72,16 @@ export class ModalDetalleProductoComponente {
   readonly precioUnitario = computed(() => {
     const p = this.producto();
     if (!p) return 0;
-    return p.precio + this.opcionesElegidas().reduce((acc, o) => acc + o.precioAdicional, 0);
+    let base = p.precio;
+    let adicionales = 0;
+    for (const o of this.opcionesElegidas()) {
+      if (o.modoPrecio === 'variante') {
+        base = o.precioAdicional > 0 ? o.precioAdicional : p.precio;
+      } else if (o.modoPrecio !== 'informativo') {
+        adicionales += o.precioAdicional;
+      }
+    }
+    return base + adicionales;
   });
 
   readonly total = computed(() => this.precioUnitario() * this.cantidad());
@@ -77,7 +94,7 @@ export class ModalDetalleProductoComponente {
     return p.gruposOpciones.filter((g) => g.obligatorio && (sel[g.id] ?? []).length === 0);
   });
 
-  readonly puedeAgregar = computed(() => this.gruposPendientes().length === 0);
+  readonly puedeAgregar = computed(() => !!this.producto()?.disponible && this.gruposPendientes().length === 0);
 
   constructor() {
     effect(() => {
@@ -109,6 +126,9 @@ export class ModalDetalleProductoComponente {
     this.seleccion.update((sel) => {
       const actuales = sel[grupo.id] ?? [];
       if (grupo.tipo === 'unica') {
+        if (!grupo.obligatorio && actuales.includes(opcion.id)) {
+          return { ...sel, [grupo.id]: [] };
+        }
         return { ...sel, [grupo.id]: [opcion.id] };
       }
       if (actuales.includes(opcion.id)) {
@@ -157,8 +177,8 @@ export class ModalDetalleProductoComponente {
   private seleccionInicial(producto: Producto | null): Record<number, number[]> {
     const inicial: Record<number, number[]> = {};
     for (const g of producto?.gruposOpciones ?? []) {
-      const porDefecto = g.opciones.filter((o) => o.porDefecto).map((o) => o.id);
-      inicial[g.id] = g.tipo === 'unica' ? porDefecto.slice(0, 1) : porDefecto.slice(0, g.maximo ?? porDefecto.length);
+      // Solo en grupos obligatorios se marca siempre el primer ítem por defecto
+      inicial[g.id] = g.obligatorio && g.opciones.length > 0 ? [g.opciones[0].id] : [];
     }
     return inicial;
   }

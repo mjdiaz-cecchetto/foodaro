@@ -1,81 +1,140 @@
-<app-modal [abierto]="abierto()" variante="dialogo" claseAncho="max-w-2xl" clasePanel="max-h-[92vh] flex flex-col" (cerrado)="cerrado.emit()">
-  <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-borderDark shrink-0">
-    <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">{{ esEdicion() ? 'Editar producto' : 'Nuevo producto' }}</h3>
-    <button type="button" (click)="cerrado.emit()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center hover:opacity-80" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
-  </div>
+@if (renderizado()) {
+  <!-- Backdrop -->
+  <div
+    (click)="cerrado.emit()"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-200"
+    [class.opacity-100]="visible()"
+    [class.opacity-0]="!visible()"
+  ></div>
 
-  <!-- Pestañas -->
-  <div class="flex gap-1 mt-3 p-1 rounded-2xl bg-zinc-100 dark:bg-surface-cardDark shrink-0 text-xs font-bold">
-    <button type="button" (click)="pestania.set('datos')" class="flex-1 py-2 rounded-xl transition" [class]="pestania() === 'datos' ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm' : 'text-zinc-500'"><i class="fa-solid fa-circle-info mr-1.5"></i>Datos</button>
-    <button type="button" (click)="pestania.set('opciones')" class="flex-1 py-2 rounded-xl transition" [class]="pestania() === 'opciones' ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm' : 'text-zinc-500'">
-      <i class="fa-solid fa-sliders mr-1.5"></i>Opciones
-      @if (gruposOpciones().length) { <span class="ml-1 px-1.5 py-0.5 rounded-md bg-brand-600 text-white text-[10px]">{{ gruposOpciones().length }}</span> }
-    </button>
-  </div>
+  <!-- Slide-over lateral derecho -->
+  <div
+    class="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 flex flex-col justify-between transform transition-transform duration-200"
+    [class.translate-x-0]="visible()"
+    [class.translate-x-full]="!visible()"
+  >
+    <div class="space-y-5 overflow-y-auto pr-1 no-scrollbar flex-1">
+      <!-- Header Modal -->
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div>
+          <h3 class="text-base font-extrabold text-zinc-900 dark:text-white">
+            {{ esEdicion() ? 'Editar Producto' : 'Nuevo Producto' }}
+          </h3>
+          <p class="text-[11px] text-zinc-400">Configuración general y grupos de variantes asociadas</p>
+        </div>
+        <button
+          type="button"
+          (click)="cerrado.emit()"
+          class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center justify-center cursor-pointer transition-colors"
+          aria-label="Cerrar"
+        >
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
 
-  <form [formGroup]="formulario" (ngSubmit)="enviar()" class="mt-4 flex flex-col min-h-0 flex-1" novalidate>
-    <div class="flex-1 overflow-y-auto custom-scroll pr-1 text-xs">
-
-      @if (pestania() === 'datos') {
-        <div class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre</label>
-              <input type="text" formControlName="nombre" placeholder="Ej: Pizza Napolitana" [class]="claseCampo + ' font-semibold'" />
-              @if (invalido('nombre')) { <p class="mt-1 text-[11px] font-semibold text-red-500">El nombre es obligatorio.</p> }
-            </div>
-            <div>
-              <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Categoría</label>
-              <select formControlName="categoriaId" [class]="claseCampo + ' font-semibold'">
-                @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-3">
-            <div>
-              <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Precio base ($)</label>
-              <input type="number" step="100" min="0" formControlName="precio" placeholder="12500" [class]="claseCampo + ' font-extrabold text-brand-600'" />
-              @if (invalido('precio')) { <p class="mt-1 text-[11px] font-semibold text-red-500">Precio inválido.</p> }
-            </div>
-            <div>
-              <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Tiempo estimado</label>
-              <input type="text" formControlName="tiempoPreparacion" placeholder="15-20 min" [class]="claseCampo" />
-            </div>
-            <div>
-              <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Etiqueta</label>
-              <input type="text" formControlName="etiqueta" placeholder="Más pedido, Nuevo" [class]="claseCampo" />
-            </div>
-          </div>
-
+      <form [formGroup]="formulario" (ngSubmit)="enviar()" class="space-y-4 text-xs" novalidate>
+        <!-- Fila 1: Nombre & Categoría -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">URL de la imagen</label>
-            <input type="url" formControlName="imagen" placeholder="https://..." [class]="claseCampo" />
-            @if (invalido('imagen')) { <p class="mt-1 text-[11px] font-semibold text-red-500">La imagen es obligatoria.</p> }
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre</label>
+            <input
+              type="text"
+              formControlName="nombre"
+              placeholder="Ej: Pizza Napolitana / Sándwich Milanesa"
+              [class]="claseCampo + ' font-semibold text-zinc-900 dark:text-white'"
+            />
+            @if (invalido('nombre')) {
+              <p class="mt-1 text-[11px] font-semibold text-red-500">El nombre es obligatorio.</p>
+            }
           </div>
-
           <div>
-            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Descripción</label>
-            <textarea formControlName="descripcion" rows="3" placeholder="Ingredientes, cocción, alérgenos..." [class]="claseCampo + ' leading-relaxed'"></textarea>
-            @if (invalido('descripcion')) { <p class="mt-1 text-[11px] font-semibold text-red-500">La descripción es obligatoria.</p> }
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Categoría</label>
+            <select
+              formControlName="categoriaId"
+              [class]="claseCampo + ' font-semibold text-zinc-900 dark:text-white'"
+            >
+              @for (c of categorias(); track c.id) {
+                <option [ngValue]="c.id">{{ c.nombre }}</option>
+              }
+            </select>
+            @if (invalido('categoriaId')) {
+              <p class="mt-1 text-[11px] font-semibold text-red-500">Seleccioná una categoría.</p>
+            }
           </div>
         </div>
-      } @else {
-        <div class="space-y-3">
-          <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
-            Definí qué puede elegir el cliente para este producto (tamaño, cantidad, extras…). El precio adicional se suma al precio base.
+
+        <!-- Fila 2: Precio Base & URL Imagen -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Precio Base ($ ARS)</label>
+            <input
+              type="number"
+              min="0"
+              step="100"
+              formControlName="precio"
+              placeholder="12500"
+              [class]="claseCampo + ' font-mono font-bold text-zinc-900 dark:text-white'"
+            />
+            @if (invalido('precio')) {
+              <p class="mt-1 text-[11px] font-semibold text-red-500">Ingresá un precio válido.</p>
+            }
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">URL Foto (Unsplash/Directo)</label>
+            <input
+              type="url"
+              formControlName="imagen"
+              placeholder="https://images.unsplash.com/..."
+              [class]="claseCampo + ' font-mono text-[11px] text-zinc-900 dark:text-white'"
+            />
+          </div>
+        </div>
+
+        <!-- Fila 3: Descripción -->
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Descripción Breve</label>
+          <textarea
+            rows="2"
+            formControlName="descripcion"
+            placeholder="Detalle de ingredientes, acompañamiento o variantes..."
+            [class]="claseCampo + ' font-medium text-zinc-900 dark:text-white leading-relaxed'"
+          ></textarea>
+        </div>
+
+        <!-- Grupos de Adicionales & Variantes -->
+        <app-editor-grupos-opciones
+          [grupos]="gruposOpciones()"
+          [precioBase]="formulario.controls.precio.value"
+          (cambiado)="gruposOpciones.set($event)"
+        />
+
+        @if (intentoEnvio() && !gruposValidos()) {
+          <p class="text-[11px] font-semibold text-red-500">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i>Todos los grupos y sus opciones deben tener nombre.
           </p>
-          <app-editor-grupos-opciones [grupos]="gruposOpciones()" (cambiado)="gruposOpciones.set($event)" />
-          @if (!gruposValidos()) {
-            <p class="text-[11px] font-semibold text-red-500"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Todos los grupos y opciones necesitan un nombre.</p>
-          }
-        </div>
-      }
-    </div>
+        }
 
-    <div class="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-zinc-100 dark:border-surface-borderDark shrink-0 text-xs">
-      <button type="button" (click)="cerrado.emit()" class="px-4 py-2.5 rounded-xl font-bold text-zinc-500 hover:text-zinc-700">Cancelar</button>
-      <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral tap-scale">Guardar producto</button>
+        <!-- Estado de Publicación -->
+        <div class="pt-3 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              formControlName="disponible"
+              class="w-4 h-4 rounded text-brand-500 accent-brand-500 focus:ring-brand-500 cursor-pointer"
+            />
+            <span class="font-bold text-xs text-zinc-800 dark:text-zinc-200">Publicado en Carta / Terminal POS</span>
+          </label>
+        </div>
+
+        <div class="pt-2">
+          <button
+            type="submit"
+            class="w-full py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-md shadow-brand-500/25 active:scale-95 transition-all cursor-pointer"
+          >
+            Guardar Producto y Modificadores
+          </button>
+        </div>
+      </form>
     </div>
-  </form>
-</app-modal>
+  </div>
+}

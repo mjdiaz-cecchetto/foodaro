@@ -34,8 +34,16 @@ export class CarritoServicio {
   readonly estaVacio = computed(() => this.items().length === 0);
 
   agregar(producto: Producto, seleccion: SeleccionProducto): void {
-    const adicionales = seleccion.opciones.reduce((acc, o) => acc + o.precioAdicional, 0);
-    const precioUnitario = producto.precio + adicionales;
+    let base = producto.precio;
+    let adicionales = 0;
+    for (const o of seleccion.opciones) {
+      if (o.modoPrecio === 'variante') {
+        base = o.precioAdicional > 0 ? o.precioAdicional : producto.precio;
+      } else if (o.modoPrecio !== 'informativo') {
+        adicionales += o.precioAdicional;
+      }
+    }
+    const precioUnitario = base + adicionales;
     const notas = seleccion.notas.trim();
     const clave = [producto.id, ...seleccion.opciones.map((o) => o.opcionId), notas].join('|');
 

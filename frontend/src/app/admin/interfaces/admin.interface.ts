@@ -3,10 +3,10 @@ import { Categoria, Producto, Promocion } from '../../shared/models';
 /** Datos del formulario de categoría (alta/edición). */
 export type ValorFormularioCategoria = Pick<Categoria, 'nombre' | 'imagen'>;
 
-/** Datos del formulario de producto (alta/edición), incluidos sus grupos de opciones. */
+/** Datos del formulario de producto (alta/edición), incluidos sus grupos de opciones y disponibilidad. */
 export type ValorFormularioProducto = Pick<
   Producto,
-  'nombre' | 'categoriaId' | 'precio' | 'tiempoPreparacion' | 'etiqueta' | 'imagen' | 'descripcion' | 'gruposOpciones'
+  'nombre' | 'categoriaId' | 'precio' | 'tiempoPreparacion' | 'etiqueta' | 'imagen' | 'descripcion' | 'disponible' | 'gruposOpciones'
 >;
 
 /** Datos del formulario de promoción (alta). */

@@ -34,7 +34,7 @@ export class InicioAdminServicio {
       detalle: `${this.local.categorias().length - this.categoriasActivas()} ocultas`,
       icono: 'fa-shapes',
       estilo: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600',
-      ruta: 'categorias',
+      ruta: 'productos',
     },
     {
       etiqueta: 'Promociones activas',
@@ -61,7 +61,7 @@ export class InicioAdminServicio {
       { id: 'logo', titulo: 'Logo y portada', descripcion: 'Son lo primero que ve el cliente en el banner.', completo: !!(p?.logoUrl && p?.portadaUrl), ruta: 'perfil' },
       { id: 'whatsapp', titulo: 'WhatsApp que recibe los pedidos', descripcion: 'A este número llegan los pedidos armados.', completo: !!p?.contacto.whatsappPedidos, ruta: 'perfil' },
       { id: 'horarios', titulo: 'Horarios y dirección', descripcion: 'Se muestran en la info del local.', completo: !!(p?.horarios.semana.some((d) => d.abierto) && p?.direccion), ruta: 'perfil' },
-      { id: 'categorias', titulo: 'Al menos una categoría', descripcion: 'Agrupan los productos en la carta.', completo: this.categoriasActivas() > 0, ruta: 'categorias' },
+      { id: 'categorias', titulo: 'Al menos una categoría', descripcion: 'Agrupan los productos en la carta.', completo: this.categoriasActivas() > 0, ruta: 'productos' },
       { id: 'productos', titulo: 'Al menos un producto disponible', descripcion: 'Con foto, precio y descripción.', completo: this.disponibles() > 0, ruta: 'productos' },
       { id: 'promo', titulo: 'Una promoción activa', descripcion: 'Opcional: aparece en el carrusel de la carta.', completo: this.promosActivas() > 0, ruta: 'promociones' },
     ];

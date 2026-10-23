@@ -17,11 +17,19 @@ export interface Categoria {
 /** 'unica' = elegir una sola opción (radio) · 'multiple' = varias (checkbox). */
 export type TipoSeleccion = 'unica' | 'multiple';
 
+/**
+ * Cómo impactan las opciones del grupo en el precio del producto:
+ * - 'adicional'   → suma (+$) al precio base (ej. Extras, Adicionales).
+ * - 'variante'    → define/reemplaza ($) el precio base del plato (ej. 8 o 4 porciones, Docena o Media).
+ * - 'informativo' → sin impacto en precio (ej. Cocción: Al horno / Fritas, Punto de carne).
+ */
+export type ModoPrecioGrupo = 'adicional' | 'variante' | 'informativo';
+
 /** Una opción dentro de un grupo: "12 porciones", "Mayonesa extra"... */
 export interface OpcionProducto {
   id: number;
   etiqueta: string;
-  /** Adicional sobre el precio base del producto (0 si no suma). */
+  /** Adicional sobre el precio base o precio de la variante según `modoPrecio` del grupo. */
   precioAdicional: number;
   porDefecto?: boolean;
 }
@@ -34,6 +42,8 @@ export interface GrupoOpciones {
   id: number;
   nombre: string;
   tipo: TipoSeleccion;
+  /** Modo de cálculo de precio de las opciones del grupo ('adicional' por defecto). */
+  modoPrecio?: ModoPrecioGrupo;
   /** Si es obligatorio elegir al menos una opción (ej. tamaño de pizza). */
   obligatorio: boolean;
   /** Tope de opciones para 'multiple' (ej. hasta 3 extras). */
