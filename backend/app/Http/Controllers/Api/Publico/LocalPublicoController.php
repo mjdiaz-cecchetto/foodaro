@@ -20,6 +20,7 @@ class LocalPublicoController extends Controller
                 'categorias' => fn ($q) => $q->where('activa', true),
                 'productos' => fn ($q) => $q->with('gruposOpciones.opciones'),
                 'promociones' => fn ($q) => $q->where('activa', true),
+                'cupones' => fn ($q) => $q->where('activo', true),
             ])
             ->firstOrFail();
 

@@ -93,11 +93,20 @@ class LocalDemoSeeder extends Seeder
             foreach ($datos['promociones'] as $promo) {
                 $local->promociones()->create([
                     'titulo' => $promo['titulo'],
-                    'descuento' => $promo['descuento'],
-                    'codigo' => $promo['codigo'],
+                    'precio' => $promo['precio'] ?? 14500,
+                    'descuento' => $promo['descuento'] ?? null,
+                    'codigo' => null,
                     'imagen_url' => $promo['imagen'],
                     'activa' => $promo['activa'] ?? true,
                 ]);
+                if (! empty($promo['codigo']) && ! empty($promo['descuento'])) {
+                    $local->cupones()->create([
+                        'codigo' => strtoupper(trim($promo['codigo'])),
+                        'descuento' => (int) $promo['descuento'],
+                        'descripcion' => $promo['titulo'],
+                        'activo' => $promo['activa'] ?? true,
+                    ]);
+                }
             }
 
             foreach ($datos['plantillasOpciones'] as $plantilla) {

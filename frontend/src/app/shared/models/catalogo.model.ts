@@ -70,9 +70,20 @@ export interface Producto {
 export interface Promocion {
   id: number;
   titulo: string;
-  /** Porcentaje de descuento. */
+  /** Precio de la promoción cuando se vende como combo/ítem directo en el carrito. */
+  precio: number;
+  /** Porcentaje de descuento visual (opcional, 0 si no aplica). */
   descuento: number;
-  codigo: string;
+  codigo?: string;
   activa: boolean;
   imagen: string;
+}
+
+export interface Cupon {
+  id: number;
+  codigo: string;
+  /** Porcentaje de descuento (1 a 100) aplicable al confirmar el pedido. */
+  descuento: number;
+  descripcion: string;
+  activo: boolean;
 }

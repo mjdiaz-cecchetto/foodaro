@@ -1,4 +1,4 @@
-import { Categoria, GrupoOpciones, Producto, Promocion } from './catalogo.model';
+import { Categoria, Cupon, GrupoOpciones, Producto, Promocion } from './catalogo.model';
 
 /** Franja horaria "HH:MM"–"HH:MM". Si `hasta` <= `desde`, termina al día siguiente (20:00–01:30). */
 export interface FranjaHoraria {
@@ -78,6 +78,7 @@ export interface Local {
   categorias: Categoria[];
   productos: Producto[];
   promociones: Promocion[];
+  cupones?: Cupon[];
   /** Solo llega en el panel admin (GET /admin/local). */
   plantillasOpciones?: GrupoOpciones[];
 }

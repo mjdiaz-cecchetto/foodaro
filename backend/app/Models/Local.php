@@ -45,6 +45,11 @@ class Local extends Model
         return $this->hasMany(Promocion::class)->orderByDesc('id');
     }
 
+    public function cupones(): HasMany
+    {
+        return $this->hasMany(Cupon::class)->orderByDesc('id');
+    }
+
     /** Plantillas de grupos de opciones (sin producto asociado). */
     public function plantillasOpciones(): HasMany
     {

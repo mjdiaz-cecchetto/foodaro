@@ -10,33 +10,44 @@
       (mouseleave)="reanudar()"
     >
       @for (promo of promociones(); track promo.id) {
-        <article class="relative shrink-0 w-full snap-start overflow-hidden bg-neutral-900 h-28 sm:h-36 flex items-center">
+        <article
+          class="relative shrink-0 w-full snap-start overflow-hidden bg-neutral-900 h-28 sm:h-36 flex items-center"
+          [class.cursor-pointer]="ui.pedidosHabilitados()"
+          (click)="seleccionarPromo(promo, $event)"
+        >
           <img [src]="promo.imagen" alt="" class="absolute inset-0 w-full h-full object-cover opacity-60" />
           <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/15"></div>
 
           <div class="relative z-10 px-4 sm:px-6 flex items-center justify-between gap-3 w-full">
             <div class="min-w-0">
-              <span class="inline-block bg-brand-600 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider mb-1.5">Promo</span>
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <span class="inline-block bg-brand-600 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">Promo</span>
+                @if (promo.descuento > 0) {
+                  <span class="inline-block bg-white/20 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                    {{ promo.descuento }}% OFF
+                  </span>
+                }
+              </div>
               <h3 class="text-base sm:text-xl font-black text-white leading-tight truncate">{{ promo.titulo }}</h3>
-              <p class="text-[11px] sm:text-sm text-gray-200 font-medium">
-                <span class="text-brand-400 font-black">{{ promo.descuento }}% OFF</span>
-                <span class="opacity-70"> · código </span><span class="font-bold tracking-wider">{{ promo.codigo }}</span>
-              </p>
+              @if (promo.precio > 0) {
+                <p class="mt-1 text-brand-400 font-black text-sm sm:text-base">{{ promo.precio | precio }}</p>
+              }
             </div>
 
             @if (ui.pedidosHabilitados()) {
               <button
                 type="button"
-                (click)="aplicarCupon(promo.id, $event)"
-                class="shrink-0 px-3 py-2 rounded-xl text-[11px] sm:text-xs font-bold tap-scale shadow-md border backdrop-blur-md transition"
-                [class]="promoActivaId() === promo.id
+                (click)="seleccionarPromo(promo, $event)"
+                class="shrink-0 px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-extrabold tap-scale shadow-md border transition flex items-center gap-1.5"
+                [class]="cantidadEnCarrito(promo.id) > 0
                   ? 'bg-emerald-500 border-emerald-400 text-white'
-                  : 'bg-white/15 border-white/25 text-white hover:bg-white/25'"
+                  : 'bg-brand-600 hover:bg-brand-700 border-brand-500 text-white'"
               >
-                @if (promoActivaId() === promo.id) {
-                  <i class="fa-solid fa-check mr-1"></i>Aplicado
+                <i class="fa-solid fa-plus text-[10px]"></i>
+                @if (cantidadEnCarrito(promo.id) > 0) {
+                  Sumar ({{ cantidadEnCarrito(promo.id) }})
                 } @else {
-                  Usar cupón
+                  Sumar al pedido
                 }
               </button>
             }

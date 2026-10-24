@@ -10,11 +10,12 @@ export interface OpcionElegida {
   modoPrecio?: ModoPrecioGrupo;
 }
 
-/** Línea de la comanda. Una por combinación de producto + opciones + notas. */
+/** Línea de la comanda. Una por combinación de producto + opciones + notas, o promoción directa. */
 export interface ItemCarrito {
-  /** Clave única de la línea (producto + opciones + notas). */
+  /** Clave única de la línea (producto + opciones + notas, o promo). */
   clave: string;
-  productoId: number;
+  productoId?: number;
+  promocionId?: number;
   nombre: string;
   /** Precio unitario incluyendo las opciones elegidas. */
   precioUnitario: number;

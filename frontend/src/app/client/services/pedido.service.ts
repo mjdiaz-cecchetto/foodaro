@@ -98,7 +98,8 @@ export class PedidoServicio {
   private aPayload(pedido: BorradorPedido): PedidoApi {
     return {
       items: pedido.items.map((i) => ({
-        productoId: i.productoId,
+        ...(i.productoId ? { productoId: i.productoId } : {}),
+        ...(i.promocionId ? { promocionId: i.promocionId } : {}),
         cantidad: i.cantidad,
         notas: i.notas,
         opciones: i.opciones.map((o) => ({ opcionId: o.opcionId })),

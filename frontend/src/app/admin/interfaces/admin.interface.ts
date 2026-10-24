@@ -1,4 +1,4 @@
-import { Categoria, Producto, Promocion } from '../../shared/models';
+import { Categoria, Cupon, Producto, Promocion } from '../../shared/models';
 
 /** Datos del formulario de categoría (alta/edición). */
 export type ValorFormularioCategoria = Pick<Categoria, 'nombre' | 'imagen'>;
@@ -9,8 +9,11 @@ export type ValorFormularioProducto = Pick<
   'nombre' | 'categoriaId' | 'precio' | 'tiempoPreparacion' | 'etiqueta' | 'imagen' | 'descripcion' | 'disponible' | 'gruposOpciones'
 >;
 
-/** Datos del formulario de promoción (alta). */
-export type ValorFormularioPromocion = Pick<Promocion, 'titulo' | 'descuento' | 'codigo' | 'imagen'>;
+/** Datos del formulario de promoción (alta/edición). */
+export type ValorFormularioPromocion = Pick<Promocion, 'titulo' | 'precio' | 'descuento' | 'imagen' | 'activa'>;
+
+/** Datos del formulario de cupón de descuento (alta/edición). */
+export type ValorFormularioCupon = Pick<Cupon, 'codigo' | 'descuento' | 'descripcion' | 'activo'>;
 
 /** Ítem de navegación de la barra lateral. */
 export interface ItemNavegacionAdmin {

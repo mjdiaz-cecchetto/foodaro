@@ -1,5 +1,7 @@
 import { Component, computed, effect, ElementRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
 
+import { Promocion } from '../../../shared/models';
+import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { CartaServicio } from '../../services/carta.service';
 import { CarritoServicio } from '../../services/carrito.service';
 import { UiClienteServicio } from '../../services/ui-cliente.service';
@@ -10,11 +12,13 @@ const INTERVALO_MS = 5000;
 /**
  * Carrusel compacto de promociones con auto-deslizado cada 5 s.
  * El usuario puede deslizar a mano (snap) o tocar los puntos; el autoplay se
- * pausa mientras interactúa. En modo pedido cada promo permite aplicar su cupón.
+ * pausa mientras interactúa. En modo pedido cada promo permite sumarla al carrito
+ * (si tiene precio) o aplicar su cupón de descuento.
  */
 @Component({
   selector: 'app-carrusel-promociones',
   standalone: true,
+  imports: [PrecioPipe],
   templateUrl: './carrusel-promociones.component.html',
   styleUrl: './carrusel-promociones.component.scss',
 })
@@ -76,14 +80,16 @@ export class CarruselPromocionesComponente implements OnDestroy {
     this.pausado = false;
   }
 
-  aplicarCupon(id: number, event: Event): void {
+  cantidadEnCarrito(promoId: number): number {
+    return this.carrito.items().find((i) => i.promocionId === promoId)?.cantidad ?? 0;
+  }
+
+  seleccionarPromo(promo: Promocion, event: Event): void {
     event.stopPropagation();
-    const promo = this.promociones().find((p) => p.id === id);
-    if (!promo) return;
-    const aplicado = this.carrito.aplicarPromo(promo);
-    this.notificaciones.mostrar(
-      aplicado ? `Cupón ${promo.codigo} aplicado: ${promo.descuento}% OFF` : `El cupón ${promo.codigo} ya está activo`,
-    );
+    if (!this.ui.pedidosHabilitados()) return;
+
+    this.carrito.agregarPromocion(promo);
+    this.notificaciones.mostrar(`¡"${promo.titulo}" sumada al pedido!`);
   }
 
   private reiniciarAutoplay(): void {

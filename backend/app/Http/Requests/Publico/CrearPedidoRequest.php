@@ -19,7 +19,8 @@ class CrearPedidoRequest extends FormRequest
     {
         return [
             'items' => ['required', 'array', 'min:1', 'max:60'],
-            'items.*.productoId' => ['required', 'integer'],
+            'items.*.productoId' => ['nullable', 'required_without:items.*.promocionId', 'integer'],
+            'items.*.promocionId' => ['nullable', 'required_without:items.*.productoId', 'integer'],
             'items.*.cantidad' => ['required', 'integer', 'min:1', 'max:99'],
             'items.*.notas' => ['nullable', 'string', 'max:255'],
             'items.*.opciones' => ['nullable', 'array', 'max:30'],

@@ -2,32 +2,104 @@
 
   <app-encabezado-pagina
     titulo="Promociones"
-    subtitulo="Cupones y banners que rotan en el carrusel de la carta."
+    subtitulo="Combos y ofertas destacadas que rotan en el carrusel de la carta y se suman directo al carrito."
     etiquetaAccion="Nueva promoción"
     (accion)="abrirAlta()"
   />
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
     @for (promo of promociones(); track promo.id) {
-      <div class="bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
-        <div class="relative h-36 rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
-          <img [src]="promo.imagen" [alt]="promo.titulo" class="w-full h-full object-cover opacity-80" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-4 flex flex-col justify-end">
-            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-brand-600 text-white w-max mb-1">{{ promo.descuento }}% OFF</span>
-            <h4 class="text-base font-extrabold text-white leading-snug">{{ promo.titulo }}</h4>
+      <div
+        class="bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4 transition-all"
+        [class]="promo.activa ? '' : 'opacity-65'"
+      >
+        <div
+          class="relative h-40 rounded-2xl overflow-hidden bg-zinc-900 shadow-md cursor-pointer group"
+          (click)="abrirEdicion(promo)"
+        >
+          <img
+            [src]="promo.imagen"
+            [alt]="promo.titulo"
+            class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-300"
+            [class.grayscale]="!promo.activa"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                @if (promo.descuento > 0) {
+                  <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-brand-600 text-white shadow-sm">
+                    {{ promo.descuento }}% OFF
+                  </span>
+                } @else {
+                  <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-brand-600 text-white shadow-sm">
+                    PROMO
+                  </span>
+                }
+                @if (!promo.activa) {
+                  <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-zinc-900/90 text-zinc-200 border border-white/15">
+                    PAUSADA
+                  </span>
+                }
+              </div>
+
+              @if (promo.precio > 0) {
+                <span class="px-3 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white font-black text-sm border border-white/15">
+                  {{ promo.precio | precio }}
+                </span>
+              }
+            </div>
+
+            <div>
+              <h4 class="text-base font-extrabold text-white leading-snug">{{ promo.titulo }}</h4>
+            </div>
           </div>
         </div>
 
-        <div class="flex items-center justify-between pt-1">
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-zinc-400 font-semibold">Cupón:</span>
-            <span class="font-mono text-xs font-black px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-brand-600 dark:text-brand-400 border border-zinc-200 dark:border-surface-borderDark">{{ promo.codigo }}</span>
+        <div class="flex items-center justify-between gap-3 pt-1">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="inline-flex items-center gap-1.5 text-xs font-extrabold text-zinc-800 dark:text-zinc-200">
+              <i class="fa-solid fa-tag text-brand-500 text-[11px]"></i>
+              {{ promo.precio | precio }}
+            </span>
+            <span class="text-[11px] text-zinc-400 font-medium truncate">· Suma directo al carrito</span>
           </div>
-          <div class="flex items-center gap-2">
-            <button type="button" (click)="alternarEstado(promo)" class="px-3 py-1 rounded-full text-xs font-bold tap-scale" [class]="promo.activa ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'">
-              {{ promo.activa ? 'Activa' : 'Pausada' }}
+
+          <div class="flex items-center gap-2.5 shrink-0">
+            <!-- Switch Activa / Pausada igual que en Productos -->
+            <label
+              class="inline-flex items-center gap-2 cursor-pointer select-none"
+              (click)="$event.stopPropagation()"
+              [title]="promo.activa ? 'Pausar promoción' : 'Activar promoción'"
+            >
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                [checked]="promo.activa"
+                (change)="alternarEstado(promo)"
+              />
+              <div class="relative w-9 h-5 bg-zinc-200 dark:bg-zinc-700 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+              <span class="text-[11px] font-bold" [class]="promo.activa ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'">
+                {{ promo.activa ? 'Activa' : 'Pausada' }}
+              </span>
+            </label>
+
+            <button
+              type="button"
+              (click)="abrirEdicion(promo)"
+              class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 flex items-center justify-center hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:hover:text-brand-400 tap-scale transition-colors"
+              title="Editar promoción"
+            >
+              <i class="fa-solid fa-pen-to-square text-xs"></i>
             </button>
-            <button type="button" (click)="eliminar(promo)" class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 flex items-center justify-center hover:bg-red-100 tap-scale" title="Eliminar"><i class="fa-solid fa-trash-can text-xs"></i></button>
+
+            <button
+              type="button"
+              (click)="eliminar(promo)"
+              class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 flex items-center justify-center hover:bg-red-100 tap-scale transition-colors"
+              title="Eliminar promoción"
+            >
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -37,4 +109,9 @@
   </div>
 </section>
 
-<app-modal-formulario-promocion [abierto]="modalAbierto()" (cerrado)="cerrarModal()" (guardado)="guardar($event)" />
+<app-modal-formulario-promocion
+  [abierto]="modalAbierto()"
+  [promocion]="editando()"
+  (cerrado)="cerrarModal()"
+  (guardado)="guardar($event)"
+/>

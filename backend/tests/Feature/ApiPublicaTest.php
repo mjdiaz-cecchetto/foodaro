@@ -230,4 +230,79 @@ class ApiPublicaTest extends TestCase
             ->patchJson("/api/admin/productos/{$producto->id}/disponibilidad")
             ->assertForbidden();
     }
+
+    public function test_promocion_con_precio_sin_cupon_edicion_y_pedido_directo(): void
+    {
+        $token = $this->postJson('/api/auth/ingreso', ['email' => 'admin@demolocal.com', 'contrasenia' => 'demo1234'])
+            ->json('data.token');
+
+        $promo = $this->withToken($token)->postJson('/api/admin/promociones', [
+            'titulo' => '2 Burgers Dobles + Papas',
+            'precio' => 18500,
+            'descuento' => 0,
+            'codigo' => '',
+            'imagen' => 'https://x.test/promo.png',
+            'activa' => true,
+        ])->assertCreated()
+            ->assertJsonPath('data.precio', fn ($v) => (float) $v === 18500.0)
+            ->assertJsonPath('data.codigo', '')
+            ->json('data');
+
+        $this->withToken($token)->putJson("/api/admin/promociones/{$promo['id']}", [
+            'titulo' => '2 Burgers Dobles + Papas + Gaseosa',
+            'precio' => 19900,
+            'descuento' => 15,
+            'codigo' => '',
+            'imagen' => 'https://x.test/promo2.png',
+            'activa' => true,
+        ])->assertOk()
+            ->assertJsonPath('data.titulo', '2 Burgers Dobles + Papas + Gaseosa')
+            ->assertJsonPath('data.precio', fn ($v) => (float) $v === 19900.0);
+
+        $this->postJson('/api/locales/demolocal/pedidos', [
+            'items' => [[
+                'promocionId' => $promo['id'],
+                'cantidad' => 2,
+                'notas' => 'Sin cebolla',
+                'opciones' => [],
+            ]],
+            'modoEntrega' => 'retiro',
+            'cliente' => ['nombre' => 'Carlos', 'telefono' => '11 2222 3333'],
+            'medioPago' => 'efectivo',
+        ])->assertCreated()
+            ->assertJsonPath('data.totales.subtotal', fn ($v) => (float) $v === 39800.0)
+            ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 39800.0)
+            ->assertJsonPath('data.items.0.nombre', 'Promo: 2 Burgers Dobles + Papas + Gaseosa');
+
+        // Crear cupón de descuento independiente y aplicarlo al confirmar pedido
+        $cupon = $this->withToken($token)->postJson('/api/admin/cupones', [
+            'codigo' => 'VIP25',
+            'descuento' => 25,
+            'descripcion' => '25% para clientes frecuentes',
+            'activo' => true,
+        ])->assertCreated()
+            ->assertJsonPath('data.codigo', 'VIP25')
+            ->assertJsonPath('data.descuento', 25)
+            ->json('data');
+
+        $this->postJson('/api/locales/demolocal/pedidos', [
+            'items' => [[
+                'promocionId' => $promo['id'],
+                'cantidad' => 1,
+                'notas' => '',
+                'opciones' => [],
+            ]],
+            'codigoPromo' => 'VIP25',
+            'modoEntrega' => 'retiro',
+            'cliente' => ['nombre' => 'Carlos', 'telefono' => '11 2222 3333'],
+            'medioPago' => 'efectivo',
+        ])->assertCreated()
+            ->assertJsonPath('data.totales.subtotal', fn ($v) => (float) $v === 19900.0)
+            ->assertJsonPath('data.totales.descuento', fn ($v) => (float) $v === 4975.0)
+            ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 14925.0);
+
+        $this->withToken($token)->patchJson("/api/admin/cupones/{$cupon['id']}/estado")
+            ->assertOk()
+            ->assertJsonPath('data.activo', false);
+    }
 }

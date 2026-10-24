@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 
 import { Promocion } from '../../../shared/models';
+import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { PromocionesAdminServicio } from '../../services/promociones-admin.service';
 import { ValorFormularioPromocion } from '../../interfaces';
@@ -12,7 +13,7 @@ import { mensajeDeError } from '../../../shared/utils/api';
 @Component({
   selector: 'app-pagina-promociones',
   standalone: true,
-  imports: [EncabezadoPaginaComponente, ModalFormularioPromocionComponente],
+  imports: [EncabezadoPaginaComponente, ModalFormularioPromocionComponente, PrecioPipe],
   templateUrl: './pagina-promociones.component.html',
   styleUrl: './pagina-promociones.component.scss',
 })
@@ -22,22 +23,38 @@ export class PaginaPromocionesComponente {
 
   readonly promociones = this.promocionesAdmin.promociones;
   readonly modalAbierto = signal(false);
+  readonly editando = signal<Promocion | null>(null);
 
   abrirAlta(): void {
+    this.editando.set(null);
+    this.modalAbierto.set(true);
+  }
+
+  abrirEdicion(promo: Promocion): void {
+    this.editando.set(promo);
     this.modalAbierto.set(true);
   }
 
   cerrarModal(): void {
     this.modalAbierto.set(false);
+    this.editando.set(null);
   }
 
   guardar(valor: ValorFormularioPromocion): void {
-    this.promocionesAdmin.crear(valor).subscribe({
+    const actual = this.editando();
+    const peticion$ = actual
+      ? this.promocionesAdmin.actualizar(actual.id, valor)
+      : this.promocionesAdmin.crear(valor);
+
+    peticion$.subscribe({
       next: () => {
-        this.notificaciones.mostrar('Promoción creada');
+        this.notificaciones.mostrar(actual ? 'Promoción actualizada' : 'Promoción creada');
         this.cerrarModal();
       },
-      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo crear la promoción')),
+      error: (err: unknown) =>
+        this.notificaciones.mostrar(
+          mensajeDeError(err, actual ? 'No se pudo actualizar la promoción' : 'No se pudo crear la promoción'),
+        ),
     });
   }
 

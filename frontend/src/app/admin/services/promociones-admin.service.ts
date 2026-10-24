@@ -24,6 +24,13 @@ export class PromocionesAdminServicio {
     );
   }
 
+  actualizar(id: number, valor: ValorFormularioPromocion): Observable<Promocion> {
+    return this.http.put<RespuestaApi<Promocion>>(`${this.api}/${id}`, valor).pipe(
+      map((r) => r.data),
+      tap((promo) => this.promociones.update((lista) => lista.map((p) => (p.id === id ? promo : p)))),
+    );
+  }
+
   alternarEstado(id: number): Observable<Promocion> {
     return this.http.patch<RespuestaApi<Promocion>>(`${this.api}/${id}/estado`, {}).pipe(
       map((r) => r.data),

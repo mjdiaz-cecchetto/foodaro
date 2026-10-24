@@ -1,10 +1,11 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
+import { Promocion } from '../../../shared/models';
 import { ModalComponente } from '../../../shared/components/modal/modal.component';
 import { ValorFormularioPromocion } from '../../interfaces';
 
-/** Alta de promoción / cupón. */
+/** Alta y edición de promoción / cupón. */
 @Component({
   selector: 'app-modal-formulario-promocion',
   standalone: true,
@@ -16,14 +17,18 @@ export class ModalFormularioPromocionComponente {
   private readonly fb = inject(FormBuilder);
 
   readonly abierto = input.required<boolean>();
+  readonly promocion = input<Promocion | null>(null);
   readonly cerrado = output<void>();
   readonly guardado = output<ValorFormularioPromocion>();
 
+  readonly esEdicion = computed(() => this.promocion() !== null);
+
   readonly formulario = this.fb.nonNullable.group({
     titulo: ['', Validators.required],
-    descuento: [20, [Validators.required, Validators.min(5), Validators.max(90)]],
-    codigo: ['', Validators.required],
+    precio: [0, [Validators.required, Validators.min(0)]],
+    descuento: [0, [Validators.min(0), Validators.max(100)]],
     imagen: ['', Validators.required],
+    activa: [true],
   });
 
   readonly claseCampo =
@@ -31,11 +36,29 @@ export class ModalFormularioPromocionComponente {
 
   constructor() {
     effect(() => {
-      if (this.abierto()) this.formulario.reset({ titulo: '', descuento: 20, codigo: '', imagen: '' });
+      if (!this.abierto()) return;
+      const p = this.promocion();
+      if (p) {
+        this.formulario.reset({
+          titulo: p.titulo,
+          precio: p.precio ?? 0,
+          descuento: p.descuento ?? 0,
+          imagen: p.imagen,
+          activa: p.activa,
+        });
+      } else {
+        this.formulario.reset({
+          titulo: '',
+          precio: 0,
+          descuento: 0,
+          imagen: '',
+          activa: true,
+        });
+      }
     });
   }
 
-  invalido(campo: 'titulo' | 'descuento' | 'codigo' | 'imagen'): boolean {
+  invalido(campo: 'titulo' | 'precio' | 'descuento' | 'imagen'): boolean {
     const c = this.formulario.controls[campo];
     return c.invalid && c.touched;
   }
@@ -46,6 +69,12 @@ export class ModalFormularioPromocionComponente {
       return;
     }
     const v = this.formulario.getRawValue();
-    this.guardado.emit({ ...v, descuento: Number(v.descuento) });
+    this.guardado.emit({
+      titulo: v.titulo.trim(),
+      precio: Number(v.precio) || 0,
+      descuento: Number(v.descuento) || 0,
+      imagen: v.imagen.trim(),
+      activa: Boolean(v.activa),
+    });
   }
 }

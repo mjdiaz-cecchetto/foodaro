@@ -1,23 +1,75 @@
 @let t = totales();
-<dl class="space-y-1.5 text-sm">
-  <div class="flex justify-between text-gray-600 dark:text-dark-muted">
-    <dt>Subtotal</dt>
-    <dd class="font-semibold text-gray-900 dark:text-white">{{ t.subtotal | precio }}</dd>
-  </div>
-  @if (t.descuento > 0) {
-    <div class="flex justify-between text-emerald-600">
-      <dt>Descuento <span class="text-[11px] font-bold tracking-wider">{{ promo()?.codigo }}</span></dt>
-      <dd class="font-semibold">{{ t.descuento | precio: '-' }}</dd>
+<div class="space-y-3">
+  <!-- Cupón de descuento -->
+  @if (cupon(); as c) {
+    <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-xs">
+      <div class="flex items-center gap-2 min-w-0">
+        <i class="fa-solid fa-ticket text-emerald-600 dark:text-emerald-400"></i>
+        <span class="font-bold text-emerald-800 dark:text-emerald-300 truncate">
+          Cupón <span class="font-mono font-black">{{ c.codigo }}</span> (-{{ c.descuento }}%)
+        </span>
+      </div>
+      <button
+        type="button"
+        (click)="quitarCupon()"
+        class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:underline shrink-0"
+      >
+        Quitar
+      </button>
+    </div>
+  } @else {
+    <div>
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-ticket absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+          <input
+            type="text"
+            [ngModel]="codigoIngresado()"
+            (ngModelChange)="codigoIngresado.set($event); errorCupon.set(null)"
+            (keydown.enter)="$event.preventDefault(); aplicarCupon()"
+            placeholder="Código de descuento"
+            class="w-full pl-8 pr-3 py-2 rounded-xl bg-gray-50 dark:bg-dark-card border border-gray-200 dark:border-dark-border text-xs font-mono uppercase font-bold text-gray-900 dark:text-white placeholder:font-sans placeholder:normal-case placeholder:font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+          />
+        </div>
+        <button
+          type="button"
+          (click)="aplicarCupon()"
+          class="px-3.5 py-2 rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 text-xs font-bold tap-scale transition shrink-0"
+        >
+          Aplicar
+        </button>
+      </div>
+      @if (errorCupon()) {
+        <p class="mt-1 text-[11px] font-semibold text-brand-600">{{ errorCupon() }}</p>
+      }
     </div>
   }
-  @if (t.cargoServicio > 0) {
+
+  <dl class="space-y-1.5 text-sm">
     <div class="flex justify-between text-gray-600 dark:text-dark-muted">
-      <dt>{{ etiquetaCargo() }}</dt>
-      <dd class="font-semibold text-gray-900 dark:text-white">{{ t.cargoServicio | precio }}</dd>
+      <dt>Subtotal</dt>
+      <dd class="font-semibold text-gray-900 dark:text-white">{{ t.subtotal | precio }}</dd>
     </div>
-  }
-  <div class="flex justify-between items-end pt-2 border-t border-dashed border-gray-200 dark:border-dark-border">
-    <dt class="font-bold text-gray-900 dark:text-white">Total</dt>
-    <dd class="text-xl font-black text-brand-600">{{ t.total | precio }}</dd>
-  </div>
-</dl>
+    @if (t.descuento > 0) {
+      <div class="flex justify-between text-emerald-600">
+        <dt>
+          Descuento
+          @if (cupon(); as c) {
+            <span class="text-[11px] font-bold tracking-wider">({{ c.codigo }} · -{{ c.descuento }}%)</span>
+          }
+        </dt>
+        <dd class="font-semibold">{{ t.descuento | precio: '-' }}</dd>
+      </div>
+    }
+    @if (t.cargoServicio > 0) {
+      <div class="flex justify-between text-gray-600 dark:text-dark-muted">
+        <dt>{{ etiquetaCargo() }}</dt>
+        <dd class="font-semibold text-gray-900 dark:text-white">{{ t.cargoServicio | precio }}</dd>
+      </div>
+    }
+    <div class="flex justify-between items-end pt-2 border-t border-dashed border-gray-200 dark:border-dark-border">
+      <dt class="font-bold text-gray-900 dark:text-white">Total</dt>
+      <dd class="text-xl font-black text-brand-600">{{ t.total | precio }}</dd>
+    </div>
+  </dl>
+</div>

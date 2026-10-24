@@ -18,7 +18,7 @@ class PedidoServicio
     public function crear(Local $local, array $datos): Pedido
     {
         return DB::transaction(function () use ($local, $datos) {
-            $promo = $this->resolverPromocion($local, $datos['codigoPromo'] ?? null);
+            $descuentoAplicado = $this->resolverDescuento($local, $datos['codigoPromo'] ?? null);
 
             $lineas = [];
             $subtotal = 0.0;
@@ -28,7 +28,7 @@ class PedidoServicio
                 $subtotal += $linea['total'];
             }
 
-            $descuento = $promo ? round($subtotal * $promo->descuento / 100, 2) : 0.0;
+            $descuento = $descuentoAplicado ? round($subtotal * $descuentoAplicado['porcentaje'] / 100, 2) : 0.0;
             $cargoServicio = (float) $local->cargo_servicio;
             $total = max(0, $subtotal - $descuento + $cargoServicio);
 
@@ -46,8 +46,8 @@ class PedidoServicio
                 'medio_pago' => $datos['medioPago'],
                 'monto_efectivo' => $datos['medioPago'] === 'efectivo' ? ($datos['montoEfectivo'] ?? null) : null,
                 'comentarios' => $datos['comentarios'] ?? null,
-                'promocion_id' => $promo?->id,
-                'codigo_promo' => $promo?->codigo,
+                'promocion_id' => $descuentoAplicado['promocion_id'] ?? null,
+                'codigo_promo' => $descuentoAplicado['codigo'] ?? null,
                 'subtotal' => $subtotal,
                 'descuento' => $descuento,
                 'cargo_servicio' => $cargoServicio,
@@ -65,6 +65,35 @@ class PedidoServicio
 
     private function armarLinea(Local $local, array $item, int $indice): array
     {
+        if (! empty($item['promocionId'])) {
+            $promocion = $local->promociones()
+                ->where('activa', true)
+                ->find($item['promocionId']);
+
+            if (! $promocion || (float) $promocion->precio <= 0) {
+                throw ValidationException::withMessages([
+                    "items.{$indice}.promocionId" => 'La promoción no existe o no está disponible.',
+                ]);
+            }
+
+            $cantidad = (int) $item['cantidad'];
+            $precioUnitario = (float) $promocion->precio;
+            $totalLinea = round($precioUnitario * $cantidad, 2);
+
+            return [
+                'total' => $totalLinea,
+                'item' => [
+                    'producto_id' => null,
+                    'nombre' => "Promo: {$promocion->titulo}",
+                    'precio_unitario' => $precioUnitario,
+                    'cantidad' => $cantidad,
+                    'total' => $totalLinea,
+                    'notas' => isset($item['notas']) && $item['notas'] !== '' ? trim($item['notas']) : null,
+                ],
+                'opciones' => [],
+            ];
+        }
+
         $producto = Producto::query()
             ->where('local_id', $local->id)
             ->where('disponible', true)
@@ -132,17 +161,38 @@ class PedidoServicio
         ];
     }
 
-    private function resolverPromocion(Local $local, ?string $codigo): ?Promocion
+    /**
+     * Resuelve un cupón de descuento por su código (busca en `cupones` y como
+     * respaldo en `promociones`).
+     *
+     * @return array{codigo: string, porcentaje: int, promocion_id: int|null}|null
+     */
+    private function resolverDescuento(Local $local, ?string $codigo): ?array
     {
         if (! $codigo) {
             return null;
         }
-        $promo = $local->promociones()->where('codigo', strtoupper(trim($codigo)))->where('activa', true)->first();
-        if (! $promo) {
-            throw ValidationException::withMessages(['codigoPromo' => 'El cupón no existe o ya no está vigente.']);
+        $normalizado = strtoupper(trim($codigo));
+
+        $cupon = $local->cupones()->where('codigo', $normalizado)->where('activo', true)->first();
+        if ($cupon) {
+            return [
+                'codigo' => $cupon->codigo,
+                'porcentaje' => (int) $cupon->descuento,
+                'promocion_id' => null,
+            ];
         }
 
-        return $promo;
+        $promo = $local->promociones()->where('codigo', $normalizado)->where('activa', true)->first();
+        if ($promo && (int) $promo->descuento > 0) {
+            return [
+                'codigo' => $promo->codigo,
+                'porcentaje' => (int) $promo->descuento,
+                'promocion_id' => $promo->id,
+            ];
+        }
+
+        throw ValidationException::withMessages(['codigoPromo' => 'El cupón no existe o ya no está vigente.']);
     }
 
     private function proximoNumero(Local $local): int

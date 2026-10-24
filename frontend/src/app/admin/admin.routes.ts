@@ -37,6 +37,12 @@ export const RUTAS_ADMIN: Routes = [
           import('./pages/pagina-promociones/pagina-promociones.component').then((m) => m.PaginaPromocionesComponente),
         title: 'Foodaro Admin • Promociones',
       },
+      {
+        path: 'cupones',
+        loadComponent: () =>
+          import('./pages/pagina-cupones/pagina-cupones.component').then((m) => m.PaginaCuponesComponente),
+        title: 'Foodaro Admin • Cupones de Descuento',
+      },
     ],
   },
 ];

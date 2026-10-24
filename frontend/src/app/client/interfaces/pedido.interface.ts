@@ -30,7 +30,13 @@ export interface BorradorPedido {
 
 /** Cuerpo que se envía a POST /locales/{slug}/pedidos. */
 export interface PedidoApi {
-  items: { productoId: number; cantidad: number; notas: string; opciones: { opcionId: number }[] }[];
+  items: {
+    productoId?: number;
+    promocionId?: number;
+    cantidad: number;
+    notas: string;
+    opciones: { opcionId: number }[];
+  }[];
   codigoPromo: string | null;
   modoEntrega: ModoEntrega;
   cliente: DatosCliente;

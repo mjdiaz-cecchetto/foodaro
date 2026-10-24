@@ -26,6 +26,7 @@ class LocalResource extends JsonResource
             'categorias' => CategoriaResource::collection($this->whenLoaded('categorias')),
             'productos' => ProductoResource::collection($this->whenLoaded('productos')),
             'promociones' => PromocionResource::collection($this->whenLoaded('promociones')),
+            'cupones' => CuponResource::collection($this->whenLoaded('cupones')),
             'plantillasOpciones' => GrupoOpcionesResource::collection($this->whenLoaded('plantillasOpciones')),
         ];
     }

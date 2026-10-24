@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\CategoriaController;
+use App\Http\Controllers\Api\Admin\CuponController;
 use App\Http\Controllers\Api\Admin\LocalAdminController;
 use App\Http\Controllers\Api\Admin\PedidoAdminController;
 use App\Http\Controllers\Api\Admin\PlantillaOpcionesController;
@@ -50,6 +51,9 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
 
     Route::patch('promociones/{promocion}/estado', [PromocionController::class, 'alternarEstado']);
     Route::apiResource('promociones', PromocionController::class)->except('show')->parameters(['promociones' => 'promocion']);
+
+    Route::patch('cupones/{cupon}/estado', [CuponController::class, 'alternarEstado']);
+    Route::apiResource('cupones', CuponController::class)->except('show')->parameters(['cupones' => 'cupon']);
 
     Route::apiResource('plantillas-opciones', PlantillaOpcionesController::class)
         ->except('show')

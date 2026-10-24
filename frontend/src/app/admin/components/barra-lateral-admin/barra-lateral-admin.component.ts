@@ -33,6 +33,7 @@ export class BarraLateralAdminComponente {
     { ruta: 'perfil', etiqueta: 'Datos del Local', icono: 'fa-store', indicador: 'flecha' },
     { ruta: 'productos', etiqueta: 'Gestión de Productos', icono: 'fa-boxes-stacked', indicador: 'contador' },
     { ruta: 'promociones', etiqueta: 'Promociones', icono: 'fa-tags', indicador: 'punto' },
+    { ruta: 'cupones', etiqueta: 'Cupones', icono: 'fa-ticket', indicador: 'flecha' },
   ];
 
   readonly claseActiva = 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400';

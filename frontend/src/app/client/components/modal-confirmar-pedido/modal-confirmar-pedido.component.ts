@@ -166,7 +166,7 @@ export class ModalConfirmarPedidoComponente {
 
   finalizar(): void {
     this.carrito.vaciar();
-    this.carrito.promoActiva.set(null);
+    this.carrito.quitarCupon();
     this.formulario.reset();
     this.cerrar();
   }
@@ -180,7 +180,7 @@ export class ModalConfirmarPedidoComponente {
     return {
       items: this.carrito.items(),
       totales: this.carrito.totales(),
-      codigoPromo: this.carrito.promoActiva()?.codigo ?? null,
+      codigoPromo: this.carrito.cuponActivo()?.codigo ?? null,
       modoEntrega: v.modoEntrega,
       cliente: { nombre: v.nombre.trim(), telefono: v.telefono.trim() },
       direccion:

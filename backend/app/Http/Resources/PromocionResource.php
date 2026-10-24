@@ -12,10 +12,11 @@ class PromocionResource extends JsonResource
         return [
             'id' => $this->id,
             'titulo' => $this->titulo,
-            'descuento' => $this->descuento,
-            'codigo' => $this->codigo,
-            'imagen' => $this->imagen_url,
-            'activa' => $this->activa,
+            'precio' => (float) ($this->precio ?? 0),
+            'descuento' => (int) ($this->descuento ?? 0),
+            'codigo' => $this->codigo ?? '',
+            'imagen' => $this->imagen_url ?? '',
+            'activa' => (bool) $this->activa,
         ];
     }
 }

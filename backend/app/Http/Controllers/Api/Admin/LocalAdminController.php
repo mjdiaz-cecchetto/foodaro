@@ -23,6 +23,7 @@ class LocalAdminController extends Controller
             'categorias',
             'productos.gruposOpciones.opciones',
             'promociones',
+            'cupones',
             'plantillasOpciones.opciones',
         ]);
 

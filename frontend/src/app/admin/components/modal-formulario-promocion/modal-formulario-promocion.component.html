@@ -1,35 +1,56 @@
 <app-modal [abierto]="abierto()" variante="dialogo" claseAncho="max-w-md" (cerrado)="cerrado.emit()">
   <div class="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-surface-borderDark">
-    <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">Nueva promoción</h3>
+    <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">
+      {{ esEdicion() ? 'Editar promoción' : 'Nueva promoción' }}
+    </h3>
     <button type="button" (click)="cerrado.emit()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center hover:opacity-80" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
   <form [formGroup]="formulario" (ngSubmit)="enviar()" class="mt-4 space-y-4 text-xs" novalidate>
+    <!-- Switch Activa / Pausada -->
+    <div class="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark">
+      <div>
+        <p class="font-extrabold text-zinc-800 dark:text-zinc-200">Promoción activa</p>
+        <p class="text-[11px] text-zinc-400">Si la pausás no se mostrará en la carta pública.</p>
+      </div>
+      <label class="inline-flex items-center cursor-pointer select-none">
+        <input type="checkbox" formControlName="activa" class="sr-only peer" />
+        <div class="relative w-10 h-5 bg-zinc-200 dark:bg-zinc-700 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+      </label>
+    </div>
+
     <div>
-      <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Título</label>
-      <input type="text" formControlName="titulo" placeholder="Ej: 20% OFF en pizzas los martes" [class]="claseCampo + ' font-semibold'" />
+      <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Título de la promo</label>
+      <input type="text" formControlName="titulo" placeholder="Ej: 2 Burgers Dobles + Papas Cheddar" [class]="claseCampo + ' font-semibold'" />
       @if (invalido('titulo')) { <p class="mt-1 text-[11px] font-semibold text-red-500">El título es obligatorio.</p> }
     </div>
+
     <div class="grid grid-cols-2 gap-3">
       <div>
-        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Descuento (%)</label>
-        <input type="number" formControlName="descuento" min="5" max="90" [class]="claseCampo + ' font-bold text-brand-600'" />
-        @if (invalido('descuento')) { <p class="mt-1 text-[11px] font-semibold text-red-500">Entre 5 y 90.</p> }
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Precio promo ($)</label>
+        <input type="number" formControlName="precio" min="0" placeholder="14500" [class]="claseCampo + ' font-extrabold text-zinc-900 dark:text-white'" />
+        @if (invalido('precio')) { <p class="mt-1 text-[11px] font-semibold text-red-500">Ingresá un precio válido.</p> }
       </div>
       <div>
-        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Código del cupón</label>
-        <input type="text" formControlName="codigo" placeholder="PIZZA20" [class]="claseCampo + ' font-mono uppercase font-bold'" />
-        @if (invalido('codigo')) { <p class="mt-1 text-[11px] font-semibold text-red-500">El código es obligatorio.</p> }
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+          Etiqueta OFF (%) <span class="text-zinc-400 font-normal">(opcional)</span>
+        </label>
+        <input type="number" formControlName="descuento" min="0" max="100" placeholder="20" [class]="claseCampo + ' font-bold text-brand-600'" />
+        @if (invalido('descuento')) { <p class="mt-1 text-[11px] font-semibold text-red-500">Entre 0 y 100.</p> }
       </div>
     </div>
+
     <div>
       <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">URL de la imagen</label>
       <input type="url" formControlName="imagen" placeholder="https://..." [class]="claseCampo" />
       @if (invalido('imagen')) { <p class="mt-1 text-[11px] font-semibold text-red-500">La imagen es obligatoria.</p> }
     </div>
+
     <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-surface-borderDark">
       <button type="button" (click)="cerrado.emit()" class="px-4 py-2.5 rounded-xl font-bold text-zinc-500 hover:text-zinc-700">Cancelar</button>
-      <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral tap-scale">Guardar promoción</button>
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral tap-scale">
+        {{ esEdicion() ? 'Guardar cambios' : 'Crear promoción' }}
+      </button>
     </div>
   </form>
 </app-modal>

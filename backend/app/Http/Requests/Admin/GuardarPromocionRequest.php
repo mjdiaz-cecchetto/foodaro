@@ -14,9 +14,13 @@ class GuardarPromocionRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->has('codigo')) {
-            $this->merge(['codigo' => strtoupper(trim((string) $this->input('codigo')))]);
-        }
+        $codigo = trim((string) $this->input('codigo', ''));
+        $this->merge([
+            'codigo' => $codigo !== '' ? strtoupper($codigo) : null,
+            'descuento' => $this->filled('descuento') && (int) $this->input('descuento') > 0
+                ? (int) $this->input('descuento')
+                : null,
+        ]);
     }
 
     public function rules(): array
@@ -26,9 +30,10 @@ class GuardarPromocionRequest extends FormRequest
 
         return [
             'titulo' => ['required', 'string', 'min:3', 'max:150'],
-            'descuento' => ['required', 'integer', 'min:1', 'max:100'],
+            'precio' => ['required', 'numeric', 'min:0', 'max:99999999'],
+            'descuento' => ['nullable', 'integer', 'min:1', 'max:100'],
             'codigo' => [
-                'required', 'string', 'min:2', 'max:30', 'alpha_num:ascii',
+                'nullable', 'string', 'min:2', 'max:30', 'alpha_num:ascii',
                 Rule::unique('promociones', 'codigo')->where('local_id', $localId)->ignore($promocionId),
             ],
             'imagen' => ['nullable', 'url', 'max:500'],

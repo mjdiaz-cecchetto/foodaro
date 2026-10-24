@@ -30,7 +30,7 @@ class PromocionController extends Controller
     public function update(GuardarPromocionRequest $request, Promocion $promocion): PromocionResource
     {
         $this->authorize('update', $promocion);
-        $promocion->update($this->atributos($request->validated()));
+        $promocion->update($this->atributos($request->validated(), $promocion));
 
         return new PromocionResource($promocion);
     }
@@ -52,14 +52,19 @@ class PromocionController extends Controller
         return response()->json(null, 204);
     }
 
-    private function atributos(array $datos): array
+    private function atributos(array $datos, ?Promocion $actual = null): array
     {
+        $codigo = isset($datos['codigo']) && trim((string) $datos['codigo']) !== ''
+            ? strtoupper(trim((string) $datos['codigo']))
+            : null;
+
         return [
             'titulo' => trim($datos['titulo']),
-            'descuento' => $datos['descuento'],
-            'codigo' => $datos['codigo'],
-            'imagen_url' => $datos['imagen'] ?? null,
-            'activa' => $datos['activa'] ?? true,
+            'precio' => (float) ($datos['precio'] ?? 0),
+            'descuento' => isset($datos['descuento']) && (int) $datos['descuento'] > 0 ? (int) $datos['descuento'] : null,
+            'codigo' => $codigo,
+            'imagen_url' => array_key_exists('imagen', $datos) ? ($datos['imagen'] ?: null) : $actual?->imagen_url,
+            'activa' => array_key_exists('activa', $datos) ? (bool) $datos['activa'] : ($actual?->activa ?? true),
         ];
     }
 }

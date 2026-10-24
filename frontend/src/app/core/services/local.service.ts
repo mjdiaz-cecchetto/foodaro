@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   Categoria,
   ConfiguracionLocal,
+  Cupon,
   GrupoOpciones,
   Local,
   PerfilLocal,
@@ -36,6 +37,7 @@ export class LocalServicio {
   readonly categorias = signal<Categoria[]>([]);
   readonly productos = signal<Producto[]>([]);
   readonly promociones = signal<Promocion[]>([]);
+  readonly cupones = signal<Cupon[]>([]);
   readonly plantillasOpciones = signal<GrupoOpciones[]>([]);
   /** `true` cuando se cargó el local completo del admin (incluye agotados y plantillas). */
   readonly cargaCompleta = signal(false);
@@ -71,6 +73,7 @@ export class LocalServicio {
     this.categorias.set(local.categorias ?? []);
     this.productos.set(local.productos ?? []);
     this.promociones.set(local.promociones ?? []);
+    this.cupones.set(local.cupones ?? []);
     this.plantillasOpciones.set(local.plantillasOpciones ?? []);
     this.cargaCompleta.set(completo);
   }
