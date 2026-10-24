@@ -32,6 +32,7 @@ class PedidoResource extends JsonResource
                 'subtotal' => (float) $this->subtotal,
                 'descuento' => (float) $this->descuento,
                 'cargoServicio' => (float) $this->cargo_servicio,
+                'costoEnvio' => (float) ($this->costo_envio ?? 0),
                 'total' => (float) $this->total,
             ],
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => [

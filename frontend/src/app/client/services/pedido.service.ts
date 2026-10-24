@@ -57,6 +57,9 @@ export class PedidoServicio {
     if (totales.cargoServicio > 0) {
       lineas.push(`${config.etiquetaCargoServicio}: ${dinero(totales.cargoServicio)}`);
     }
+    if ((totales.costoEnvio ?? 0) > 0) {
+      lineas.push(`Envío a domicilio: ${dinero(totales.costoEnvio!)}`);
+    }
     lineas.push(`*TOTAL: ${dinero(totales.total)}*`);
     lineas.push(sep);
 

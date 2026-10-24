@@ -21,7 +21,7 @@ class Pedido extends Model
         'local_id', 'numero', 'estado', 'modo_entrega',
         'nombre_cliente', 'telefono_cliente', 'calle', 'piso_depto', 'referencia',
         'medio_pago', 'monto_efectivo', 'comentarios',
-        'promocion_id', 'codigo_promo', 'subtotal', 'descuento', 'cargo_servicio', 'total',
+        'promocion_id', 'codigo_promo', 'subtotal', 'descuento', 'cargo_servicio', 'costo_envio', 'total',
     ];
 
     protected function casts(): array
@@ -34,6 +34,7 @@ class Pedido extends Model
             'subtotal' => 'decimal:2',
             'descuento' => 'decimal:2',
             'cargo_servicio' => 'decimal:2',
+            'costo_envio' => 'decimal:2',
             'total' => 'decimal:2',
         ];
     }

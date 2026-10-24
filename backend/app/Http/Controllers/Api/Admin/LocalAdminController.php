@@ -62,6 +62,18 @@ class LocalAdminController extends Controller
         if (isset($c['etiquetaCargoServicio'])) {
             $local->etiqueta_cargo_servicio = $c['etiquetaCargoServicio'];
         }
+        if (array_key_exists('costoEnvio', $c)) {
+            $local->costo_envio = (float) $c['costoEnvio'];
+        }
+        if (array_key_exists('montoMinimoEnvio', $c)) {
+            $local->monto_minimo_envio = (float) $c['montoMinimoEnvio'];
+        }
+        if (array_key_exists('aliasTransferencia', $c)) {
+            $local->alias_transferencia = $c['aliasTransferencia'] ? trim($c['aliasTransferencia']) : null;
+        }
+        if (array_key_exists('titularTransferencia', $c)) {
+            $local->titular_transferencia = $c['titularTransferencia'] ? trim($c['titularTransferencia']) : null;
+        }
         $local->save();
 
         if (isset($p['horarios'])) {

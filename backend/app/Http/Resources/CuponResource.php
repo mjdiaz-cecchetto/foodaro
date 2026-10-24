@@ -14,6 +14,10 @@ class CuponResource extends JsonResource
             'codigo' => $this->codigo,
             'descuento' => (int) $this->descuento,
             'descripcion' => $this->descripcion ?? '',
+            'montoMinimo' => (float) ($this->monto_minimo ?? 0),
+            'maxUsos' => $this->max_usos !== null ? (int) $this->max_usos : null,
+            'usos' => (int) ($this->usos ?? 0),
+            'fechaVencimiento' => $this->fecha_vencimiento ? $this->fecha_vencimiento->format('Y-m-d') : null,
             'activo' => (bool) $this->activo,
         ];
     }

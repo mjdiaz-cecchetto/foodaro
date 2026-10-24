@@ -19,6 +19,10 @@ const CONFIGURACION_POR_DEFECTO: ConfiguracionLocal = {
   moneda: 'ARS',
   cargoServicio: 0,
   etiquetaCargoServicio: 'Servicio / empaque',
+  costoEnvio: 0,
+  montoMinimoEnvio: 0,
+  aliasTransferencia: '',
+  titularTransferencia: '',
 };
 
 /**

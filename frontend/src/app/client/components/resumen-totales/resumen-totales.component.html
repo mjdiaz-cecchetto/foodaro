@@ -2,20 +2,27 @@
 <div class="space-y-3">
   <!-- Cupón de descuento -->
   @if (cupon(); as c) {
-    <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-xs">
-      <div class="flex items-center gap-2 min-w-0">
-        <i class="fa-solid fa-ticket text-emerald-600 dark:text-emerald-400"></i>
-        <span class="font-bold text-emerald-800 dark:text-emerald-300 truncate">
-          Cupón <span class="font-mono font-black">{{ c.codigo }}</span> (-{{ c.descuento }}%)
-        </span>
+    <div class="space-y-1">
+      <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-xs">
+        <div class="flex items-center gap-2 min-w-0">
+          <i class="fa-solid fa-ticket text-emerald-600 dark:text-emerald-400"></i>
+          <span class="font-bold text-emerald-800 dark:text-emerald-300 truncate">
+            Cupón <span class="font-mono font-black">{{ c.codigo }}</span> (-{{ c.descuento }}%)
+          </span>
+        </div>
+        <button
+          type="button"
+          (click)="quitarCupon()"
+          class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:underline shrink-0"
+        >
+          Quitar
+        </button>
       </div>
-      <button
-        type="button"
-        (click)="quitarCupon()"
-        class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:underline shrink-0"
-      >
-        Quitar
-      </button>
+      @if (faltaParaCupon() > 0) {
+        <p class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 px-1">
+          Sumá {{ faltaParaCupon() | precio }} más para activar el descuento (mín. {{ c.montoMinimo | precio }}).
+        </p>
+      }
     </div>
   } @else {
     <div>
@@ -65,6 +72,12 @@
       <div class="flex justify-between text-gray-600 dark:text-dark-muted">
         <dt>{{ etiquetaCargo() }}</dt>
         <dd class="font-semibold text-gray-900 dark:text-white">{{ t.cargoServicio | precio }}</dd>
+      </div>
+    }
+    @if ((t.costoEnvio ?? 0) > 0) {
+      <div class="flex justify-between text-gray-600 dark:text-dark-muted">
+        <dt>Envío a domicilio</dt>
+        <dd class="font-semibold text-gray-900 dark:text-white">{{ (t.costoEnvio ?? 0) | precio }}</dd>
       </div>
     }
     <div class="flex justify-between items-end pt-2 border-t border-dashed border-gray-200 dark:border-dark-border">

@@ -13,7 +13,10 @@ export type ValorFormularioProducto = Pick<
 export type ValorFormularioPromocion = Pick<Promocion, 'titulo' | 'precio' | 'descuento' | 'imagen' | 'activa'>;
 
 /** Datos del formulario de cupón de descuento (alta/edición). */
-export type ValorFormularioCupon = Pick<Cupon, 'codigo' | 'descuento' | 'descripcion' | 'activo'>;
+export type ValorFormularioCupon = Pick<
+  Cupon,
+  'codigo' | 'descuento' | 'descripcion' | 'montoMinimo' | 'maxUsos' | 'fechaVencimiento' | 'activo'
+>;
 
 /** Ítem de navegación de la barra lateral. */
 export interface ItemNavegacionAdmin {

@@ -14,13 +14,17 @@ class Local extends Model
         'slug', 'nombre', 'eslogan', 'rubro', 'logo_url', 'portada_url',
         'direccion', 'referencia_direccion', 'maps_url',
         'whatsapp', 'whatsapp_pedidos', 'instagram', 'tiktok', 'telefono',
-        'moneda', 'cargo_servicio', 'etiqueta_cargo_servicio', 'activo',
+        'moneda', 'cargo_servicio', 'etiqueta_cargo_servicio',
+        'costo_envio', 'monto_minimo_envio', 'alias_transferencia', 'titular_transferencia',
+        'activo',
     ];
 
     protected function casts(): array
     {
         return [
             'cargo_servicio' => 'decimal:2',
+            'costo_envio' => 'decimal:2',
+            'monto_minimo_envio' => 'decimal:2',
             'activo' => 'boolean',
         ];
     }

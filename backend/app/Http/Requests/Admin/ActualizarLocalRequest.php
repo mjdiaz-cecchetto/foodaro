@@ -62,6 +62,10 @@ class ActualizarLocalRequest extends FormRequest
             'configuracion.moneda' => ['sometimes', 'string', 'size:3'],
             'configuracion.cargoServicio' => ['sometimes', 'numeric', 'min:0', 'max:99999999'],
             'configuracion.etiquetaCargoServicio' => ['sometimes', 'string', 'max:80'],
+            'configuracion.costoEnvio' => ['sometimes', 'numeric', 'min:0', 'max:99999999'],
+            'configuracion.montoMinimoEnvio' => ['sometimes', 'numeric', 'min:0', 'max:99999999'],
+            'configuracion.aliasTransferencia' => ['nullable', 'string', 'max:120'],
+            'configuracion.titularTransferencia' => ['nullable', 'string', 'max:120'],
         ];
     }
 }

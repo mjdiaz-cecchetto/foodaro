@@ -19,6 +19,7 @@ export class ResumenTotalesComponente {
 
   readonly totales = this.carrito.totales;
   readonly cupon = this.carrito.cuponActivo;
+  readonly faltaParaCupon = this.carrito.faltaParaCupon;
   readonly etiquetaCargo = this.carrito.etiquetaCargoServicio;
 
   readonly codigoIngresado = signal('');

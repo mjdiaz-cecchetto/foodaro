@@ -64,6 +64,14 @@ export interface ConfiguracionLocal {
   /** Cargo fijo por servicio / empaque que se suma al pedido. */
   cargoServicio: number;
   etiquetaCargoServicio: string;
+  /** Costo fijo de envío a domicilio (0 = sin cargo / a coordinar). */
+  costoEnvio?: number;
+  /** Subtotal mínimo requerido para habilitar envío a domicilio (0 = sin mínimo). */
+  montoMinimoEnvio?: number;
+  /** Alias o CBU/CVU para pagos por transferencia. */
+  aliasTransferencia?: string;
+  /** Nombre del titular o banco de la cuenta de transferencia. */
+  titularTransferencia?: string;
 }
 
 /**

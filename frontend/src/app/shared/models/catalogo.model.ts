@@ -85,5 +85,13 @@ export interface Cupon {
   /** Porcentaje de descuento (1 a 100) aplicable al confirmar el pedido. */
   descuento: number;
   descripcion: string;
+  /** Compra mínima requerida para aplicar el cupón (0 = sin mínimo). */
+  montoMinimo: number;
+  /** Límite total de usos (null = ilimitado). */
+  maxUsos: number | null;
+  /** Cantidad de pedidos en los que ya se utilizó este cupón. */
+  usos: number;
+  /** Fecha límite YYYY-MM-DD (null = sin vencimiento). */
+  fechaVencimiento: string | null;
   activo: boolean;
 }

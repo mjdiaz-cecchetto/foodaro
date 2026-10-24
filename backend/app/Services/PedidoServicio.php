@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Cupon;
 use App\Models\Local;
 use App\Models\Pedido;
 use App\Models\Producto;
 use App\Models\Promocion;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,7 +20,15 @@ class PedidoServicio
     public function crear(Local $local, array $datos): Pedido
     {
         return DB::transaction(function () use ($local, $datos) {
-            $descuentoAplicado = $this->resolverDescuento($local, $datos['codigoPromo'] ?? null);
+            $local->loadMissing(['horarios', 'excepcionesHorario']);
+            if ($local->horarios->isNotEmpty() || $local->excepcionesHorario->isNotEmpty()) {
+                $estadoHorario = app(HorariosServicio::class)->estadoActual($local);
+                if (! $estadoHorario['abierto']) {
+                    throw ValidationException::withMessages([
+                        'horario' => "El local se encuentra cerrado en este momento ({$estadoHorario['texto']}).",
+                    ]);
+                }
+            }
 
             $lineas = [];
             $subtotal = 0.0;
@@ -28,11 +38,21 @@ class PedidoServicio
                 $subtotal += $linea['total'];
             }
 
-            $descuento = $descuentoAplicado ? round($subtotal * $descuentoAplicado['porcentaje'] / 100, 2) : 0.0;
-            $cargoServicio = (float) $local->cargo_servicio;
-            $total = max(0, $subtotal - $descuento + $cargoServicio);
+            $descuentoAplicado = $this->resolverDescuento($local, $datos['codigoPromo'] ?? null, $subtotal);
 
             $esEnvio = $datos['modoEntrega'] === 'envio';
+            if ($esEnvio && (float) $local->monto_minimo_envio > 0 && $subtotal < (float) $local->monto_minimo_envio) {
+                $minimoEnvio = number_format((float) $local->monto_minimo_envio, 0, ',', '.');
+                throw ValidationException::withMessages([
+                    'modoEntrega' => "El envío a domicilio requiere una compra mínima de \${$minimoEnvio}.",
+                ]);
+            }
+
+            $descuento = $descuentoAplicado ? round($subtotal * $descuentoAplicado['porcentaje'] / 100, 2) : 0.0;
+            $cargoServicio = (float) $local->cargo_servicio;
+            $costoEnvio = $esEnvio ? (float) ($local->costo_envio ?? 0) : 0.0;
+            $total = max(0, $subtotal - $descuento + $cargoServicio + $costoEnvio);
+
             $direccion = $esEnvio ? ($datos['direccion'] ?? []) : [];
 
             $pedido = $local->pedidos()->create([
@@ -51,8 +71,15 @@ class PedidoServicio
                 'subtotal' => $subtotal,
                 'descuento' => $descuento,
                 'cargo_servicio' => $cargoServicio,
+                'costo_envio' => $costoEnvio,
                 'total' => $total,
             ]);
+
+            if (! empty($descuentoAplicado['cupon'])) {
+                /** @var Cupon $cupon */
+                $cupon = $descuentoAplicado['cupon'];
+                $cupon->increment('usos');
+            }
 
             foreach ($lineas as $linea) {
                 $item = $pedido->items()->create($linea['item']);
@@ -163,23 +190,39 @@ class PedidoServicio
 
     /**
      * Resuelve un cupón de descuento por su código (busca en `cupones` y como
-     * respaldo en `promociones`).
+     * respaldo en `promociones`), verificando vencimiento, límite de usos y monto mínimo.
      *
-     * @return array{codigo: string, porcentaje: int, promocion_id: int|null}|null
+     * @return array{codigo: string, porcentaje: int, promocion_id: int|null, cupon: Cupon|null}|null
      */
-    private function resolverDescuento(Local $local, ?string $codigo): ?array
+    private function resolverDescuento(Local $local, ?string $codigo, float $subtotal): ?array
     {
         if (! $codigo) {
             return null;
         }
         $normalizado = strtoupper(trim($codigo));
 
-        $cupon = $local->cupones()->where('codigo', $normalizado)->where('activo', true)->first();
+        /** @var Cupon|null $cupon */
+        $cupon = $local->cupones()->lockForUpdate()->where('codigo', $normalizado)->where('activo', true)->first();
         if ($cupon) {
+            $hoy = CarbonImmutable::now(config('app.timezone'))->toDateString();
+            if ($cupon->fecha_vencimiento && $cupon->fecha_vencimiento->format('Y-m-d') < $hoy) {
+                throw ValidationException::withMessages(['codigoPromo' => 'El cupón ya venció.']);
+            }
+            if ($cupon->max_usos !== null && $cupon->usos >= $cupon->max_usos) {
+                throw ValidationException::withMessages(['codigoPromo' => 'El cupón alcanzó su límite máximo de usos.']);
+            }
+            if ((float) $cupon->monto_minimo > 0 && $subtotal < (float) $cupon->monto_minimo) {
+                $minimoFormateado = number_format((float) $cupon->monto_minimo, 0, ',', '.');
+                throw ValidationException::withMessages([
+                    'codigoPromo' => "El cupón requiere una compra mínima de \${$minimoFormateado}.",
+                ]);
+            }
+
             return [
                 'codigo' => $cupon->codigo,
                 'porcentaje' => (int) $cupon->descuento,
                 'promocion_id' => null,
+                'cupon' => $cupon,
             ];
         }
 
@@ -189,6 +232,7 @@ class PedidoServicio
                 'codigo' => $promo->codigo,
                 'porcentaje' => (int) $promo->descuento,
                 'promocion_id' => $promo->id,
+                'cupon' => null,
             ];
         }
 

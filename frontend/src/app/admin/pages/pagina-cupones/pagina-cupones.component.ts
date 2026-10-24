@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Cupon } from '../../../shared/models';
 import { ModalComponente } from '../../../shared/components/modal/modal.component';
+import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { CuponesAdminServicio } from '../../services/cupones-admin.service';
 import { EncabezadoPaginaComponente } from '../../components/encabezado-pagina/encabezado-pagina.component';
@@ -12,7 +13,7 @@ import { mensajeDeError } from '../../../shared/utils/api';
 @Component({
   selector: 'app-pagina-cupones',
   standalone: true,
-  imports: [ReactiveFormsModule, EncabezadoPaginaComponente, ModalComponente],
+  imports: [ReactiveFormsModule, EncabezadoPaginaComponente, ModalComponente, PrecioPipe],
   templateUrl: './pagina-cupones.component.html',
 })
 export class PaginaCuponesComponente {
@@ -24,11 +25,15 @@ export class PaginaCuponesComponente {
   readonly modalAbierto = signal(false);
   readonly editando = signal<Cupon | null>(null);
   readonly esEdicion = computed(() => this.editando() !== null);
+  readonly hoy = new Date().toISOString().slice(0, 10);
 
   readonly formulario = this.fb.nonNullable.group({
     codigo: ['', [Validators.required, Validators.maxLength(30), Validators.pattern(/^[A-Za-z0-9_-]+$/)]],
     descuento: [15, [Validators.required, Validators.min(1), Validators.max(100)]],
     descripcion: ['', [Validators.maxLength(160)]],
+    montoMinimo: [0, [Validators.min(0)]],
+    maxUsos: [''],
+    fechaVencimiento: [''],
     activo: [true],
   });
 
@@ -41,6 +46,9 @@ export class PaginaCuponesComponente {
       codigo: '',
       descuento: 15,
       descripcion: '',
+      montoMinimo: 0,
+      maxUsos: '',
+      fechaVencimiento: '',
       activo: true,
     });
     this.modalAbierto.set(true);
@@ -52,6 +60,9 @@ export class PaginaCuponesComponente {
       codigo: cupon.codigo,
       descuento: cupon.descuento,
       descripcion: cupon.descripcion ?? '',
+      montoMinimo: cupon.montoMinimo ?? 0,
+      maxUsos: cupon.maxUsos !== null && cupon.maxUsos !== undefined ? String(cupon.maxUsos) : '',
+      fechaVencimiento: cupon.fechaVencimiento ?? '',
       activo: cupon.activo,
     });
     this.modalAbierto.set(true);
@@ -62,7 +73,15 @@ export class PaginaCuponesComponente {
     this.editando.set(null);
   }
 
-  invalido(campo: 'codigo' | 'descuento' | 'descripcion'): boolean {
+  estaVencido(cupon: Cupon): boolean {
+    return Boolean(cupon.fechaVencimiento && cupon.fechaVencimiento < this.hoy);
+  }
+
+  estaAgotado(cupon: Cupon): boolean {
+    return cupon.maxUsos !== null && cupon.maxUsos !== undefined && cupon.usos >= cupon.maxUsos;
+  }
+
+  invalido(campo: 'codigo' | 'descuento' | 'descripcion' | 'montoMinimo'): boolean {
     const c = this.formulario.controls[campo];
     return c.invalid && c.touched;
   }
@@ -73,10 +92,14 @@ export class PaginaCuponesComponente {
       return;
     }
     const v = this.formulario.getRawValue();
+    const maxUsosNum = v.maxUsos !== '' && Number(v.maxUsos) > 0 ? Math.floor(Number(v.maxUsos)) : null;
     const valor = {
       codigo: v.codigo.trim().toUpperCase(),
       descuento: Number(v.descuento),
       descripcion: v.descripcion.trim(),
+      montoMinimo: Math.max(0, Number(v.montoMinimo) || 0),
+      maxUsos: maxUsosNum,
+      fechaVencimiento: v.fechaVencimiento ? v.fechaVencimiento : null,
       activo: Boolean(v.activo),
     };
 

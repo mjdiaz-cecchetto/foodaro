@@ -17,6 +17,9 @@ class CuponController extends Controller
             'codigo' => $request->validated('codigo'),
             'descuento' => (int) $request->validated('descuento'),
             'descripcion' => $request->validated('descripcion') ?: null,
+            'monto_minimo' => (float) ($request->validated('montoMinimo') ?? 0),
+            'max_usos' => $request->validated('maxUsos'),
+            'fecha_vencimiento' => $request->validated('fechaVencimiento'),
             'activo' => $request->boolean('activo', true),
         ]);
 
@@ -31,6 +34,9 @@ class CuponController extends Controller
             'codigo' => $request->validated('codigo'),
             'descuento' => (int) $request->validated('descuento'),
             'descripcion' => $request->validated('descripcion') ?: null,
+            'monto_minimo' => (float) ($request->validated('montoMinimo') ?? 0),
+            'max_usos' => $request->validated('maxUsos'),
+            'fecha_vencimiento' => $request->validated('fechaVencimiento'),
             'activo' => $request->has('activo') ? $request->boolean('activo') : $cupon->activo,
         ]);
 

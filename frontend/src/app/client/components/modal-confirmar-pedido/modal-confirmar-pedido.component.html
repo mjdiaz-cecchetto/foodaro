@@ -39,17 +39,49 @@
 
           <!-- Paso 1: entrega -->
           @case (1) {
-            <div class="grid grid-cols-2 gap-3">
-              <button type="button" (click)="elegirEntrega('retiro')" class="p-4 rounded-2xl border-2 text-left transition tap-scale" [class]="modoEntrega() === 'retiro' ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card'">
-                <span class="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-3" [class]="modoEntrega() === 'retiro' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'"><i class="fa-solid fa-store"></i></span>
-                <p class="font-bold text-sm text-gray-900 dark:text-white">Retiro en el local</p>
-                <p class="text-[11px] text-gray-500 dark:text-dark-muted mt-0.5 line-clamp-2">{{ direccionLocal() }}</p>
-              </button>
-              <button type="button" (click)="elegirEntrega('envio')" class="p-4 rounded-2xl border-2 text-left transition tap-scale" [class]="modoEntrega() === 'envio' ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card'">
-                <span class="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-3" [class]="modoEntrega() === 'envio' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'"><i class="fa-solid fa-motorcycle"></i></span>
-                <p class="font-bold text-sm text-gray-900 dark:text-white">Envío a domicilio</p>
-                <p class="text-[11px] text-gray-500 dark:text-dark-muted mt-0.5">Te lo llevamos a tu dirección</p>
-              </button>
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <button type="button" (click)="elegirEntrega('retiro')" class="p-4 rounded-2xl border-2 text-left transition tap-scale" [class]="modoEntrega() === 'retiro' ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card'">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" [class]="modoEntrega() === 'retiro' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'"><i class="fa-solid fa-store"></i></span>
+                    <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Sin cargo</span>
+                  </div>
+                  <p class="font-bold text-sm text-gray-900 dark:text-white">Retiro en el local</p>
+                  <p class="text-[11px] text-gray-500 dark:text-dark-muted mt-0.5 line-clamp-2">{{ direccionLocal() }}</p>
+                </button>
+                <button
+                  type="button"
+                  (click)="elegirEntrega('envio')"
+                  class="p-4 rounded-2xl border-2 text-left transition tap-scale"
+                  [class]="faltaParaEnvio() > 0
+                    ? 'border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-card/50 opacity-65'
+                    : (modoEntrega() === 'envio' ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card')"
+                >
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" [class]="modoEntrega() === 'envio' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'"><i class="fa-solid fa-motorcycle"></i></span>
+                    @if (costoEnvio() > 0) {
+                      <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400">+{{ costoEnvio() | precio }}</span>
+                    } @else {
+                      <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-gray-100 dark:bg-dark-surface text-gray-600 dark:text-dark-muted">Envío</span>
+                    }
+                  </div>
+                  <p class="font-bold text-sm text-gray-900 dark:text-white">Envío a domicilio</p>
+                  <p class="text-[11px] text-gray-500 dark:text-dark-muted mt-0.5">
+                    @if (montoMinimoEnvio() > 0) {
+                      Mínimo {{ montoMinimoEnvio() | precio }}
+                    } @else {
+                      Te lo llevamos a tu dirección
+                    }
+                  </p>
+                </button>
+              </div>
+
+              @if (faltaParaEnvio() > 0) {
+                <div class="rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2.5">
+                  <i class="fa-solid fa-circle-info text-amber-500 shrink-0"></i>
+                  <span>Para pedir con <b>Envío a domicilio</b> necesitás sumar <b>{{ faltaParaEnvio() | precio }}</b> más (compra mínima {{ montoMinimoEnvio() | precio }}).</span>
+                </div>
+              }
             </div>
           }
 
@@ -93,7 +125,7 @@
           <!-- Paso 3: pago -->
           @case (3) {
             <div class="space-y-2.5">
-              @for (medio of mediosPago; track medio.id) {
+              @for (medio of mediosPago(); track medio.id) {
                 @let m = medio.id;
                 <button type="button" (click)="elegirPago(m)" class="w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 text-left transition tap-scale" [class]="medioPago() === m ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card'">
                   <span class="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0" [class]="medioPago() === m ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'">
@@ -107,6 +139,26 @@
                     @if (medioPago() === m) { <i class="fa-solid fa-check text-[10px]"></i> }
                   </span>
                 </button>
+              }
+
+              @if (medioPago() === 'transferencia' && aliasTransferencia()) {
+                <div class="rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-200 dark:border-dark-border p-3.5 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Datos para transferir</p>
+                    <p class="font-mono font-black text-sm text-gray-900 dark:text-white truncate">{{ aliasTransferencia() }}</p>
+                    @if (titularTransferencia()) {
+                      <p class="text-xs text-gray-500 dark:text-dark-muted truncate">{{ titularTransferencia() }}</p>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    (click)="copiarAlias()"
+                    class="shrink-0 px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold tap-scale flex items-center gap-1.5"
+                  >
+                    <i class="fa-regular fa-copy"></i>
+                    Copiar
+                  </button>
+                </div>
               }
 
               @if (medioPago() === 'efectivo') {

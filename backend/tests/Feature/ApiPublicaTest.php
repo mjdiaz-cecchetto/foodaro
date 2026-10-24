@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Local;
 use App\Models\Usuario;
+use Carbon\CarbonImmutable;
 use Database\Seeders\LocalDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -16,6 +17,7 @@ class ApiPublicaTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-23 21:00:00', config('app.timezone')));
         $this->seed(LocalDemoSeeder::class);
     }
 
@@ -203,11 +205,22 @@ class ApiPublicaTest extends TestCase
             ['fecha' => now()->addDays(4)->toDateString(), 'cerrado' => false, 'motivo' => null, 'franjas' => [['desde' => '18:00', 'hasta' => '23:00']]],
         ];
 
-        $this->withToken($token)->putJson('/api/admin/local', ['perfil' => $perfil])
+        $this->withToken($token)->putJson('/api/admin/local', [
+            'perfil' => $perfil,
+            'configuracion' => [
+                'costoEnvio' => 2500,
+                'montoMinimoEnvio' => 15000,
+                'aliasTransferencia' => 'demolocal.mp',
+                'titularTransferencia' => 'Demo Local SRL',
+            ],
+        ])
             ->assertOk()
             ->assertJsonPath('data.perfil.horarios.semana.0.abierto', false)
             ->assertJsonCount(2, 'data.perfil.horarios.excepciones')
-            ->assertJsonPath('data.perfil.horarios.excepciones.1.franjas.0.hasta', '23:00');
+            ->assertJsonPath('data.perfil.horarios.excepciones.1.franjas.0.hasta', '23:00')
+            ->assertJsonPath('data.configuracion.costoEnvio', fn ($v) => (float) $v === 2500.0)
+            ->assertJsonPath('data.configuracion.montoMinimoEnvio', fn ($v) => (float) $v === 15000.0)
+            ->assertJsonPath('data.configuracion.aliasTransferencia', 'demolocal.mp');
 
         // Un día abierto sin franjas es inválido
         $perfil['horarios']['semana'][1] = ['dia' => 2, 'abierto' => true, 'franjas' => []];
@@ -274,15 +287,19 @@ class ApiPublicaTest extends TestCase
             ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 39800.0)
             ->assertJsonPath('data.items.0.nombre', 'Promo: 2 Burgers Dobles + Papas + Gaseosa');
 
-        // Crear cupón de descuento independiente y aplicarlo al confirmar pedido
+        // Crear cupón de descuento con límite de 1 uso y monto mínimo, y aplicarlo al confirmar pedido
         $cupon = $this->withToken($token)->postJson('/api/admin/cupones', [
             'codigo' => 'VIP25',
             'descuento' => 25,
             'descripcion' => '25% para clientes frecuentes',
+            'montoMinimo' => 15000,
+            'maxUsos' => 1,
+            'fechaVencimiento' => '2026-12-31',
             'activo' => true,
         ])->assertCreated()
             ->assertJsonPath('data.codigo', 'VIP25')
             ->assertJsonPath('data.descuento', 25)
+            ->assertJsonPath('data.maxUsos', 1)
             ->json('data');
 
         $this->postJson('/api/locales/demolocal/pedidos', [
@@ -301,8 +318,37 @@ class ApiPublicaTest extends TestCase
             ->assertJsonPath('data.totales.descuento', fn ($v) => (float) $v === 4975.0)
             ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 14925.0);
 
+        // El segundo intento con VIP25 debe fallar porque alcanzó su maxUsos = 1
+        $this->postJson('/api/locales/demolocal/pedidos', [
+            'items' => [[
+                'promocionId' => $promo['id'],
+                'cantidad' => 1,
+                'notas' => '',
+                'opciones' => [],
+            ]],
+            'codigoPromo' => 'VIP25',
+            'modoEntrega' => 'retiro',
+            'cliente' => ['nombre' => 'Carlos', 'telefono' => '11 2222 3333'],
+            'medioPago' => 'efectivo',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['codigoPromo']);
+
         $this->withToken($token)->patchJson("/api/admin/cupones/{$cupon['id']}/estado")
             ->assertOk()
-            ->assertJsonPath('data.activo', false);
+            ->assertJsonPath('data.activo', false)
+            ->assertJsonPath('data.usos', 1);
+
+        // Fuera del horario de atención (04:00 AM) rechaza nuevos pedidos
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-23 04:00:00', config('app.timezone')));
+        $this->postJson('/api/locales/demolocal/pedidos', [
+            'items' => [[
+                'promocionId' => $promo['id'],
+                'cantidad' => 1,
+                'notas' => '',
+                'opciones' => [],
+            ]],
+            'modoEntrega' => 'retiro',
+            'cliente' => ['nombre' => 'Carlos', 'telefono' => '11 2222 3333'],
+            'medioPago' => 'efectivo',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['horario']);
     }
 }

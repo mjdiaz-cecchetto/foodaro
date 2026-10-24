@@ -1,16 +1,23 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 
+import { LocalServicio } from '../../core/services/local.service';
 import { ModoCliente } from '../interfaces';
 
 /**
- * Estado de UI compartido de la carta pública: modo (menú / pedido) y modales globales.
- * Permite que encabezado, banner del local, carrito y layout coordinen sin acoplarse.
+ * Estado de UI compartido de la carta pública: modo (menú / pedido), estado de
+ * horario del local y modales globales.
  */
 @Injectable({ providedIn: 'root' })
 export class UiClienteServicio {
+  private readonly local = inject(LocalServicio);
+
   readonly modo = signal<ModoCliente>('pedido');
-  /** `true` cuando la carta permite armar pedidos (/pedido). */
-  readonly pedidosHabilitados = computed(() => this.modo() === 'pedido');
+  /** `true` si el local figura abierto según sus horarios configurados. */
+  readonly localAbierto = computed(() => this.local.perfil()?.abiertoAhora ?? true);
+  /** Texto del estado actual: "Abierto · Cierra 01:30" o "Cerrado · Abre a las 12:00". */
+  readonly estadoHorario = computed(() => this.local.perfil()?.estado ?? '');
+  /** `true` cuando la ruta es `/pedido` y además el local está abierto para recibir pedidos. */
+  readonly pedidosHabilitados = computed(() => this.modo() === 'pedido' && this.localAbierto());
 
   readonly modalLocalAbierto = signal(false);
   readonly modalQrAbierto = signal(false);

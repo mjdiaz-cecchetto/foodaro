@@ -110,6 +110,67 @@
       </div>
     }
 
+    <!-- ENVÍOS Y PAGOS -->
+    @if (seccion() === 'pedidos') {
+      <div class="space-y-6">
+        <!-- Envío a domicilio -->
+        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
+          <div>
+            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Envío a domicilio</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Configurá el costo de envío y el importe mínimo requerido cuando el cliente elige entrega a domicilio.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Costo de envío ($)</label>
+              <input type="number" min="0" formControlName="costoEnvio" placeholder="0 = sin cargo" [class]="claseCampo + ' font-extrabold'" />
+              <p class="text-[11px] text-zinc-400 mt-1">Se suma automáticamente solo si el cliente elige "Envío a domicilio".</p>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Compra mínima para envío ($)</label>
+              <input type="number" min="0" formControlName="montoMinimoEnvio" placeholder="0 = sin mínimo" [class]="claseCampo + ' font-extrabold'" />
+              <p class="text-[11px] text-zinc-400 mt-1">Si el subtotal es menor, le avisa cuánto le falta para pedir con envío.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transferencia bancaria -->
+        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
+          <div>
+            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Datos para Transferencia</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Se muestran al cliente cuando elige pagar por Transferencia, con botón para copiar el Alias en un toque.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Alias o CBU / CVU</label>
+              <input type="text" formControlName="aliasTransferencia" placeholder="Ej: demolocal.mp" [class]="claseCampo + ' font-mono font-bold'" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Titular / Entidad bancaria</label>
+              <input type="text" formControlName="titularTransferencia" placeholder="Ej: Juan Pérez · Mercado Pago" [class]="claseCampo" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Cargo de servicio / empaque -->
+        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
+          <div>
+            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Cargo por servicio o empaque</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Opcional: recargo fijo que se suma a todos los pedidos (0 para desactivar).</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Importe ($)</label>
+              <input type="number" min="0" formControlName="cargoServicio" placeholder="0" [class]="claseCampo + ' font-extrabold'" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Etiqueta visible</label>
+              <input type="text" formControlName="etiquetaCargoServicio" placeholder="Servicio / empaque" [class]="claseCampo" />
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- CONTACTO -->
     @if (seccion() === 'contacto') {
       <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">

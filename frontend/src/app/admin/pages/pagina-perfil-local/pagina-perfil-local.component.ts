@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { ExcepcionHorario, HorarioDia, Horarios, PerfilLocal } from '../../../shared/models';
+import { ConfiguracionLocal, ExcepcionHorario, HorarioDia, Horarios, PerfilLocal } from '../../../shared/models';
 import { clonarHorarios } from '../../../shared/utils/horarios';
 import { mensajeDeError } from '../../../shared/utils/api';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
@@ -13,7 +13,7 @@ import { EditorHorariosComponente } from '../../components/editor-horarios/edito
 import { CalendarioExcepcionesComponente } from '../../components/calendario-excepciones/calendario-excepciones.component';
 import { MapaUbicacionComponente } from '../../../shared/components/mapa-ubicacion/mapa-ubicacion.component';
 
-type Seccion = 'identidad' | 'ubicacion' | 'horarios' | 'contacto';
+type Seccion = 'identidad' | 'ubicacion' | 'horarios' | 'pedidos' | 'contacto';
 
 /** Datos del local: identidad, ubicación con mapa, horarios (semana + excepciones) y contacto. */
 @Component({
@@ -36,11 +36,13 @@ export class PaginaPerfilLocalComponente {
   private readonly notificaciones = inject(NotificacionesServicio);
 
   private readonly inicial = this.localAdmin.perfil();
+  private readonly configInicial = this.localAdmin.configuracion();
 
   readonly secciones: { id: Seccion; etiqueta: string; icono: string }[] = [
     { id: 'identidad', etiqueta: 'Identidad', icono: 'fa-store' },
     { id: 'ubicacion', etiqueta: 'Ubicación', icono: 'fa-location-dot' },
     { id: 'horarios', etiqueta: 'Horarios', icono: 'fa-clock' },
+    { id: 'pedidos', etiqueta: 'Envíos y Pagos', icono: 'fa-truck-fast' },
     { id: 'contacto', etiqueta: 'Contacto', icono: 'fa-comments' },
   ];
   readonly seccion = signal<Seccion>('identidad');
@@ -59,6 +61,12 @@ export class PaginaPerfilLocalComponente {
     instagram: [this.inicial.contacto.instagram],
     tiktok: [this.inicial.contacto.tiktok],
     telefono: [this.inicial.contacto.telefono],
+    costoEnvio: [this.configInicial.costoEnvio ?? 0, [Validators.min(0)]],
+    montoMinimoEnvio: [this.configInicial.montoMinimoEnvio ?? 0, [Validators.min(0)]],
+    aliasTransferencia: [this.configInicial.aliasTransferencia ?? ''],
+    titularTransferencia: [this.configInicial.titularTransferencia ?? ''],
+    cargoServicio: [this.configInicial.cargoServicio ?? 0, [Validators.min(0)]],
+    etiquetaCargoServicio: [this.configInicial.etiquetaCargoServicio ?? 'Servicio / empaque'],
   });
 
   /** Horarios se editan fuera del formulario reactivo (estructura anidada con señales). */
@@ -105,7 +113,7 @@ export class PaginaPerfilLocalComponente {
     }
 
     this.guardando.set(true);
-    this.localAdmin.guardar(this.aPerfil()).subscribe({
+    this.localAdmin.guardar(this.aPerfil(), this.aConfiguracion()).subscribe({
       next: (perfil) => {
         this.guardando.set(false);
         this.horarios.set(clonarHorarios(perfil.horarios));
@@ -116,6 +124,18 @@ export class PaginaPerfilLocalComponente {
         this.notificaciones.mostrar(mensajeDeError(err, 'No se pudieron guardar los datos'));
       },
     });
+  }
+
+  private aConfiguracion(): Partial<ConfiguracionLocal> {
+    const v = this.formulario.getRawValue();
+    return {
+      costoEnvio: Math.max(0, Number(v.costoEnvio) || 0),
+      montoMinimoEnvio: Math.max(0, Number(v.montoMinimoEnvio) || 0),
+      aliasTransferencia: v.aliasTransferencia.trim(),
+      titularTransferencia: v.titularTransferencia.trim(),
+      cargoServicio: Math.max(0, Number(v.cargoServicio) || 0),
+      etiquetaCargoServicio: v.etiquetaCargoServicio.trim() || 'Servicio / empaque',
+    };
   }
 
   private aPerfil(): PerfilLocal {

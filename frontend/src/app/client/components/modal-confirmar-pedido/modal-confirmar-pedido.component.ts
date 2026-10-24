@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ModalComponente } from '../../../shared/components/modal/modal.component';
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
+import { LocalServicio } from '../../../core/services/local.service';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { CarritoServicio } from '../../services/carrito.service';
 import { PedidoServicio } from '../../services/pedido.service';
@@ -30,17 +31,30 @@ export class ModalConfirmarPedidoComponente {
   private readonly notificaciones = inject(NotificacionesServicio);
   private readonly pedidoServicio = inject(PedidoServicio);
   private readonly localPublico = inject(LocalPublicoServicio);
+  private readonly local = inject(LocalServicio);
   readonly ui = inject(UiClienteServicio);
   readonly carrito = inject(CarritoServicio);
 
   readonly ETIQUETAS_ENTREGA = ETIQUETAS_MODO_ENTREGA;
   readonly ETIQUETAS_PAGO = ETIQUETAS_MEDIO_PAGO;
 
-  readonly mediosPago: { id: MedioPago; icono: string; detalle: string }[] = [
-    { id: 'transferencia', icono: 'fa-building-columns', detalle: 'Te pasamos el alias por WhatsApp' },
+  readonly costoEnvio = this.carrito.costoEnvioConfigurado;
+  readonly montoMinimoEnvio = this.carrito.montoMinimoEnvio;
+  readonly faltaParaEnvio = this.carrito.faltaParaEnvio;
+  readonly aliasTransferencia = computed(() => this.local.configuracion().aliasTransferencia || '');
+  readonly titularTransferencia = computed(() => this.local.configuracion().titularTransferencia || '');
+
+  readonly mediosPago = computed<{ id: MedioPago; icono: string; detalle: string }[]>(() => [
+    {
+      id: 'transferencia',
+      icono: 'fa-building-columns',
+      detalle: this.aliasTransferencia()
+        ? `Alias: ${this.aliasTransferencia()}`
+        : 'Te pasamos el alias por WhatsApp',
+    },
     { id: 'debito', icono: 'fa-credit-card', detalle: 'Pagás con tarjeta al recibir / retirar' },
     { id: 'efectivo', icono: 'fa-money-bill-wave', detalle: 'Pagás al recibir / retirar' },
-  ];
+  ]);
 
   readonly paso = signal<Paso>(1);
   readonly enviando = signal(false);
@@ -77,6 +91,7 @@ export class ModalConfirmarPedidoComponente {
   constructor() {
     this.formulario.controls.modoEntrega.valueChanges.subscribe((v) => {
       this.modoEntrega.set(v);
+      this.carrito.modoEntrega.set(v);
       const calle = this.formulario.controls.calle;
       calle.setValidators(v === 'envio' ? [Validators.required, Validators.minLength(4)] : []);
       calle.updateValueAndValidity();
@@ -91,6 +106,9 @@ export class ModalConfirmarPedidoComponente {
         this.enviando.set(false);
         this.errorEnvio.set(null);
         this.numeroPedido.set(null);
+        this.carrito.modoEntrega.set(this.formulario.controls.modoEntrega.value);
+      } else {
+        this.carrito.modoEntrega.set('retiro');
       }
     });
   }
@@ -103,6 +121,10 @@ export class ModalConfirmarPedidoComponente {
   }
 
   elegirEntrega(modo: ModoEntrega): void {
+    if (modo === 'envio' && this.faltaParaEnvio() > 0) {
+      this.notificaciones.mostrar('El pedido aún no alcanza el monto mínimo para envío a domicilio');
+      return;
+    }
     this.formulario.controls.modoEntrega.setValue(modo);
   }
 
@@ -110,12 +132,23 @@ export class ModalConfirmarPedidoComponente {
     this.formulario.controls.medioPago.setValue(medio);
   }
 
+  async copiarAlias(): Promise<void> {
+    const alias = this.aliasTransferencia();
+    if (!alias) return;
+    try {
+      await navigator.clipboard.writeText(alias);
+      this.notificaciones.mostrar(`Alias "${alias}" copiado al portapapeles`);
+    } catch {
+      this.notificaciones.mostrar('No se pudo copiar el alias');
+    }
+  }
+
   /** Valida solo los controles del paso actual antes de avanzar. */
   puedeAvanzar(): boolean {
     const c = this.formulario.controls;
     switch (this.paso()) {
       case 1:
-        return c.modoEntrega.valid;
+        return c.modoEntrega.valid && (this.modoEntrega() !== 'envio' || this.faltaParaEnvio() === 0);
       case 2:
         return c.nombre.valid && c.telefono.valid && (!this.esEnvio() || c.calle.valid);
       case 3:

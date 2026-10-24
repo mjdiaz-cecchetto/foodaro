@@ -31,6 +31,7 @@ export interface TotalesCarrito {
   subtotal: number;
   descuento: number;
   cargoServicio: number;
+  costoEnvio?: number;
   total: number;
 }
 

@@ -5,6 +5,32 @@
     <main class="space-y-5 sm:space-y-6" [class]="ui.pedidosHabilitados() ? 'lg:col-span-8' : 'lg:col-span-8 lg:col-start-3'">
 
       <app-banner-local />
+
+      @if (!ui.localAbierto()) {
+        <div class="rounded-2xl sm:rounded-3xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 p-4 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <i class="fa-regular fa-clock text-lg"></i>
+            </span>
+            <div class="min-w-0">
+              <p class="text-xs sm:text-sm font-extrabold text-amber-900 dark:text-amber-200">
+                Local cerrado en este momento · {{ ui.estadoHorario() }}
+              </p>
+              <p class="text-[11px] sm:text-xs text-amber-700 dark:text-amber-300/80">
+                Podés explorar toda la carta, pero los pedidos se habilitan dentro del horario de atención.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="ui.abrirModalLocal()"
+            class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold tap-scale transition"
+          >
+            Horarios
+          </button>
+        </div>
+      }
+
       <app-carrusel-promociones />
       <app-carrusel-categorias />
       <app-buscador />
