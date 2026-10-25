@@ -1,67 +1,73 @@
 @let p = inicio.perfil();
 @let progreso = inicio.progreso();
-<section class="space-y-6">
+<section class="space-y-4">
 
-  <!-- Bienvenida -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div class="flex items-center gap-4 min-w-0">
+  <!-- Bienvenida compacta -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex items-center gap-3.5 min-w-0">
       @if (p?.logoUrl) {
-        <img [src]="p?.logoUrl" alt="" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-brand-500/20 shadow-sm shrink-0" />
+        <img [src]="p?.logoUrl" alt="" class="w-12 h-12 rounded-2xl object-cover ring-2 ring-brand-500/20 shadow-sm shrink-0" />
       }
       <div class="min-w-0">
-        <p class="text-xs font-bold text-brand-600 uppercase tracking-wider">{{ saludo }}</p>
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white truncate">{{ p?.nombre }}</h1>
-        <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Así está tu carta hoy. Todo lo que cambies acá se ve al instante en la carta.</p>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-extrabold text-brand-600 uppercase tracking-wider">{{ saludo }}</span>
+          <span class="text-zinc-300 dark:text-zinc-700">·</span>
+          <span class="text-xs sm:text-[13px] text-zinc-500 dark:text-zinc-400">Así está tu carta hoy. Todo lo que cambies acá se ve al instante en la carta.</span>
+        </div>
+        <h1 class="text-2xl sm:text-[26px] font-extrabold tracking-tight text-zinc-900 dark:text-white truncate leading-tight">{{ p?.nombre }}</h1>
       </div>
     </div>
     <div class="flex items-center gap-2 shrink-0">
-      <a [href]="inicio.urlPedido()" target="_blank" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs sm:text-sm shadow-coral tap-scale flex items-center gap-2 transition">
+      <a [href]="inicio.urlPedido()" target="_blank" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4.5 rounded-xl text-xs sm:text-sm shadow-coral tap-scale flex items-center gap-2 transition">
         <i class="fa-solid fa-arrow-up-right-from-square"></i><span>Ver carta en vivo</span>
       </a>
     </div>
   </div>
 
-  <!-- Indicadores -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  <!-- Indicadores horizontales -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
     @for (ind of inicio.indicadores(); track ind.etiqueta) {
-      <a [routerLink]="'../' + ind.ruta" class="bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition group">
-        <div class="flex items-start justify-between">
-          <span class="w-10 h-10 rounded-2xl flex items-center justify-center text-base" [class]="ind.estilo"><i class="fa-solid" [class]="ind.icono"></i></span>
-          <i class="fa-solid fa-arrow-right text-xs text-zinc-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition"></i>
+      <a [routerLink]="'../' + ind.ruta" class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition group flex items-center gap-4">
+        <span class="w-11 h-11 rounded-2xl flex items-center justify-center text-base shrink-0" [class]="ind.estilo"><i class="fa-solid" [class]="ind.icono"></i></span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-baseline justify-between gap-1">
+            <p class="text-2xl sm:text-[28px] font-black text-zinc-900 dark:text-white leading-none">{{ ind.valor }}</p>
+            <i class="fa-solid fa-arrow-right text-xs text-zinc-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition"></i>
+          </div>
+          <p class="text-[13px] font-bold text-zinc-700 dark:text-zinc-300 truncate mt-1 leading-tight">{{ ind.etiqueta }}</p>
+          <p class="text-xs text-zinc-400 truncate leading-tight mt-0.5">{{ ind.detalle }}</p>
         </div>
-        <p class="text-3xl font-black text-zinc-900 dark:text-white mt-3 leading-none">{{ ind.valor }}</p>
-        <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300 mt-1.5">{{ ind.etiqueta }}</p>
-        <p class="text-[11px] text-zinc-400 mt-0.5">{{ ind.detalle }}</p>
       </a>
     }
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
 
-    <!-- Puesta a punto -->
-    <div class="lg:col-span-2 space-y-6">
-      <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark">
-        <div class="flex items-center justify-between gap-4 mb-4">
-          <div>
-            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Puesta a punto</h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ progreso.hechos }} de {{ progreso.total }} pasos listos</p>
+    <!-- Columna izquierda (8 cols) -->
+    <div class="lg:col-span-8 space-y-4">
+      <!-- Puesta a punto en grilla de 2 columnas -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark">
+        <div class="flex items-center justify-between gap-4 mb-2.5">
+          <div class="flex items-baseline gap-2.5">
+            <h3 class="font-extrabold text-[13px] uppercase tracking-wider text-brand-600">Puesta a punto</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ progreso.hechos }} de {{ progreso.total }} pasos listos</p>
           </div>
-          <span class="text-2xl font-black" [class]="progreso.porcentaje === 100 ? 'text-emerald-500' : 'text-zinc-900 dark:text-white'">{{ progreso.porcentaje }}%</span>
+          <span class="text-xl font-black leading-none" [class]="progreso.porcentaje === 100 ? 'text-emerald-500' : 'text-zinc-900 dark:text-white'">{{ progreso.porcentaje }}%</span>
         </div>
-        <div class="h-2 rounded-full bg-zinc-100 dark:bg-surface-cardDark overflow-hidden mb-4">
+        <div class="h-2 rounded-full bg-zinc-100 dark:bg-surface-cardDark overflow-hidden mb-3.5">
           <div class="h-full rounded-full transition-all duration-500" [class]="progreso.porcentaje === 100 ? 'bg-emerald-500' : 'bg-brand-600'" [style.width.%]="progreso.porcentaje"></div>
         </div>
-        <ul class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2">
           @for (paso of inicio.pasos(); track paso.id) {
             <li>
-              <a [routerLink]="'../' + paso.ruta" class="flex items-center gap-3 py-3 group">
+              <a [routerLink]="'../' + paso.ruta" class="flex items-center gap-3 py-2 px-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-surface-cardDark/60 transition group">
                 <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0" [class]="paso.completo ? 'bg-emerald-500 text-white' : 'border-2 border-zinc-300 dark:border-zinc-600 text-transparent'"><i class="fa-solid fa-check"></i></span>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-bold" [class]="paso.completo ? 'text-zinc-400 line-through decoration-zinc-300' : 'text-zinc-900 dark:text-white'">{{ paso.titulo }}</p>
-                  <p class="text-[11px] text-zinc-400">{{ paso.descripcion }}</p>
+                  <p class="text-[13px] font-bold truncate leading-snug" [class]="paso.completo ? 'text-zinc-400 line-through decoration-zinc-300' : 'text-zinc-900 dark:text-white'">{{ paso.titulo }}</p>
+                  <p class="text-xs text-zinc-400 truncate leading-snug">{{ paso.descripcion }}</p>
                 </div>
                 @if (!paso.completo) {
-                  <span class="text-[11px] font-bold text-brand-600 opacity-0 group-hover:opacity-100 transition">Completar <i class="fa-solid fa-arrow-right ml-1"></i></span>
+                  <span class="text-xs font-bold text-brand-600 opacity-0 group-hover:opacity-100 transition shrink-0">Completar <i class="fa-solid fa-arrow-right ml-0.5"></i></span>
                 }
               </a>
             </li>
@@ -71,60 +77,215 @@
 
       <!-- Agotados -->
       @if (inicio.agotados().length) {
-        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-extrabold text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2"><i class="fa-solid fa-ban text-zinc-400"></i>Agotados ahora</h3>
-            <a routerLink="../productos" class="text-[11px] font-bold text-brand-600">Ver productos</a>
+        <div class="bg-white dark:bg-surface-dark rounded-2xl px-5 py-3.5 shadow-soft border border-zinc-100 dark:border-surface-borderDark flex flex-wrap items-center justify-between gap-2.5">
+          <div class="flex items-center gap-3.5 flex-wrap flex-1 min-w-0">
+            <h3 class="font-extrabold text-[13px] uppercase tracking-wider text-zinc-500 flex items-center gap-2 shrink-0">
+              <i class="fa-solid fa-ban text-zinc-400"></i>Agotados ahora
+            </h3>
+            <ul class="flex flex-wrap gap-2">
+              @for (prod of inicio.agotados(); track prod.id) {
+                <li class="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark">
+                  <img [src]="prod.imagen" alt="" class="w-6 h-6 rounded-lg object-cover grayscale" />
+                  <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">{{ prod.nombre }}</span>
+                  <button type="button" (click)="reponer(prod)" class="text-[11px] font-bold text-emerald-600 hover:underline ml-0.5 cursor-pointer" title="Volver a poner en carta">Reponer</button>
+                </li>
+              }
+            </ul>
           </div>
-          <ul class="flex flex-wrap gap-2">
-            @for (prod of inicio.agotados(); track prod.id) {
-              <li class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark">
-                <img [src]="prod.imagen" alt="" class="w-7 h-7 rounded-lg object-cover grayscale" />
-                <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">{{ prod.nombre }}</span>
-                <button type="button" (click)="reponer(prod)" class="text-[10px] font-bold text-emerald-600 hover:underline ml-1" title="Volver a poner en carta">Reponer</button>
-              </li>
-            }
-          </ul>
+          <a routerLink="../productos" class="text-xs font-bold text-brand-600 shrink-0 hover:underline">Ver productos</a>
         </div>
       }
 
       <!-- Accesos rápidos -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         @for (a of inicio.accesos; track a.titulo) {
-          <a [routerLink]="'../' + a.ruta" class="bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-soft border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition flex items-start gap-3">
-            <span class="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 flex items-center justify-center shrink-0"><i class="fa-solid" [class]="a.icono"></i></span>
+          <a [routerLink]="'../' + a.ruta" class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition flex items-center gap-3.5">
+            <span class="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 flex items-center justify-center shrink-0 text-sm"><i class="fa-solid" [class]="a.icono"></i></span>
             <div class="min-w-0">
-              <p class="text-sm font-bold text-zinc-900 dark:text-white">{{ a.titulo }}</p>
-              <p class="text-[11px] text-zinc-400">{{ a.descripcion }}</p>
+              <p class="text-[13px] font-bold text-zinc-900 dark:text-white truncate leading-tight">{{ a.titulo }}</p>
+              <p class="text-xs text-zinc-400 truncate leading-tight mt-0.5">{{ a.descripcion }}</p>
             </div>
           </a>
         }
       </div>
     </div>
 
-    <!-- Compartir la carta -->
-    <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark flex flex-col">
-      <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600 mb-1">Compartí tu carta</h3>
-      <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-4">Imprimí el QR para las mesas o pegá el enlace en Instagram y WhatsApp.</p>
+    <!-- Columna derecha (4 cols): Cartel QR + Acciones -->
+    <div class="lg:col-span-4 space-y-3">
+      <!-- Vista previa del Cartel QR con borde punteado -->
+      <div class="bg-white rounded-[1.75rem] px-5 py-4 border-2 border-dashed border-zinc-300 dark:border-zinc-700 shadow-soft text-center flex flex-col items-center">
+        <!-- Marca del sistema sutil arriba -->
+        <div class="inline-flex items-center gap-1.5 mb-2">
+          <span class="w-6 h-6 rounded-lg bg-gradient-to-tr from-brand-600 to-brand-400 text-white font-brand font-bold text-base flex items-center justify-center shadow-sm leading-none">
+            <span class="-mt-0.5">f</span>
+          </span>
+          <span class="font-brand font-bold text-xl text-brand-600 leading-none">foodaro</span>
+        </div>
 
-      <div class="bg-white rounded-2xl p-3 border border-zinc-100 shadow-soft mx-auto">
-        <img [src]="inicio.urlImagenQr(200)" alt="QR de la carta" width="200" height="200" class="rounded-lg" />
+        <!-- Nombre del Local Protagonista -->
+        <div class="flex items-center justify-center gap-3 mb-2.5">
+          @if (p?.logoUrl) {
+            <img [src]="p?.logoUrl" alt="" class="w-10 h-10 rounded-xl object-cover ring-2 ring-brand-500/20 shadow-sm shrink-0" />
+          }
+          <div class="text-left min-w-0">
+            <h3 class="text-xl font-black text-zinc-900 tracking-tight leading-none truncate">
+              {{ p?.nombre }}
+            </h3>
+            <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-zinc-400 mt-1">
+              CARTA DIGITAL &amp; PEDIDOS
+            </p>
+          </div>
+        </div>
+
+        <!-- QR grande en marco suave -->
+        <div
+          (click)="abrirModalCartel()"
+          class="p-3 rounded-2xl bg-zinc-50 border border-zinc-200/80 shadow-inner mx-auto cursor-pointer hover:scale-[1.02] transition-transform"
+          title="Ver cartel en tamaño completo"
+        >
+          <img
+            [src]="urlQrActual()"
+            alt="QR de la carta"
+            width="176"
+            height="176"
+            class="w-40 h-40 sm:w-44 sm:h-44 rounded-lg block"
+          />
+        </div>
+
+        <!-- Mensaje de bienvenida -->
+        <h4 class="text-[15px] font-extrabold text-zinc-900 mt-2.5 leading-tight">
+          {{ tituloCartel() }}
+        </h4>
+        <p class="text-[11px] text-zinc-500 leading-snug max-w-[250px] mx-auto mt-1 line-clamp-2">
+          {{ subtituloCartel() }}
+        </p>
+
+        <!-- Pie del cartel -->
+        <div class="w-full border-t border-zinc-100 mt-2.5 pt-2.5 flex items-center justify-center gap-4 text-[11px] font-bold text-zinc-400">
+          <span class="inline-flex items-center gap-1"><i class="fa-solid fa-wifi text-zinc-400"></i> Wi-Fi Libre</span>
+          <span class="inline-flex items-center gap-1"><i class="fa-solid fa-mobile-screen text-zinc-400"></i> Sin Apps</span>
+        </div>
       </div>
 
-      <div class="mt-4 space-y-2 text-xs">
-        <div class="flex items-center gap-2 p-2 pl-3 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-100 dark:border-surface-borderDark">
-          <i class="fa-solid fa-link text-zinc-400"></i>
-          <span class="flex-1 truncate font-medium text-zinc-700 dark:text-zinc-300">{{ inicio.urlCarta() }}</span>
-          <button type="button" (click)="copiar(inicio.urlCarta())" class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-surface-dark font-bold shadow-sm tap-scale">Copiar</button>
-        </div>
+      <!-- Acciones de impresión y enlaces -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-3.5 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-2 text-xs">
         <div class="grid grid-cols-2 gap-2">
-          <button type="button" (click)="copiar(inicio.urlMenu())" class="py-2.5 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold tap-scale"><i class="fa-solid fa-book-open mr-1.5 text-zinc-400"></i>Link solo carta</button>
-          <button type="button" (click)="copiar(inicio.urlPedido())" class="py-2.5 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold tap-scale"><i class="fa-solid fa-bag-shopping mr-1.5 text-zinc-400"></i>Link con pedidos</button>
+          <button
+            type="button"
+            (click)="imprimirCartel()"
+            class="py-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold flex items-center justify-center gap-1.5 shadow-coral tap-scale cursor-pointer"
+          >
+            <i class="fa-solid fa-print"></i>Imprimir cartel
+          </button>
+          <button
+            type="button"
+            (click)="abrirModalCartel()"
+            class="py-2 px-3 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold flex items-center justify-center gap-1.5 tap-scale cursor-pointer"
+          >
+            <i class="fa-solid fa-sliders"></i>Personalizar
+          </button>
         </div>
-        <a [href]="inicio.urlDescargaQr()" download="qr-carta.png" target="_blank" rel="noopener" class="w-full py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold flex items-center justify-center gap-2 tap-scale">
-          <i class="fa-solid fa-download"></i>Descargar QR para imprimir
-        </a>
+
+        <div class="flex items-center gap-2 p-2 pl-3 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-100 dark:border-surface-borderDark">
+          <i class="fa-solid fa-link text-zinc-400 text-[11px]"></i>
+          <span class="flex-1 truncate font-medium text-zinc-700 dark:text-zinc-300 text-[11px]">{{ urlDestinoActual() }}</span>
+          <button type="button" (click)="copiar(urlDestinoActual())" class="px-2.5 py-1 rounded-lg bg-white dark:bg-surface-dark font-bold shadow-sm tap-scale cursor-pointer text-[11px]">Copiar</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" (click)="copiar(inicio.urlMenu())" class="py-1.5 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold tap-scale cursor-pointer text-[11px]"><i class="fa-solid fa-book-open mr-1 text-zinc-400"></i>Link solo carta</button>
+          <button type="button" (click)="copiar(inicio.urlPedido())" class="py-1.5 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold tap-scale cursor-pointer text-[11px]"><i class="fa-solid fa-bag-shopping mr-1 text-zinc-400"></i>Link con pedidos</button>
+        </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Modal para personalizar e imprimir el Cartel QR -->
+<app-modal [abierto]="modalCartelAbierto()" variante="dialogo" claseAncho="max-w-lg" (cerrado)="cerrarModalCartel()">
+  <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-borderDark">
+    <div>
+      <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">Cartel QR para Mesas y Mostrador</h3>
+      <p class="text-[11px] text-zinc-400">Personalizá el texto o el destino del QR e imprimilo listo para recortar.</p>
+    </div>
+    <button type="button" (click)="cerrarModalCartel()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center hover:opacity-80" aria-label="Cerrar">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="mt-4 space-y-4 text-xs">
+    <!-- Selector de qué abre el QR -->
+    <div>
+      <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">¿Qué abre el código QR al escanearlo?</label>
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          type="button"
+          (click)="destinoQr.set('pedido')"
+          class="p-2.5 rounded-xl border text-center font-bold transition cursor-pointer"
+          [class]="destinoQr() === 'pedido' ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+        >
+          <i class="fa-solid fa-bag-shopping block mb-1"></i>
+          Carta + Pedidos
+        </button>
+        <button
+          type="button"
+          (click)="destinoQr.set('menu')"
+          class="p-2.5 rounded-xl border text-center font-bold transition cursor-pointer"
+          [class]="destinoQr() === 'menu' ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+        >
+          <i class="fa-solid fa-book-open block mb-1"></i>
+          Solo Menú (Mesa)
+        </button>
+        <button
+          type="button"
+          (click)="destinoQr.set('portada')"
+          class="p-2.5 rounded-xl border text-center font-bold transition cursor-pointer"
+          [class]="destinoQr() === 'portada' ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+        >
+          <i class="fa-solid fa-store block mb-1"></i>
+          Portada Local
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Título inferior</label>
+        <input
+          type="text"
+          [ngModel]="tituloCartel()"
+          (ngModelChange)="tituloCartel.set($event)"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-xl px-3.5 py-2.5 font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+        />
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Subtítulo descriptivo</label>
+        <textarea
+          rows="3"
+          [ngModel]="subtituloCartel()"
+          (ngModelChange)="subtituloCartel.set($event)"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-xl px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed resize-none focus:outline-none focus:border-brand-600"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-surface-borderDark">
+      <a
+        [href]="inicio.urlDescargaQr(destinoQr())"
+        download="qr-carta.png"
+        target="_blank"
+        rel="noopener"
+        class="px-4 py-2.5 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-800 dark:text-zinc-200 font-bold flex items-center gap-2 tap-scale"
+      >
+        <i class="fa-solid fa-download"></i>Solo QR (PNG)
+      </a>
+      <button
+        type="button"
+        (click)="imprimirCartel()"
+        class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral tap-scale flex items-center gap-2 cursor-pointer"
+      >
+        <i class="fa-solid fa-print"></i>Imprimir Cartel Completo
+      </button>
+    </div>
+  </div>
+</app-modal>

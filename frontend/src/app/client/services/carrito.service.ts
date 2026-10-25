@@ -1,8 +1,10 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 
 import { Cupon, Producto, Promocion } from '../../shared/models';
 import { LocalServicio } from '../../core/services/local.service';
 import { ItemCarrito, SeleccionProducto, TotalesCarrito } from '../interfaces';
+
+const PREFIJO_STORAGE_CARRITO = 'foodaro:carrito:';
 
 /**
  * Estado de la comanda. Cada combinación distinta de producto + opciones + notas
@@ -56,6 +58,56 @@ export class CarritoServicio {
   });
 
   readonly estaVacio = computed(() => this.items().length === 0);
+
+  private slugRestaurado: string | null = null;
+
+  constructor() {
+    // Restaurar carrito guardado del local activo
+    effect(() => {
+      const slug = this.local.slug();
+      if (!slug || this.slugRestaurado === slug) return;
+      this.slugRestaurado = slug;
+      this.restaurarDesdeStorage(slug);
+    });
+
+    // Persistir cambios de items y cupón en localStorage
+    effect(() => {
+      const slug = this.local.slug();
+      const items = this.items();
+      const cupon = this.cuponActivo();
+      if (!slug || this.slugRestaurado !== slug) return;
+      try {
+        localStorage.setItem(
+          `${PREFIJO_STORAGE_CARRITO}${slug}`,
+          JSON.stringify({ items, codigoCupon: cupon?.codigo ?? null }),
+        );
+      } catch {
+        // Ignorar errores de cuota de almacenamiento
+      }
+    });
+  }
+
+  private restaurarDesdeStorage(slug: string): void {
+    try {
+      const crudo = localStorage.getItem(`${PREFIJO_STORAGE_CARRITO}${slug}`);
+      if (!crudo) {
+        this.items.set([]);
+        this.cuponActivo.set(null);
+        return;
+      }
+      const datos = JSON.parse(crudo) as { items?: ItemCarrito[]; codigoCupon?: string | null };
+      if (Array.isArray(datos.items)) {
+        this.items.set(datos.items);
+      }
+      if (datos.codigoCupon) {
+        const res = this.aplicarCodigoCupon(datos.codigoCupon);
+        if (!res.ok) this.cuponActivo.set(null);
+      }
+    } catch {
+      this.items.set([]);
+      this.cuponActivo.set(null);
+    }
+  }
 
   agregar(producto: Producto, seleccion: SeleccionProducto): void {
     let base = producto.precio;

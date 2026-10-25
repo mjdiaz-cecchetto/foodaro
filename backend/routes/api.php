@@ -44,8 +44,10 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     Route::get('local', [LocalAdminController::class, 'show']);
     Route::put('local', [LocalAdminController::class, 'update']);
 
+    Route::patch('categorias/reordenar', [CategoriaController::class, 'reordenar']);
     Route::apiResource('categorias', CategoriaController::class)->except('show')->parameters(['categorias' => 'categoria']);
 
+    Route::patch('productos/reordenar', [ProductoController::class, 'reordenar']);
     Route::patch('productos/{producto}/disponibilidad', [ProductoController::class, 'alternarDisponibilidad']);
     Route::apiResource('productos', ProductoController::class);
 

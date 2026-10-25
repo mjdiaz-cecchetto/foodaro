@@ -21,6 +21,12 @@ export const RUTAS_ADMIN: Routes = [
         title: 'Foodaro Admin • Datos del Local',
       },
       {
+        path: 'pedidos',
+        loadComponent: () =>
+          import('./pages/pagina-pedidos/pagina-pedidos.component').then((m) => m.PaginaPedidosComponente),
+        title: 'Foodaro Admin • Pedidos y Envíos',
+      },
+      {
         path: 'categorias',
         redirectTo: 'productos',
         pathMatch: 'full',

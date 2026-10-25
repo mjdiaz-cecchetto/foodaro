@@ -192,6 +192,13 @@ class ApiPublicaTest extends TestCase
         $this->withToken($token)->deleteJson("/api/admin/categorias/{$categoria['id']}")->assertStatus(409);
         $this->withToken($token)->deleteJson("/api/admin/productos/{$producto['id']}")->assertNoContent();
         $this->withToken($token)->deleteJson("/api/admin/categorias/{$categoria['id']}")->assertNoContent();
+
+        // Reordenar categorías
+        $cats = $this->withToken($token)->getJson('/api/admin/categorias')->json('data');
+        $idsInvertidos = array_reverse(array_column($cats, 'id'));
+        $this->withToken($token)->patchJson('/api/admin/categorias/reordenar', ['ids' => $idsInvertidos])
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $idsInvertidos[0]);
     }
 
     public function test_actualiza_horarios_con_dias_cerrados_y_excepciones(): void

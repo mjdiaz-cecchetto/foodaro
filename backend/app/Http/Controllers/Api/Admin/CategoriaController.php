@@ -37,6 +37,24 @@ class CategoriaController extends Controller
         return new CategoriaResource($this->catalogo->actualizarCategoria($categoria, $request->validated()));
     }
 
+    /** PATCH /api/admin/categorias/reordenar — actualiza el orden de las categorías del local. */
+    public function reordenar(Request $request): AnonymousResourceCollection
+    {
+        $datos = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $local = $request->user()->local;
+        \Illuminate\Support\Facades\DB::transaction(function () use ($local, $datos) {
+            foreach (array_values($datos['ids']) as $indice => $id) {
+                $local->categorias()->where('id', (int) $id)->update(['orden' => $indice]);
+            }
+        });
+
+        return CategoriaResource::collection($local->categorias()->withCount('productos')->get());
+    }
+
     public function destroy(Categoria $categoria): JsonResponse
     {
         $this->authorize('delete', $categoria);

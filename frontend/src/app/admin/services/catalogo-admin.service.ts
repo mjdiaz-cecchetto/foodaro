@@ -56,6 +56,18 @@ export class CatalogoAdminServicio {
     );
   }
 
+  /** Actualiza el orden de las categorías (optimista + API). */
+  reordenarCategorias(ids: number[]): Observable<Categoria[]> {
+    this.categorias.update((lista) => {
+      const porId = new Map(lista.map((c) => [c.id, c]));
+      return ids.map((id, i) => ({ ...porId.get(id)!, orden: i })).filter(Boolean);
+    });
+    return this.http.patch<RespuestaApi<Categoria[]>>(`${this.api}/categorias/reordenar`, { ids }).pipe(
+      map((r) => r.data),
+      tap((categorias) => this.categorias.set(categorias)),
+    );
+  }
+
   /* ------------------------------- Productos ------------------------------ */
 
   filtrarProductos(busqueda: string, categoriaId: number | 'todas'): Producto[] {
@@ -91,6 +103,18 @@ export class CatalogoAdminServicio {
   eliminarProducto(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/productos/${id}`).pipe(
       tap(() => this.productos.update((lista) => lista.filter((p) => p.id !== id))),
+    );
+  }
+
+  /** Actualiza el orden de los productos (optimista + API). */
+  reordenarProductos(ids: number[]): Observable<Producto[]> {
+    this.productos.update((lista) => {
+      const porId = new Map(lista.map((p) => [p.id, p]));
+      return ids.map((id, i) => ({ ...porId.get(id)!, orden: i })).filter(Boolean);
+    });
+    return this.http.patch<RespuestaApi<Producto[]>>(`${this.api}/productos/reordenar`, { ids }).pipe(
+      map((r) => r.data),
+      tap((productos) => this.productos.set(productos)),
     );
   }
 

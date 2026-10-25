@@ -1,15 +1,32 @@
-<app-modal [abierto]="abierto()" variante="hoja" claseAncho="sm:max-w-sm" clasePanel="max-h-[90dvh]" (cerrado)="cerrar()">
-  <div class="px-5 pt-3 pb-5">
+<app-modal [abierto]="abierto()" variante="hoja" claseAncho="sm:max-w-md" clasePanel="max-h-[92dvh]" (cerrado)="cerrar()">
+  <div class="px-5 pt-3 pb-5 overflow-y-auto custom-scroll">
     <div class="w-10 h-1 rounded-full bg-gray-300 dark:bg-dark-border mx-auto mb-3 sm:hidden"></div>
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-black text-lg text-gray-900 dark:text-white">Compartir carta</h3>
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-black text-base text-gray-900 dark:text-white">Compartir carta</h3>
       <button type="button" (click)="cerrar()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-dark-muted flex items-center justify-center tap-scale" aria-label="Cerrar"><i class="fa-solid fa-xmark text-sm"></i></button>
     </div>
 
-    <div class="bg-white rounded-3xl p-4 border border-gray-100 dark:border-dark-border shadow-soft mx-auto w-fit">
-      <img [src]="localPublico.urlImagenQr(220)" alt="Código QR de la carta" width="220" height="220" class="rounded-xl" />
+    <!-- Tarjeta estilo Cartel QR -->
+    <div class="bg-white rounded-[2rem] p-6 border-2 border-dashed border-gray-200 text-center shadow-soft">
+      <div class="inline-flex items-center gap-1.5 mb-2">
+        <span class="w-6 h-6 rounded-lg bg-gradient-to-tr from-brand-600 to-brand-400 text-white font-brand font-bold text-lg flex items-center justify-center shadow-sm leading-none">
+          <span class="-mt-0.5">f</span>
+        </span>
+        <span class="font-brand font-bold text-xl text-brand-600 leading-none">foodaro</span>
+      </div>
+
+      <h4 class="text-2xl font-black text-gray-900 tracking-tight leading-tight">{{ localPublico.perfil().nombre }}</h4>
+      <p class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-gray-400 mt-0.5 mb-4">CARTA DIGITAL &amp; PEDIDOS</p>
+
+      <div class="bg-gray-50 rounded-3xl p-4 border border-gray-200/80 shadow-inner mx-auto w-fit">
+        <img [src]="localPublico.urlImagenQr(260)" alt="Código QR de la carta" width="240" height="240" class="w-56 h-56 rounded-xl block" />
+      </div>
+
+      <p class="font-extrabold text-sm text-gray-900 mt-4">¡Bienvenido a tu mesa!</p>
+      <p class="text-xs text-gray-500 mt-1 max-w-xs mx-auto leading-relaxed">
+        Escaneá con tu celular para ver las opciones, fotos de los platos y hacer tu pedido sin esperas.
+      </p>
     </div>
-    <p class="text-center text-xs text-gray-500 dark:text-dark-muted mt-3">Escaneá el código para abrir la carta de <span class="font-bold text-gray-800 dark:text-white">{{ localPublico.perfil().nombre }}</span></p>
 
     <div class="mt-4 flex items-center gap-2 p-2 pl-4 rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border">
       <span class="flex-1 text-xs text-gray-600 dark:text-dark-muted truncate">{{ localPublico.urlCompartible() }}</span>

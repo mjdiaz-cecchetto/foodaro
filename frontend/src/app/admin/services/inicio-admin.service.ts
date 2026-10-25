@@ -59,7 +59,7 @@ export class InicioAdminServicio {
     const p = this.perfil();
     return [
       { id: 'logo', titulo: 'Logo y portada', descripcion: 'Son lo primero que ve el cliente en el banner.', completo: !!(p?.logoUrl && p?.portadaUrl), ruta: 'perfil' },
-      { id: 'whatsapp', titulo: 'WhatsApp que recibe los pedidos', descripcion: 'A este número llegan los pedidos armados.', completo: !!p?.contacto.whatsappPedidos, ruta: 'perfil' },
+      { id: 'whatsapp', titulo: 'WhatsApp que recibe los pedidos', descripcion: 'A este número llegan los pedidos armados.', completo: !!p?.contacto.whatsappPedidos, ruta: 'pedidos' },
       { id: 'horarios', titulo: 'Horarios y dirección', descripcion: 'Se muestran en la info del local.', completo: !!(p?.horarios.semana.some((d) => d.abierto) && p?.direccion), ruta: 'perfil' },
       { id: 'categorias', titulo: 'Al menos una categoría', descripcion: 'Agrupan los productos en la carta.', completo: this.categoriasActivas() > 0, ruta: 'productos' },
       { id: 'productos', titulo: 'Al menos un producto disponible', descripcion: 'Con foto, precio y descripción.', completo: this.disponibles() > 0, ruta: 'productos' },
@@ -81,15 +81,24 @@ export class InicioAdminServicio {
 
   /* ------------------------------ Enlaces de la carta ------------------------------ */
 
+  readonly slug = this.local.slug;
   readonly urlCarta = computed(() => `${window.location.origin}${this.local.ruta()}`);
   readonly urlMenu = computed(() => `${window.location.origin}${this.local.ruta('menu')}`);
   readonly urlPedido = computed(() => `${window.location.origin}${this.local.ruta('pedido')}`);
 
-  urlImagenQr(tamanio = 220): string {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=${tamanio}x${tamanio}&data=${encodeURIComponent(this.urlCarta())}&margin=10&color=22-25-29`;
+  urlPorDestino(destino: 'pedido' | 'menu' | 'portada' = 'pedido'): string {
+    if (destino === 'menu') return this.urlMenu();
+    if (destino === 'portada') return this.urlCarta();
+    return this.urlPedido();
   }
 
-  urlDescargaQr(): string {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=800x800&data=${encodeURIComponent(this.urlCarta())}&margin=20`;
+  urlImagenQr(tamanio = 300, destino: 'pedido' | 'menu' | 'portada' = 'pedido'): string {
+    const url = this.urlPorDestino(destino);
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${tamanio}x${tamanio}&data=${encodeURIComponent(url)}&margin=10&color=15-17-21`;
+  }
+
+  urlDescargaQr(destino: 'pedido' | 'menu' | 'portada' = 'pedido'): string {
+    const url = this.urlPorDestino(destino);
+    return `https://api.qrserver.com/v1/create-qr-code/?size=900x900&data=${encodeURIComponent(url)}&margin=20`;
   }
 }

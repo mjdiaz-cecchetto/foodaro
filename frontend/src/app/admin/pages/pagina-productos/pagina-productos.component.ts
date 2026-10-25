@@ -108,6 +108,19 @@ export class PaginaProductosComponente {
     }
   }
 
+  moverCategoria(categoria: Categoria, delta: -1 | 1, event: Event): void {
+    event.stopPropagation();
+    const lista = [...this.categorias()];
+    const idx = lista.findIndex((c) => c.id === categoria.id);
+    const destino = idx + delta;
+    if (idx < 0 || destino < 0 || destino >= lista.length) return;
+
+    [lista[idx], lista[destino]] = [lista[destino], lista[idx]];
+    this.catalogo.reordenarCategorias(lista.map((c) => c.id)).subscribe({
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo reordenar la categoría')),
+    });
+  }
+
   /* --------------------------- ABM Productos --------------------------- */
 
   abrirAltaProducto(): void {
@@ -161,6 +174,24 @@ export class PaginaProductosComponente {
         error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar el producto')),
       });
     }
+  }
+
+  moverProducto(producto: Producto, delta: -1 | 1): void {
+    const visibles = this.filtrados();
+    const idxVisible = visibles.findIndex((p) => p.id === producto.id);
+    const destinoVisible = idxVisible + delta;
+    if (idxVisible < 0 || destinoVisible < 0 || destinoVisible >= visibles.length) return;
+
+    const otroProducto = visibles[destinoVisible];
+    const todos = [...this.catalogo.productos()];
+    const idxA = todos.findIndex((p) => p.id === producto.id);
+    const idxB = todos.findIndex((p) => p.id === otroProducto.id);
+    if (idxA < 0 || idxB < 0) return;
+
+    [todos[idxA], todos[idxB]] = [todos[idxB], todos[idxA]];
+    this.catalogo.reordenarProductos(todos.map((p) => p.id)).subscribe({
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo reordenar el producto')),
+    });
   }
 
   /* ------------------------- Imágenes fallback ------------------------- */

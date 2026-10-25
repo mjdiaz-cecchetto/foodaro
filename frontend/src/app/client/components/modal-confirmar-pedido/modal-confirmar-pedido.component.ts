@@ -15,6 +15,18 @@ import { mensajeDeError } from '../../../shared/utils/api';
 
 type Paso = 1 | 2 | 3 | 4;
 
+const CLAVE_STORAGE_CLIENTE = 'foodaro:cliente';
+
+interface DatosClienteGuardados {
+  nombre: string;
+  telefono: string;
+  calle: string;
+  pisoDepto: string;
+  referencia: string;
+  modoEntrega: ModoEntrega;
+  medioPago: MedioPago;
+}
+
 /**
  * Confirmación del pedido en 4 pasos: entrega → datos → pago → revisión.
  * Al confirmar arma el BorradorPedido y lo envía al WhatsApp del local.
@@ -98,7 +110,7 @@ export class ModalConfirmarPedidoComponente {
     });
     this.formulario.controls.medioPago.valueChanges.subscribe((v) => this.medioPago.set(v));
 
-    // Al abrir, se reinicia al primer paso
+    // Al abrir, se reinicia al primer paso y precarga datos recordados del cliente
     effect(() => {
       if (this.ui.confirmacionAbierta()) {
         this.paso.set(1);
@@ -106,6 +118,7 @@ export class ModalConfirmarPedidoComponente {
         this.enviando.set(false);
         this.errorEnvio.set(null);
         this.numeroPedido.set(null);
+        this.cargarClienteGuardado();
         this.carrito.modoEntrega.set(this.formulario.controls.modoEntrega.value);
       } else {
         this.carrito.modoEntrega.set('retiro');
@@ -184,6 +197,7 @@ export class ModalConfirmarPedidoComponente {
 
     this.pedidoServicio.registrar(pedido).subscribe({
       next: (registrado) => {
+        this.guardarClienteEnStorage();
         this.numeroPedido.set(registrado.numero);
         this.pedidoServicio.abrirWhatsApp(pedido, registrado);
         this.enviado.set(true);
@@ -200,8 +214,49 @@ export class ModalConfirmarPedidoComponente {
   finalizar(): void {
     this.carrito.vaciar();
     this.carrito.quitarCupon();
-    this.formulario.reset();
+    this.formulario.controls.montoEfectivo.setValue(null);
+    this.formulario.controls.comentarios.setValue('');
     this.cerrar();
+  }
+
+  private cargarClienteGuardado(): void {
+    try {
+      const crudo = localStorage.getItem(CLAVE_STORAGE_CLIENTE);
+      if (!crudo) return;
+      const d = JSON.parse(crudo) as Partial<DatosClienteGuardados>;
+      const actual = this.formulario.getRawValue();
+      const modo: ModoEntrega =
+        d.modoEntrega === 'envio' && this.faltaParaEnvio() === 0 ? 'envio' : 'retiro';
+      this.formulario.patchValue({
+        modoEntrega: modo,
+        nombre: actual.nombre || d.nombre || '',
+        telefono: actual.telefono || d.telefono || '',
+        calle: actual.calle || d.calle || '',
+        pisoDepto: actual.pisoDepto || d.pisoDepto || '',
+        referencia: actual.referencia || d.referencia || '',
+        medioPago: d.medioPago || actual.medioPago || 'transferencia',
+      });
+    } catch {
+      // Ignorar si localStorage no está disponible
+    }
+  }
+
+  private guardarClienteEnStorage(): void {
+    try {
+      const v = this.formulario.getRawValue();
+      const datos: DatosClienteGuardados = {
+        nombre: v.nombre.trim(),
+        telefono: v.telefono.trim(),
+        calle: v.calle.trim(),
+        pisoDepto: v.pisoDepto.trim(),
+        referencia: v.referencia.trim(),
+        modoEntrega: v.modoEntrega,
+        medioPago: v.medioPago,
+      };
+      localStorage.setItem(CLAVE_STORAGE_CLIENTE, JSON.stringify(datos));
+    } catch {
+      // Ignorar errores de cuota
+    }
   }
 
   cerrar(): void {

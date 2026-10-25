@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { ConfiguracionLocal, ExcepcionHorario, HorarioDia, Horarios, PerfilLocal } from '../../../shared/models';
+import { ExcepcionHorario, HorarioDia, Horarios, PerfilLocal } from '../../../shared/models';
 import { clonarHorarios } from '../../../shared/utils/horarios';
 import { mensajeDeError } from '../../../shared/utils/api';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
@@ -13,9 +13,9 @@ import { EditorHorariosComponente } from '../../components/editor-horarios/edito
 import { CalendarioExcepcionesComponente } from '../../components/calendario-excepciones/calendario-excepciones.component';
 import { MapaUbicacionComponente } from '../../../shared/components/mapa-ubicacion/mapa-ubicacion.component';
 
-type Seccion = 'identidad' | 'ubicacion' | 'horarios' | 'pedidos' | 'contacto';
+type Seccion = 'identidad' | 'ubicacion' | 'horarios' | 'contacto';
 
-/** Datos del local: identidad, ubicación con mapa, horarios (semana + excepciones) y contacto. */
+/** Datos del local: identidad, ubicación con mapa, horarios (semana + excepciones) y contacto público. */
 @Component({
   selector: 'app-pagina-perfil-local',
   standalone: true,
@@ -36,14 +36,12 @@ export class PaginaPerfilLocalComponente {
   private readonly notificaciones = inject(NotificacionesServicio);
 
   private readonly inicial = this.localAdmin.perfil();
-  private readonly configInicial = this.localAdmin.configuracion();
 
   readonly secciones: { id: Seccion; etiqueta: string; icono: string }[] = [
     { id: 'identidad', etiqueta: 'Identidad', icono: 'fa-store' },
     { id: 'ubicacion', etiqueta: 'Ubicación', icono: 'fa-location-dot' },
     { id: 'horarios', etiqueta: 'Horarios', icono: 'fa-clock' },
-    { id: 'pedidos', etiqueta: 'Envíos y Pagos', icono: 'fa-truck-fast' },
-    { id: 'contacto', etiqueta: 'Contacto', icono: 'fa-comments' },
+    { id: 'contacto', etiqueta: 'Contacto Público', icono: 'fa-comments' },
   ];
   readonly seccion = signal<Seccion>('identidad');
 
@@ -57,16 +55,9 @@ export class PaginaPerfilLocalComponente {
     referenciaDireccion: [this.inicial.referenciaDireccion],
     mapsUrl: [this.inicial.mapsUrl],
     whatsapp: [this.inicial.contacto.whatsapp, Validators.required],
-    whatsappPedidos: [this.inicial.contacto.whatsappPedidos, [Validators.required, Validators.pattern(/^[\d\s()+-]{6,}$/)]],
     instagram: [this.inicial.contacto.instagram],
     tiktok: [this.inicial.contacto.tiktok],
     telefono: [this.inicial.contacto.telefono],
-    costoEnvio: [this.configInicial.costoEnvio ?? 0, [Validators.min(0)]],
-    montoMinimoEnvio: [this.configInicial.montoMinimoEnvio ?? 0, [Validators.min(0)]],
-    aliasTransferencia: [this.configInicial.aliasTransferencia ?? ''],
-    titularTransferencia: [this.configInicial.titularTransferencia ?? ''],
-    cargoServicio: [this.configInicial.cargoServicio ?? 0, [Validators.min(0)]],
-    etiquetaCargoServicio: [this.configInicial.etiquetaCargoServicio ?? 'Servicio / empaque'],
   });
 
   /** Horarios se editan fuera del formulario reactivo (estructura anidada con señales). */
@@ -80,14 +71,8 @@ export class PaginaPerfilLocalComponente {
   readonly diasAbiertos = computed(() => this.horarios().semana.filter((d) => d.abierto).length);
   readonly excepcionesFuturas = computed(() => this.horarios().excepciones.length);
 
-  /** Enlace wa.me para probar el número de pedidos tal como lo usa la carta. */
-  readonly enlacePruebaPedidos = computed(() => {
-    const digitos = (this.vistaPrevia().contacto.whatsappPedidos || '').replace(/\D/g, '');
-    return digitos.length >= 6 ? `https://wa.me/${digitos}?text=${encodeURIComponent('Prueba de Foodaro: a este número llegan los pedidos de ' + this.vistaPrevia().nombre)}` : null;
-  });
-
   readonly claseCampo =
-    'w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500';
+    'w-full bg-zinc-50/90 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 text-xs sm:text-[13px] font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:bg-white dark:focus:bg-surface-dark focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition';
 
   cambiarSemana(semana: HorarioDia[]): void {
     this.horarios.update((h) => ({ ...h, semana }));
@@ -101,7 +86,6 @@ export class PaginaPerfilLocalComponente {
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
       this.seccion.set(this.formulario.controls.nombre.invalid ? 'identidad' : 'contacto');
-      if (this.formulario.controls.whatsappPedidos.invalid) this.notificaciones.mostrar('Falta el WhatsApp que recibe los pedidos');
       this.notificaciones.mostrar('Revisá los campos obligatorios');
       return;
     }
@@ -113,7 +97,7 @@ export class PaginaPerfilLocalComponente {
     }
 
     this.guardando.set(true);
-    this.localAdmin.guardar(this.aPerfil(), this.aConfiguracion()).subscribe({
+    this.localAdmin.guardar(this.aPerfil()).subscribe({
       next: (perfil) => {
         this.guardando.set(false);
         this.horarios.set(clonarHorarios(perfil.horarios));
@@ -124,18 +108,6 @@ export class PaginaPerfilLocalComponente {
         this.notificaciones.mostrar(mensajeDeError(err, 'No se pudieron guardar los datos'));
       },
     });
-  }
-
-  private aConfiguracion(): Partial<ConfiguracionLocal> {
-    const v = this.formulario.getRawValue();
-    return {
-      costoEnvio: Math.max(0, Number(v.costoEnvio) || 0),
-      montoMinimoEnvio: Math.max(0, Number(v.montoMinimoEnvio) || 0),
-      aliasTransferencia: v.aliasTransferencia.trim(),
-      titularTransferencia: v.titularTransferencia.trim(),
-      cargoServicio: Math.max(0, Number(v.cargoServicio) || 0),
-      etiquetaCargoServicio: v.etiquetaCargoServicio.trim() || 'Servicio / empaque',
-    };
   }
 
   private aPerfil(): PerfilLocal {
@@ -153,7 +125,13 @@ export class PaginaPerfilLocalComponente {
       referenciaDireccion: v.referenciaDireccion,
       mapsUrl: v.mapsUrl,
       horarios: this.horarios(),
-      contacto: { whatsapp: v.whatsapp, whatsappPedidos: v.whatsappPedidos, instagram: v.instagram, tiktok: v.tiktok, telefono: v.telefono },
+      contacto: {
+        ...base.contacto,
+        whatsapp: v.whatsapp,
+        instagram: v.instagram,
+        tiktok: v.tiktok,
+        telefono: v.telefono,
+      },
     };
   }
 }

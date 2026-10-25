@@ -20,7 +20,7 @@ export class EditorHorariosComponente {
   readonly NOMBRES = NOMBRES_DIA;
 
   readonly claseHora =
-    'w-[104px] bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark rounded-xl px-2.5 py-2 text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500';
+    'w-[104px] bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500';
 
   alternarAbierto(dia: DiaSemana): void {
     this.emitir(

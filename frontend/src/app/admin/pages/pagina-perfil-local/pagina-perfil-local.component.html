@@ -1,8 +1,8 @@
-<section class="space-y-6">
+<section class="space-y-3.5">
 
   <app-encabezado-pagina
     titulo="Datos del Local"
-    subtitulo="Lo que ve el cliente: identidad, dónde estás, cuándo abrís y cómo contactarte."
+    subtitulo="Lo que ve el cliente: identidad, dónde estás, cuándo abrís y tus redes de contacto."
     [etiquetaAccion]="guardando() ? 'Guardando…' : 'Guardar cambios'"
     iconoAccion="fa-floppy-disk"
     (accion)="guardar()"
@@ -11,12 +11,19 @@
   <app-vista-previa-cabecera [perfil]="vistaPrevia()" />
 
   <!-- Pestañas de sección -->
-  <nav class="flex gap-1 p-1 rounded-2xl bg-zinc-100 dark:bg-surface-cardDark text-xs font-bold overflow-x-auto no-scrollbar">
+  <nav class="flex gap-1.5 p-1 rounded-2xl bg-zinc-200/70 dark:bg-surface-cardDark text-xs sm:text-[13px] font-bold overflow-x-auto no-scrollbar">
     @for (s of secciones; track s.id) {
-      <button type="button" (click)="seccion.set(s.id)" class="flex-1 min-w-max px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2" [class]="seccion() === s.id ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'">
+      <button
+        type="button"
+        (click)="seccion.set(s.id)"
+        class="flex-1 min-w-max px-4 py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+        [class]="seccion() === s.id
+          ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm ring-1 ring-zinc-200/80 dark:ring-surface-borderDark'
+          : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'"
+      >
         <i class="fa-solid" [class]="s.icono"></i>{{ s.etiqueta }}
         @if (s.id === 'horarios') {
-          <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">{{ diasAbiertos() }}/7</span>
+          <span class="ml-1 text-[11px] px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-black">{{ diasAbiertos() }}/7</span>
         }
       </button>
     }
@@ -26,36 +33,48 @@
 
     <!-- IDENTIDAD -->
     @if (seccion() === 'identidad') {
-      <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
-        <div>
-          <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Identidad</h3>
-          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Nombre, eslogan y las imágenes del banner.</p>
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 sm:p-5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex items-baseline gap-2.5 flex-wrap">
+          <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Identidad</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Nombre, rubro, eslogan y las imágenes del banner.</p>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
           <div>
-            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Nombre del local</label>
-            <input type="text" formControlName="nombre" [class]="claseCampo + ' font-semibold'" />
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Nombre del local</label>
+            <input type="text" formControlName="nombre" [class]="claseCampo + ' font-bold'" />
             @if (formulario.controls.nombre.invalid && formulario.controls.nombre.touched) {
-              <p class="mt-1 text-[11px] font-semibold text-red-500">El nombre es obligatorio.</p>
+              <p class="mt-1 text-[11px] font-bold text-red-500">El nombre es obligatorio.</p>
             }
           </div>
           <div>
-            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Rubro</label>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Rubro</label>
             <input type="text" formControlName="rubro" placeholder="Ej: Restaurante · Pizzería" [class]="claseCampo" />
           </div>
-          <div class="lg:col-span-2">
-            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Eslogan</label>
+          <div>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Eslogan</label>
             <input type="text" formControlName="eslogan" placeholder="Una frase corta que describa el local" [class]="claseCampo" />
           </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 pt-0.5">
           <div>
-            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">URL del logo</label>
-            <input type="url" formControlName="logoUrl" [class]="claseCampo" />
-            <p class="text-[11px] text-zinc-400 mt-1">Cuadrado, mínimo 240×240.</p>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">URL del logo <span class="text-[11px] font-normal text-zinc-400">(cuadrado, mín. 240×240)</span></label>
+            <div class="flex items-center gap-2">
+              @if (vistaPrevia().logoUrl) {
+                <img [src]="vistaPrevia().logoUrl" alt="" class="w-9 h-9 rounded-lg object-cover ring-1 ring-zinc-200 dark:ring-zinc-700 shrink-0" />
+              }
+              <input type="url" formControlName="logoUrl" [class]="claseCampo" />
+            </div>
           </div>
           <div>
-            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">URL de la portada (banner)</label>
-            <input type="url" formControlName="portadaUrl" [class]="claseCampo" />
-            <p class="text-[11px] text-zinc-400 mt-1">Apaisada, ideal 1600×600.</p>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">URL de la portada (banner) <span class="text-[11px] font-normal text-zinc-400">(ideal 1600×600)</span></label>
+            <div class="flex items-center gap-2">
+              @if (vistaPrevia().portadaUrl) {
+                <img [src]="vistaPrevia().portadaUrl" alt="" class="w-14 h-9 rounded-lg object-cover ring-1 ring-zinc-200 dark:ring-zinc-700 shrink-0" />
+              }
+              <input type="url" formControlName="portadaUrl" [class]="claseCampo" />
+            </div>
           </div>
         </div>
       </div>
@@ -63,161 +82,87 @@
 
     <!-- UBICACIÓN -->
     @if (seccion() === 'ubicacion') {
-      <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark">
-        <div class="mb-4">
-          <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Ubicación</h3>
-          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Pegá el enlace de Google Maps y el mapa se arma solo.</p>
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 sm:p-5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark">
+        <div class="flex items-baseline gap-2.5 flex-wrap mb-3.5">
+          <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Ubicación</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Pegá el enlace de Google Maps y el mapa se arma solo.</p>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Dirección</label>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Dirección</label>
               <input type="text" formControlName="direccion" placeholder="Calle, número y ciudad" [class]="claseCampo" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Referencia (barrio, zona)</label>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Referencia (barrio, zona)</label>
               <input type="text" formControlName="referenciaDireccion" placeholder="Ej: a dos cuadras de la plaza" [class]="claseCampo" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Enlace a Google Maps</label>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Enlace a Google Maps</label>
               <input type="url" formControlName="mapsUrl" placeholder="https://maps.google.com/?q=..." [class]="claseCampo" />
-              <p class="text-[11px] text-zinc-400 mt-1">En Google Maps: buscá tu local → Compartir → Copiar enlace. Los enlaces cortos (maps.app.goo.gl) abren bien pero el mapa de abajo usa la dirección.</p>
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">En Google Maps: buscá tu local → Compartir → Copiar enlace.</p>
             </div>
           </div>
-          <app-mapa-ubicacion [mapsUrl]="vistaPrevia().mapsUrl" [direccion]="vistaPrevia().direccion" clase="h-64 lg:h-full min-h-[16rem] rounded-2xl" />
+          <app-mapa-ubicacion [mapsUrl]="vistaPrevia().mapsUrl" [direccion]="vistaPrevia().direccion" clase="h-56 lg:h-full min-h-[14rem] rounded-2xl" />
         </div>
       </div>
     }
 
-    <!-- HORARIOS -->
+    <!-- HORARIOS (Semana + Días especiales lado a lado en escritorio) -->
     @if (seccion() === 'horarios') {
-      <div class="space-y-6">
-        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark">
-          <div class="mb-2">
-            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Horario semanal</h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Activá los días que abrís y cargá una o más franjas por día. Si una franja termina después de medianoche, marcala con la hora del día siguiente (ej. 20:00 – 01:30).</p>
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+        <div class="xl:col-span-7 bg-white dark:bg-surface-dark rounded-2xl p-4 sm:p-5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark">
+          <div class="mb-2.5">
+            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Horario semanal</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Activá los días que abrís y cargá una o más franjas por día (ej. 12:00–15:30 y 20:00–00:30).</p>
           </div>
           <app-editor-horarios [semana]="horarios().semana" (cambiado)="cambiarSemana($event)" />
         </div>
 
-        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark">
-          <div class="mb-4">
-            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Días especiales</h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Feriados, vacaciones o eventos: marcá fechas puntuales como cerradas o con un horario distinto. Tienen prioridad sobre el horario semanal.</p>
+        <div class="xl:col-span-5 bg-white dark:bg-surface-dark rounded-2xl p-4 sm:p-5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark">
+          <div class="mb-2.5">
+            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Días especiales</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Feriados o eventos: marcá fechas puntuales cerradas o con horario distinto.</p>
           </div>
           <app-calendario-excepciones [excepciones]="horarios().excepciones" [semana]="horarios().semana" (cambiado)="cambiarExcepciones($event)" />
         </div>
       </div>
     }
 
-    <!-- ENVÍOS Y PAGOS -->
-    @if (seccion() === 'pedidos') {
-      <div class="space-y-6">
-        <!-- Envío a domicilio -->
-        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
-          <div>
-            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Envío a domicilio</h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Configurá el costo de envío y el importe mínimo requerido cuando el cliente elige entrega a domicilio.</p>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Costo de envío ($)</label>
-              <input type="number" min="0" formControlName="costoEnvio" placeholder="0 = sin cargo" [class]="claseCampo + ' font-extrabold'" />
-              <p class="text-[11px] text-zinc-400 mt-1">Se suma automáticamente solo si el cliente elige "Envío a domicilio".</p>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Compra mínima para envío ($)</label>
-              <input type="number" min="0" formControlName="montoMinimoEnvio" placeholder="0 = sin mínimo" [class]="claseCampo + ' font-extrabold'" />
-              <p class="text-[11px] text-zinc-400 mt-1">Si el subtotal es menor, le avisa cuánto le falta para pedir con envío.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Transferencia bancaria -->
-        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
-          <div>
-            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Datos para Transferencia</h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Se muestran al cliente cuando elige pagar por Transferencia, con botón para copiar el Alias en un toque.</p>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Alias o CBU / CVU</label>
-              <input type="text" formControlName="aliasTransferencia" placeholder="Ej: demolocal.mp" [class]="claseCampo + ' font-mono font-bold'" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Titular / Entidad bancaria</label>
-              <input type="text" formControlName="titularTransferencia" placeholder="Ej: Juan Pérez · Mercado Pago" [class]="claseCampo" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Cargo de servicio / empaque -->
-        <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
-          <div>
-            <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Cargo por servicio o empaque</h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Opcional: recargo fijo que se suma a todos los pedidos (0 para desactivar).</p>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Importe ($)</label>
-              <input type="number" min="0" formControlName="cargoServicio" placeholder="0" [class]="claseCampo + ' font-extrabold'" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Etiqueta visible</label>
-              <input type="text" formControlName="etiquetaCargoServicio" placeholder="Servicio / empaque" [class]="claseCampo" />
-            </div>
-          </div>
-        </div>
-      </div>
-    }
-
-    <!-- CONTACTO -->
+    <!-- CONTACTO PÚBLICO -->
     @if (seccion() === 'contacto') {
-      <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-zinc-100 dark:border-surface-borderDark space-y-4">
-        <!-- Número que recibe los pedidos (destacado) -->
-        <div class="rounded-2xl border-2 border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-500/5 p-4 sm:p-5">
-          <div class="flex items-start gap-3">
-            <span class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg shrink-0"><i class="fa-brands fa-whatsapp"></i></span>
-            <div class="flex-1 min-w-0">
-              <h3 class="font-extrabold text-sm text-zinc-900 dark:text-white">WhatsApp que recibe los pedidos</h3>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">Cada pedido que confirma un cliente se abre en WhatsApp hacia <span class="font-bold">este número</span>. Puede ser el de cocina o del encargado; no tiene que ser el de contacto público. Con código de país, ej. <span class="font-mono">+54 9 385 311 5268</span>.</p>
-              <div class="mt-3 flex flex-col sm:flex-row gap-2">
-                <input type="tel" formControlName="whatsappPedidos" placeholder="+54 9 ..." [class]="claseCampo + ' sm:max-w-xs font-bold tracking-wide'" />
-                @if (enlacePruebaPedidos(); as enlace) {
-                  <a [href]="enlace" target="_blank" rel="noopener" class="h-10 px-4 rounded-2xl bg-white dark:bg-surface-dark border border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center justify-center gap-2 tap-scale shrink-0">
-                    <i class="fa-solid fa-paper-plane"></i>Enviar mensaje de prueba
-                  </a>
-                }
-              </div>
-              @if (formulario.controls.whatsappPedidos.invalid && formulario.controls.whatsappPedidos.touched) {
-                <p class="mt-1.5 text-[11px] font-semibold text-red-500">Ingresá un número válido: sin este dato no se pueden recibir pedidos.</p>
-              }
-            </div>
-          </div>
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 sm:p-5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex items-baseline gap-2.5 flex-wrap">
+          <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Redes y contacto público</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Lo que se muestra en la portada e información del local para que el cliente te consulte o te siga.</p>
         </div>
 
-        <div>
-          <h3 class="font-extrabold text-sm uppercase tracking-wider text-brand-600">Redes y contacto público</h3>
-          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Lo que se muestra en la info del local para que el cliente te escriba o te siga.</p>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label class="text-zinc-600 dark:text-zinc-300 mb-1 font-bold flex items-center gap-1.5"><i class="fa-brands fa-whatsapp text-emerald-500"></i> WhatsApp de contacto</label>
+            <label class="text-xs text-zinc-800 dark:text-zinc-200 mb-1 font-bold flex items-center gap-1.5">
+              <i class="fa-brands fa-whatsapp text-emerald-500 text-sm"></i> WhatsApp de contacto público
+            </label>
             <input type="text" formControlName="whatsapp" placeholder="+54 9 11 ..." [class]="claseCampo" />
             @if (formulario.controls.whatsapp.invalid && formulario.controls.whatsapp.touched) {
-              <p class="mt-1 text-[11px] font-semibold text-red-500">Ingresá un WhatsApp de contacto.</p>
+              <p class="mt-1 text-[11px] font-bold text-red-500">Ingresá un WhatsApp de contacto.</p>
             }
           </div>
           <div>
-            <label class="text-zinc-600 dark:text-zinc-300 mb-1 font-bold flex items-center gap-1.5"><i class="fa-solid fa-phone text-brand-600"></i> Teléfono</label>
-            <input type="text" formControlName="telefono" [class]="claseCampo" />
+            <label class="text-xs text-zinc-800 dark:text-zinc-200 mb-1 font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-phone text-brand-600 text-xs"></i> Teléfono fijo / alternativo
+            </label>
+            <input type="text" formControlName="telefono" placeholder="+54 ..." [class]="claseCampo" />
           </div>
           <div>
-            <label class="text-zinc-600 dark:text-zinc-300 mb-1 font-bold flex items-center gap-1.5"><i class="fa-brands fa-instagram text-pink-500"></i> Instagram</label>
+            <label class="text-xs text-zinc-800 dark:text-zinc-200 mb-1 font-bold flex items-center gap-1.5">
+              <i class="fa-brands fa-instagram text-pink-500 text-sm"></i> Instagram
+            </label>
             <input type="text" formControlName="instagram" placeholder="@tulocal" [class]="claseCampo" />
           </div>
           <div>
-            <label class="text-zinc-600 dark:text-zinc-300 mb-1 font-bold flex items-center gap-1.5"><i class="fa-brands fa-tiktok text-zinc-800 dark:text-white"></i> TikTok</label>
+            <label class="text-xs text-zinc-800 dark:text-zinc-200 mb-1 font-bold flex items-center gap-1.5">
+              <i class="fa-brands fa-tiktok text-zinc-900 dark:text-white text-xs"></i> TikTok
+            </label>
             <input type="text" formControlName="tiktok" placeholder="@tulocal" [class]="claseCampo" />
           </div>
         </div>

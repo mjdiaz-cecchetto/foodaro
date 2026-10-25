@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="es-AR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodaro Admin • Flujo Operativo y Cobros</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#FFF1F0',
+              500: '#FF3B30',
+              600: '#E0261B',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            caveat: ['"Caveat"', 'cursive'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Font Awesome 6 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=JetBrains+Mono:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    button { touch-action: manipulation; }
+  </style>
+</head>
+
+<body class="bg-zinc-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased min-h-screen flex flex-col">
+
+  <div class="flex flex-1 min-h-screen">
+    
+    <!-- SIDEBAR PERSISTENTE -->
+    <aside class="hidden lg:flex flex-col w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 justify-between shrink-0">
+      <div class="space-y-6">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-brand-500 text-white flex items-center justify-center font-caveat text-2xl font-bold shadow-md shadow-brand-500/20">f</div>
+          <div>
+            <span class="font-caveat text-2xl font-bold text-brand-500">foodaro</span>
+            <p class="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">Admin Panel</p>
+          </div>
+        </div>
+
+        <nav class="space-y-1 text-xs font-bold">
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <i class="fa-solid fa-store w-4"></i> Local & Perfil
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <i class="fa-solid fa-boxes-stacked w-4"></i> Catálogo & Productos
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 border border-brand-500/20">
+            <i class="fa-solid fa-fire-burner w-4"></i> Pedidos en Vivo
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <i class="fa-solid fa-chart-line w-4"></i> Ventas & Reportes
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <i class="fa-solid fa-ticket w-4"></i> Promociones & Cupones
+          </a>
+        </nav>
+      </div>
+
+      <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
+        <span class="text-zinc-400 font-mono text-[11px]">v2.4 Pro</span>
+        <button onclick="toggleDarkMode()" class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-amber-400 flex items-center justify-center cursor-pointer">
+          <i id="themeIcon" class="fa-solid fa-moon"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="flex-1 flex flex-col min-w-0">
+      
+      <!-- TOPBAR CON FILTRO RÁPIDO DE ESTADO FINANCIERO -->
+      <header class="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 shrink-0">
+        <div>
+          <h1 class="text-lg font-black text-zinc-900 dark:text-white leading-tight">Control de Pedidos & Caja</h1>
+          <p class="text-[11px] text-zinc-500">Pipeline de despacho operativo con control de cobros independiente</p>
+        </div>
+
+        <!-- Filtros Rápidos (Segmented Control) -->
+        <div class="flex items-center gap-2">
+          <div class="inline-flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold border border-zinc-200 dark:border-zinc-700">
+            <button onclick="setFilter('all', this)" class="filter-btn active px-3 py-1 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm cursor-pointer">Todos</button>
+            <button onclick="setFilter('unpaid', this)" class="filter-btn px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white cursor-pointer flex items-center gap-1.5">
+              <span>Solo Impagos</span>
+              <span id="badgeUnpaidTotal" class="w-4 h-4 rounded-full bg-rose-500 text-white font-mono text-[9px] flex items-center justify-center font-bold">0</span>
+            </button>
+            <button onclick="setFilter('takeaway', this)" class="filter-btn px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white cursor-pointer">Takeaway</button>
+          </div>
+
+          <button onclick="openManualOrderDrawer()" class="bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-brand-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Nuevo Pedido</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TABLERO KANBAN CON LOGÍSTICA REAL -->
+      <div class="p-4 sm:p-8 flex-1 w-full overflow-x-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 min-w-[320px] xl:min-w-0 items-start">
+          
+          <!-- CARRIL 1: NUEVOS / PENDIENTES -->
+          <section class="bg-zinc-200/50 dark:bg-zinc-900/50 rounded-3xl p-3 border border-zinc-200 dark:border-zinc-800 flex flex-col h-[calc(100vh-140px)]">
+            <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <h2 class="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">Nuevos / Ingreso</h2>
+              </div>
+              <span id="badge-pending" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300">0</span>
+            </div>
+            <div id="col-pending" class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar"></div>
+          </section>
+
+          <!-- CARRIL 2: EN ELABORACIÓN / COCINA -->
+          <section class="bg-zinc-200/50 dark:bg-zinc-900/50 rounded-3xl p-3 border border-zinc-200 dark:border-zinc-800 flex flex-col h-[calc(100vh-140px)]">
+            <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                <h2 class="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">En Cocina</h2>
+              </div>
+              <span id="badge-kitchen" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300">0</span>
+            </div>
+            <div id="col-kitchen" class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar"></div>
+          </section>
+
+          <!-- CARRIL 3: LISTO / POR ENTREGAR -->
+          <section class="bg-zinc-200/50 dark:bg-zinc-900/50 rounded-3xl p-3 border border-zinc-200 dark:border-zinc-800 flex flex-col h-[calc(100vh-140px)]">
+            <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                <h2 class="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">Listos / Despacho</h2>
+              </div>
+              <span id="badge-ready" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-300">0</span>
+            </div>
+            <div id="col-ready" class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar"></div>
+          </section>
+
+          <!-- CARRIL 4: ENTREGADOS (PUEDEN ESTAR COBRADOS O IMPAGOS) -->
+          <section class="bg-zinc-200/50 dark:bg-zinc-900/50 rounded-3xl p-3 border border-zinc-200 dark:border-zinc-800 flex flex-col h-[calc(100vh-140px)]">
+            <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <h2 class="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">Entregados</h2>
+              </div>
+              <span id="badge-delivered" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300">0</span>
+            </div>
+            <div id="col-delivered" class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar"></div>
+          </section>
+
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ==================== MODAL RÁPIDO DE COBRO ==================== -->
+  <div id="chargeModalBackdrop" onclick="closeChargeModal()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity"></div>
+  <div id="chargeModal" class="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-sm mx-auto z-50 bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-zinc-200 dark:border-zinc-800 hidden transform scale-95 transition-all space-y-4">
+    <div class="text-center space-y-1">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-cash-register"></i>
+      </div>
+      <h3 class="font-extrabold text-base text-zinc-900 dark:text-white" id="cmTitle">Cobrar Ticket #00</h3>
+      <p class="font-mono text-2xl font-black text-emerald-600" id="cmTotal">$ 0</p>
+    </div>
+
+    <div class="space-y-2 text-xs">
+      <label class="block font-bold text-zinc-600 dark:text-zinc-400">Seleccionar Medio de Pago:</label>
+      <div class="grid grid-cols-1 gap-2">
+        <button onclick="confirmCharge('Efectivo')" class="p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-brand-500 flex items-center justify-between font-bold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
+          <span>💵 Efectivo en Mano</span>
+          <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
+        </button>
+        <button onclick="confirmCharge('Mercado Pago')" class="p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-brand-500 flex items-center justify-between font-bold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
+          <span>📱 Mercado Pago / Transferencia</span>
+          <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
+        </button>
+        <button onclick="confirmCharge('Tarjeta Débito/Crédito')" class="p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-brand-500 flex items-center justify-between font-bold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
+          <span>💳 Tarjeta Débito / Crédito</span>
+          <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <button onclick="closeChargeModal()" class="w-full py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-bold text-xs hover:bg-zinc-200 cursor-pointer">
+      Cancelar
+    </button>
+  </div>
+
+  <!-- ==================== DRAWER: REGISTRAR PEDIDO MANUAL ==================== -->
+  <div id="drawerBackdrop" onclick="closeManualOrderDrawer()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-200"></div>
+
+  <div id="manualOrderDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 flex flex-col justify-between hidden transform translate-x-full transition-transform duration-200">
+    <div class="space-y-4 overflow-y-auto pr-1 no-scrollbar flex-1">
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div>
+          <h3 class="text-base font-extrabold text-zinc-900 dark:text-white">Nuevo Pedido Manual</h3>
+          <p class="text-[11px] text-zinc-400">Seleccioná ítems y definí si requiere o no cocción</p>
+        </div>
+        <button onclick="closeManualOrderDrawer()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <form id="manualOrderForm" onsubmit="handleManualSubmit(event)" class="space-y-3.5 text-xs">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Canal</label>
+            <select id="moType" class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-bold focus:outline-none">
+              <option value="Mesa">🍽️ Mesa Salón</option>
+              <option value="Mostrador">🛍️ Mostrador (Takeaway)</option>
+              <option value="WhatsApp">💬 WhatsApp Directo</option>
+              <option value="Delivery Propio">🛵 Delivery Propio</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Destino / Cliente</label>
+            <input type="text" id="moTarget" required placeholder="Ej: Mesa 05 / Lucas R." class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-bold focus:outline-none">
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300">Ítems</label>
+          <div id="moProductsList" class="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar"></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Observaciones</label>
+          <input type="text" id="moNotes" placeholder="Ej: Bien fría, aderezos aparte..." class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-medium focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Estado de Cobro</label>
+            <select id="moPaymentStatus" class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-bold focus:outline-none">
+              <option value="false">⏳ Impago (A cobrar luego)</option>
+              <option value="true">✓ Pagado al Instante</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Medio</label>
+            <select id="moPaymentMethod" class="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 font-bold focus:outline-none">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Mercado Pago">Mercado Pago / Transf.</option>
+              <option value="Tarjeta">Tarjeta</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center py-2.5 px-3.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-zinc-100 dark:border-zinc-800">
+          <span class="font-bold text-zinc-500">Total:</span>
+          <span id="moCalculatedTotal" class="font-mono text-base font-black text-brand-500">$ 0</span>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-md shadow-brand-500/25 active:scale-95 transition-all cursor-pointer">
+          Ingresar Pedido al Tablero
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    const catalogBase = [
+      { id: 1, name: 'Doble Smash Angus Burger', price: 13800, requiresKitchen: true },
+      { id: 2, name: 'Smash Bacon Crispy', price: 14500, requiresKitchen: true },
+      { id: 3, name: 'Pizza Napolitana', price: 16900, requiresKitchen: true },
+      { id: 4, name: 'Patagonia IPA 500cc (Barra)', price: 4200, requiresKitchen: false },
+      { id: 5, name: 'Coca-Cola 500cc (Barra)', price: 2600, requiresKitchen: false }
+    ];
+
+    let orders = [
+      {
+        id: 401,
+        target: 'Mesa #02 (2 personas)',
+        type: 'Mesa',
+        status: 'pending', // 'pending' | 'kitchen' | 'ready' | 'delivered'
+        requiresKitchen: false, // Solo bebidas -> Puede saltar cocina
+        time: '14:20',
+        minutesAgo: 4,
+        paid: false,
+        method: '-',
+        notes: 'Copas con hielo',
+        items: [{ name: 'Patagonia IPA 500cc (Barra)', qty: 2, price: 4200 }]
+      },
+      {
+        id: 402,
+        target: 'Mesa #04',
+        type: 'Mesa',
+        status: 'kitchen',
+        requiresKitchen: true,
+        time: '14:05',
+        minutesAgo: 19,
+        paid: false,
+        method: '-',
+        notes: 'Punto jugoso',
+        items: [
+          { name: 'Doble Smash Angus Burger', qty: 2, price: 13800 },
+          { name: 'Coca-Cola 500cc (Barra)', qty: 2, price: 2600 }
+        ]
+      },
+      {
+        id: 403,
+        target: 'Lucas Gómez (Mostrador)',
+        type: 'Mostrador',
+        status: 'ready',
+        requiresKitchen: true,
+        time: '13:50',
+        minutesAgo: 34,
+        paid: true,
+        method: 'Mercado Pago',
+        notes: 'Para llevar en caja',
+        items: [{ name: 'Pizza Napolitana', qty: 1, price: 16900 }]
+      },
+      {
+        id: 404,
+        target: 'Mesa #01 (En Salón)',
+        type: 'Mesa',
+        status: 'delivered', // YA ENTREGADO A LA MESA PERO IMPAGO
+        requiresKitchen: true,
+        time: '13:30',
+        minutesAgo: 54,
+        paid: false, // ¡AQUÍ ESTÁ LA CLAVE!
+        method: '-',
+        notes: 'Comiendo en el salón',
+        items: [
+          { name: 'Smash Bacon Crispy', qty: 2, price: 14500 },
+          { name: 'Patagonia IPA 500cc (Barra)', qty: 2, price: 4200 }
+        ]
+      },
+      {
+        id: 405,
+        target: 'Camila Sosa (Delivery)',
+        type: 'Delivery Propio',
+        status: 'delivered',
+        requiresKitchen: true,
+        time: '13:15',
+        minutesAgo: 69,
+        paid: true, // ENTREGADO Y COBRADO
+        method: 'Efectivo',
+        notes: '',
+        items: [{ name: 'Doble Smash Angus Burger', qty: 1, price: 13800 }]
+      }
+    ];
+
+    let currentFilter = 'all';
+    let manualOrderCart = {};
+    let orderToChargeId = null;
+
+    function formatARS(val) {
+      return '$ ' + new Intl.NumberFormat('es-AR').format(val);
+    }
+
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.className = "filter-btn px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white cursor-pointer";
+      });
+      btn.className = "filter-btn active px-3 py-1 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm cursor-pointer";
+      renderBoard();
+    }
+
+    function getChannelBadge(type) {
+      switch (type) {
+        case 'Mesa':
+          return `<span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50"><i class="fa-solid fa-utensils mr-1"></i>Salón</span>`;
+        case 'Mostrador':
+          return `<span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/50"><i class="fa-solid fa-bag-shopping mr-1"></i>Takeaway</span>`;
+        case 'Delivery Propio':
+          return `<span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200/50"><i class="fa-solid fa-motorcycle mr-1"></i>Delivery</span>`;
+        default:
+          return `<span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200/50">${type}</span>`;
+      }
+    }
+
+    function renderBoard() {
+      const cols = {
+        pending: document.getElementById('col-pending'),
+        kitchen: document.getElementById('col-kitchen'),
+        ready: document.getElementById('col-ready'),
+        delivered: document.getElementById('col-delivered')
+      };
+
+      Object.values(cols).forEach(col => col.innerHTML = '');
+
+      // Filtrado dinámico
+      let filtered = orders;
+      if (currentFilter === 'unpaid') filtered = orders.filter(o => !o.paid);
+      if (currentFilter === 'takeaway') filtered = orders.filter(o => o.type === 'Mostrador');
+
+      filtered.forEach(order => {
+        const total = order.items.reduce((acc, it) => acc + (it.price * it.qty), 0);
+        const card = document.createElement('div');
+        
+        // Borde condicional si está entregado pero impago
+        const isDeliveredUnpaid = order.status === 'delivered' && !order.paid;
+        card.className = `bg-white dark:bg-zinc-900 rounded-2xl p-3.5 border ${isDeliveredUnpaid ? 'border-2 border-rose-500 ring-2 ring-rose-500/10' : 'border-zinc-200/80 dark:border-zinc-800'} shadow-sm space-y-3 transition-all hover:shadow-md`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2">
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono text-xs font-bold text-zinc-400">#${order.id}</span>
+              ${getChannelBadge(order.type)}
+            </div>
+            
+            <!-- Pastilla de Cobro Independiente -->
+            <button onclick="promptChargeOrder(${order.id})" class="font-mono text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all ${order.paid ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 border border-rose-500/30 animate-pulse'}">
+              <i class="fa-solid ${order.paid ? 'fa-check' : 'fa-hand-holding-dollar'}"></i>
+              <span>${order.paid ? 'PAGADO' : 'IMPAGO'}</span>
+            </button>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-black text-zinc-900 dark:text-white truncate" title="${order.target}">${order.target}</h4>
+              <span class="font-mono text-[11px] text-zinc-400 font-bold">${order.minutesAgo}m</span>
+            </div>
+
+            <div class="mt-1.5 space-y-1">
+              ${order.items.map(it => `
+                <div class="flex justify-between text-xs">
+                  <span class="text-zinc-700 dark:text-zinc-300 font-medium">${it.qty}x ${it.name}</span>
+                  <span class="font-mono text-zinc-400 text-[11px]">${formatARS(it.price * it.qty)}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            ${order.notes ? `<p class="mt-2 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 p-1.5 rounded-lg font-medium">${order.notes}</p>` : ''}
+          </div>
+
+          <!-- FOOTER DE ACCIONES CON BYPASS Y COBRO -->
+          <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+            <div>
+              <span class="font-mono font-black text-zinc-900 dark:text-white">${formatARS(total)}</span>
+              <p class="text-[9px] text-zinc-400 font-mono">${order.method !== '-' ? order.method : 'Sin medio'}</p>
+            </div>
+
+            <div class="flex items-center gap-1">
+              ${getActionButtons(order, total)}
+            </div>
+          </div>
+        `;
+
+        if (cols[order.status]) {
+          cols[order.status].appendChild(card);
+        }
+      });
+
+      // Actualizar contadores
+      document.getElementById('badge-pending').innerText = orders.filter(o => o.status === 'pending').length;
+      document.getElementById('badge-kitchen').innerText = orders.filter(o => o.status === 'kitchen').length;
+      document.getElementById('badge-ready').innerText = orders.filter(o => o.status === 'ready').length;
+      document.getElementById('badge-delivered').innerText = orders.filter(o => o.status === 'delivered').length;
+      document.getElementById('badgeUnpaidTotal').innerText = orders.filter(o => !o.paid).length;
+    }
+
+    // LÓGICA DE BOTONES INTELIGENTES (BYPASS COCINA + COBRO DIRECTO)
+    function getActionButtons(order, total) {
+      // 1. Si está en Pendientes:
+      if (order.status === 'pending') {
+        let btns = '';
+        // Si no requiere cocina (ej: bebidas/barra), botón bypass
+        if (!order.requiresKitchen) {
+          btns += `<button onclick="changeStatus(${order.id}, 'ready')" class="bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold px-2 py-1.5 rounded-xl cursor-pointer shadow-sm" title="Servir directo sin pasar a cocina">⚡ Barra</button>`;
+        }
+        btns += `<button onclick="changeStatus(${order.id}, 'kitchen')" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl cursor-pointer">Cocinar →</button>`;
+        return btns;
+      }
+
+      // 2. Si está en Cocina:
+      if (order.status === 'kitchen') {
+        return `<button onclick="changeStatus(${order.id}, 'ready')" class="bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl cursor-pointer">Listo →</button>`;
+      }
+
+      // 3. Si está en Listos / Por Entregar:
+      if (order.status === 'ready') {
+        return `<button onclick="changeStatus(${order.id}, 'delivered')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl cursor-pointer">Entregar ✓</button>`;
+      }
+
+      // 4. Si ya está Entregado:
+      if (order.status === 'delivered') {
+        if (!order.paid) {
+          return `<button onclick="promptChargeOrder(${order.id})" class="bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl cursor-pointer shadow-sm animate-bounce">Cobrar ${formatARS(total)}</button>`;
+        }
+        return `<span class="text-[10px] font-mono font-bold text-emerald-600">Archivado ✓</span>`;
+      }
+    }
+
+    function changeStatus(orderId, next) {
+      const o = orders.find(x => x.id === orderId);
+      if (o) {
+        o.status = next;
+        renderBoard();
+      }
+    }
+
+    // GESTIÓN DEL MODAL DE COBRO
+    function promptChargeOrder(id) {
+      const o = orders.find(x => x.id === id);
+      if (!o) return;
+      if (o.paid) {
+        if (confirm(`El pedido #${o.id} ya está cobrado (${o.method}). ¿Querés volver a marcarlo como Impago?`)) {
+          o.paid = false;
+          o.method = '-';
+          renderBoard();
+        }
+        return;
+      }
+
+      orderToChargeId = id;
+      const total = o.items.reduce((acc, it) => acc + (it.price * it.qty), 0);
+      document.getElementById('cmTitle').innerText = `Cobrar Pedido #${o.id} (${o.target})`;
+      document.getElementById('cmTotal').innerText = formatARS(total);
+
+      const m = document.getElementById('chargeModal');
+      const b = document.getElementById('chargeModalBackdrop');
+      b.classList.remove('hidden');
+      m.classList.remove('hidden');
+      setTimeout(() => {
+        b.classList.remove('opacity-0');
+        m.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeChargeModal() {
+      const m = document.getElementById('chargeModal');
+      const b = document.getElementById('chargeModalBackdrop');
+      b.classList.add('opacity-0');
+      m.classList.add('scale-95');
+      setTimeout(() => {
+        b.classList.add('hidden');
+        m.classList.add('hidden');
+      }, 150);
+    }
+
+    function confirmCharge(method) {
+      const o = orders.find(x => x.id === orderToChargeId);
+      if (o) {
+        o.paid = true;
+        o.method = method;
+        closeChargeModal();
+        renderBoard();
+      }
+    }
+
+    // REGISTRO MANUAL
+    function openManualOrderDrawer() {
+      manualOrderCart = {};
+      renderManualProductsList();
+      updateManualOrderTotal();
+      document.getElementById('manualOrderForm').reset();
+
+      const d = document.getElementById('manualOrderDrawer');
+      const b = document.getElementById('drawerBackdrop');
+      b.classList.remove('hidden');
+      d.classList.remove('hidden');
+      setTimeout(() => {
+        b.classList.remove('opacity-0');
+        d.classList.remove('translate-x-full');
+      }, 10);
+    }
+
+    function closeManualOrderDrawer() {
+      const d = document.getElementById('manualOrderDrawer');
+      const b = document.getElementById('drawerBackdrop');
+      b.classList.add('opacity-0');
+      d.classList.add('translate-x-full');
+      setTimeout(() => {
+        b.classList.add('hidden');
+        d.classList.add('hidden');
+      }, 200);
+    }
+
+    function renderManualProductsList() {
+      const container = document.getElementById('moProductsList');
+      container.innerHTML = catalogBase.map(item => {
+        const qty = manualOrderCart[item.id] || 0;
+        return `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+            <div>
+              <p class="font-bold text-zinc-800 dark:text-zinc-200 text-xs">${item.name}</p>
+              <span class="text-[10px] text-zinc-400 font-mono">${formatARS(item.price)} • ${item.requiresKitchen ? 'Cocina' : 'Barra'}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="adjustManualQty(${item.id}, -1)" class="w-6 h-6 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold flex items-center justify-center">-</button>
+              <span class="font-mono font-bold text-xs w-4 text-center">${qty}</span>
+              <button type="button" onclick="adjustManualQty(${item.id}, 1)" class="w-6 h-6 rounded-lg bg-brand-500 text-white font-bold flex items-center justify-center">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function adjustManualQty(id, delta) {
+      const cur = manualOrderCart[id] || 0;
+      const next = cur + delta;
+      if (next <= 0) delete manualOrderCart[id];
+      else manualOrderCart[id] = next;
+      renderManualProductsList();
+      updateManualOrderTotal();
+    }
+
+    function updateManualOrderTotal() {
+      let total = 0;
+      for (let id in manualOrderCart) {
+        const item = catalogBase.find(i => i.id == id);
+        total += item.price * manualOrderCart[id];
+      }
+      document.getElementById('moCalculatedTotal').innerText = formatARS(total);
+    }
+
+    function handleManualSubmit(e) {
+      e.preventDefault();
+      const keys = Object.keys(manualOrderCart);
+      if (!keys.length) return alert('Por favor seleccioná al menos un ítem.');
+
+      const target = document.getElementById('moTarget').value.trim();
+      const type = document.getElementById('moType').value;
+      const notes = document.getElementById('moNotes').value.trim();
+      const paid = document.getElementById('moPaymentStatus').value === 'true';
+      const method = document.getElementById('moPaymentMethod').value;
+
+      let requiresKitchen = false;
+      const orderItems = keys.map(id => {
+        const it = catalogBase.find(i => i.id == id);
+        if (it.requiresKitchen) requiresKitchen = true;
+        return { name: it.name, qty: manualOrderCart[id], price: it.price };
+      });
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      orders.unshift({
+        id: Math.floor(400 + Math.random() * 500),
+        target,
+        type,
+        status: 'pending',
+        requiresKitchen,
+        time: timeStr,
+        minutesAgo: 0,
+        paid,
+        method: paid ? method : '-',
+        notes,
+        items: orderItems
+      });
+
+      closeManualOrderDrawer();
+      renderBoard();
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    }
+
+    renderBoard();
+  </script>
+</body>
+</html>

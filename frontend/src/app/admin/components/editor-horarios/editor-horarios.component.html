@@ -1,16 +1,16 @@
 <ul class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
   @for (d of semana(); track d.dia) {
-    <li class="py-3 flex flex-col sm:flex-row sm:items-start gap-3">
+    <li class="py-2 flex flex-col sm:flex-row sm:items-center gap-2.5">
       <!-- Día + interruptor -->
-      <div class="flex items-center justify-between sm:w-40 shrink-0">
-        <button type="button" (click)="alternarAbierto(d.dia)" class="flex items-center gap-2.5 group" [attr.aria-pressed]="d.abierto">
+      <div class="flex items-center justify-between sm:w-36 shrink-0">
+        <button type="button" (click)="alternarAbierto(d.dia)" class="flex items-center gap-2.5 group cursor-pointer" [attr.aria-pressed]="d.abierto">
           <span class="w-10 h-6 rounded-full p-0.5 transition-colors" [class]="d.abierto ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'">
             <span class="block w-5 h-5 rounded-full bg-white shadow transition-transform" [class.translate-x-4]="d.abierto"></span>
           </span>
-          <span class="text-sm font-bold" [class]="d.abierto ? 'text-zinc-900 dark:text-white' : 'text-zinc-400'">{{ NOMBRES[d.dia] }}</span>
+          <span class="text-xs sm:text-[13px] font-bold" [class]="d.abierto ? 'text-zinc-900 dark:text-white' : 'text-zinc-400'">{{ NOMBRES[d.dia] }}</span>
         </button>
         @if (!d.abierto) {
-          <span class="sm:hidden text-[11px] font-bold text-zinc-400">Cerrado</span>
+          <span class="sm:hidden text-xs font-bold text-zinc-400">Cerrado</span>
         }
       </div>
 
@@ -19,27 +19,27 @@
         @if (d.abierto) {
           <div class="flex flex-wrap items-center gap-2">
             @for (f of d.franjas; track $index; let i = $index) {
-              <div class="flex items-center gap-1.5 p-1 rounded-2xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark">
+              <div class="flex items-center gap-1.5 p-1 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark">
                 <input type="time" [value]="f.desde" (change)="cambiarHora(d.dia, i, 'desde', $event)" [class]="claseHora" aria-label="Desde" />
-                <span class="text-zinc-400 text-xs">–</span>
+                <span class="text-zinc-400 text-xs font-bold">–</span>
                 <input type="time" [value]="f.hasta" (change)="cambiarHora(d.dia, i, 'hasta', $event)" [class]="claseHora" aria-label="Hasta" />
                 @if (cruzaMedianoche(f)) {
-                  <span class="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded-md" title="Termina al día siguiente">+1 día</span>
+                  <span class="text-[11px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded-md" title="Termina al día siguiente">+1 día</span>
                 }
-                <button type="button" (click)="quitarFranja(d.dia, i)" class="w-7 h-7 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center" title="Quitar franja"><i class="fa-solid fa-xmark text-xs"></i></button>
+                <button type="button" (click)="quitarFranja(d.dia, i)" class="w-7 h-7 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center cursor-pointer" title="Quitar franja"><i class="fa-solid fa-xmark text-xs"></i></button>
               </div>
             }
             @if (d.franjas.length < 4) {
-              <button type="button" (click)="agregarFranja(d.dia)" class="h-9 px-3 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 text-[11px] font-bold text-zinc-500 hover:text-brand-600 hover:border-brand-300 transition">
+              <button type="button" (click)="agregarFranja(d.dia)" class="h-8 px-3 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:text-brand-600 hover:border-brand-300 transition cursor-pointer">
                 <i class="fa-solid fa-plus mr-1"></i>Franja
               </button>
             }
-            <button type="button" (click)="copiarATodos(d.dia)" class="h-9 px-2 text-[11px] font-bold text-zinc-400 hover:text-brand-600 transition" title="Aplicar este horario a todos los días abiertos">
+            <button type="button" (click)="copiarATodos(d.dia)" class="h-8 px-2 text-xs font-bold text-zinc-500 hover:text-brand-600 transition cursor-pointer" title="Aplicar este horario a todos los días abiertos">
               <i class="fa-regular fa-copy mr-1"></i>Copiar a todos
             </button>
           </div>
         } @else {
-          <p class="hidden sm:block text-xs text-zinc-400 py-2">Cerrado</p>
+          <p class="hidden sm:block text-xs font-medium text-zinc-400 py-1.5">Cerrado</p>
         }
       </div>
     </li>

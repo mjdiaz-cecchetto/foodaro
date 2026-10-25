@@ -1,0 +1,134 @@
+<section class="space-y-3.5">
+  <app-encabezado-pagina
+    titulo="Pedidos y Envíos"
+    subtitulo="Dónde recibís los pedidos por WhatsApp, tarifas de entrega a domicilio y datos para pagos."
+    [etiquetaAccion]="guardando() ? 'Guardando…' : 'Guardar cambios'"
+    iconoAccion="fa-floppy-disk"
+    (accion)="guardar()"
+  />
+
+  <form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate class="space-y-3.5">
+    <!-- Número que recibe los pedidos (destacado) -->
+    <div class="rounded-2xl border-2 border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-500/10 p-4 shadow-soft">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+        <div class="flex items-start gap-3 min-w-0">
+          <span class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+            <i class="fa-brands fa-whatsapp"></i>
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-extrabold text-sm sm:text-[15px] text-zinc-900 dark:text-white leading-tight">
+              WhatsApp que recibe los pedidos
+            </h3>
+            <p class="text-xs text-zinc-600 dark:text-zinc-300 mt-0.5 leading-relaxed">
+              Cada pedido que confirma un cliente se abre en WhatsApp hacia <span class="font-bold text-zinc-900 dark:text-white">este número</span>. Puede ser el de cocina o del encargado (no tiene que ser el de contacto público). Ej: <span class="font-mono font-bold">+54 9 385 311 5268</span>.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+          <input
+            type="tel"
+            formControlName="whatsappPedidos"
+            placeholder="+54 9 ..."
+            [class]="claseCampo + ' sm:w-56 font-extrabold tracking-wide bg-white dark:bg-surface-dark border-emerald-300 dark:border-emerald-500/40'"
+          />
+          @if (enlacePruebaPedidos(); as enlace) {
+            <a
+              [href]="enlace"
+              target="_blank"
+              rel="noopener"
+              class="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 tap-scale shrink-0 shadow-sm transition"
+            >
+              <i class="fa-solid fa-paper-plane"></i>Enviar prueba
+            </a>
+          }
+        </div>
+      </div>
+
+      @if (formulario.controls.whatsappPedidos.invalid && formulario.controls.whatsappPedidos.touched) {
+        <p class="mt-2 text-[11px] font-bold text-red-600">Ingresá un número válido: sin este dato no se pueden recibir pedidos.</p>
+      }
+    </div>
+
+    <!-- Grilla de 3 tarjetas: Envío a domicilio, Transferencia y Cargo por servicio -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+      <!-- Envío a domicilio -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex items-start gap-2.5">
+          <span class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 flex items-center justify-center text-sm shrink-0">
+            <i class="fa-solid fa-motorcycle"></i>
+          </span>
+          <div>
+            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Envío a domicilio</h3>
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Costo e importe mínimo cuando eligen entrega a domicilio.</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Costo de envío ($)</label>
+            <input type="number" min="0" formControlName="costoEnvio" placeholder="0 = sin cargo" [class]="claseCampo + ' font-extrabold'" />
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Se suma automáticamente al elegir "Envío a domicilio".</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Compra mínima para envío ($)</label>
+            <input type="number" min="0" formControlName="montoMinimoEnvio" placeholder="0 = sin mínimo" [class]="claseCampo + ' font-extrabold'" />
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Si el subtotal es menor, avisa cuánto falta.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos para Transferencia -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex items-start gap-2.5">
+          <span class="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 flex items-center justify-center text-sm shrink-0">
+            <i class="fa-solid fa-building-columns"></i>
+          </span>
+          <div>
+            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Datos para Transferencia</h3>
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Se muestran al pagar por Transferencia con botón para copiar.</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Alias o CBU / CVU</label>
+            <input type="text" formControlName="aliasTransferencia" placeholder="Ej: demolocal.mp" [class]="claseCampo + ' font-mono font-bold'" />
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">El cliente puede copiarlo en un toque al confirmar.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Titular / Entidad bancaria</label>
+            <input type="text" formControlName="titularTransferencia" placeholder="Ej: Juan Pérez · Mercado Pago" [class]="claseCampo" />
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Para que el cliente verifique a quién transfiere.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cargo por servicio o empaque -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex items-start gap-2.5">
+          <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 flex items-center justify-center text-sm shrink-0">
+            <i class="fa-solid fa-box-open"></i>
+          </span>
+          <div>
+            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Cargo por servicio</h3>
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Opcional: recargo fijo por empaque o cubiertos (0 desactiva).</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Importe ($)</label>
+            <input type="number" min="0" formControlName="cargoServicio" placeholder="0" [class]="claseCampo + ' font-extrabold'" />
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Dejá en 0 si no cobrás cargo adicional.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Etiqueta visible</label>
+            <input type="text" formControlName="etiquetaCargoServicio" placeholder="Servicio / empaque" [class]="claseCampo" />
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Nombre con el que aparece en el desglose del pedido.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>

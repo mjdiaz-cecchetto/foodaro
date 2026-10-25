@@ -58,7 +58,7 @@
         </button>
 
         <!-- Lista de categorías con su imagen -->
-        @for (c of categorias(); track c.id) {
+        @for (c of categorias(); track c.id; let primero = $first; let ultimo = $last) {
           @let activa = filtroCategoria() === c.id;
           <div
             (click)="seleccionarCategoria(c.id)"
@@ -87,8 +87,28 @@
               <span class="whitespace-nowrap lg:truncate" [title]="c.nombre">{{ c.nombre }}</span>
             </div>
 
-            <div class="flex items-center gap-1 shrink-0 ml-2">
-              <span class="text-[10px] font-mono opacity-80 px-1">{{ catalogo.cantidadProductosPorCategoria(c.id) }}</span>
+            <div class="flex items-center gap-0.5 shrink-0 ml-1">
+              <span class="text-[10px] font-mono opacity-80 px-1 group-hover:hidden">{{ catalogo.cantidadProductosPorCategoria(c.id) }}</span>
+              <button
+                type="button"
+                (click)="moverCategoria(c, -1, $event)"
+                [disabled]="primero"
+                class="w-5 h-5 rounded-md hidden group-hover:flex items-center justify-center disabled:opacity-30 transition-opacity cursor-pointer"
+                [class]="activa ? 'hover:bg-white/20 text-white' : 'hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300'"
+                title="Subir categoría"
+              >
+                <i class="fa-solid fa-arrow-up text-[9px]"></i>
+              </button>
+              <button
+                type="button"
+                (click)="moverCategoria(c, 1, $event)"
+                [disabled]="ultimo"
+                class="w-5 h-5 rounded-md hidden group-hover:flex items-center justify-center disabled:opacity-30 transition-opacity cursor-pointer"
+                [class]="activa ? 'hover:bg-white/20 text-white' : 'hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300'"
+                title="Bajar categoría"
+              >
+                <i class="fa-solid fa-arrow-down text-[9px]"></i>
+              </button>
               <button
                 type="button"
                 (click)="abrirEdicionCategoria(c, $event)"
@@ -135,7 +155,7 @@
 
       <!-- Grilla Adaptativa de Productos -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1920px]:grid-cols-6 gap-5">
-        @for (p of filtrados(); track p.id) {
+        @for (p of filtrados(); track p.id; let primeroProd = $first; let ultimoProd = $last) {
           <div
             class="bg-white dark:bg-zinc-900 rounded-3xl border p-4 shadow-sm flex flex-col justify-between space-y-3 transition-all hover:shadow-md"
             [class]="p.disponible
@@ -210,7 +230,25 @@
                 </span>
               </label>
 
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  (click)="moverProducto(p, -1)"
+                  [disabled]="primeroProd"
+                  class="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Mover antes"
+                >
+                  <i class="fa-solid fa-arrow-up text-xs"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="moverProducto(p, 1)"
+                  [disabled]="ultimoProd"
+                  class="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Mover después"
+                >
+                  <i class="fa-solid fa-arrow-down text-xs"></i>
+                </button>
                 <button
                   type="button"
                   (click)="abrirEdicionProducto(p)"

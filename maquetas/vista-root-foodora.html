@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es-AR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodaro • Super Admin & Gestión de Membresías</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#FFF1F0',
+              500: '#FF3B30',
+              600: '#E0261B',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            caveat: ['"Caveat"', 'cursive'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=JetBrains+Mono:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    button { touch-action: manipulation; }
+  </style>
+</head>
+
+<body class="bg-zinc-950 text-zinc-100 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- ==================== 1. VISTA LOGIN SUPER ADMIN ==================== -->
+  <div id="rootLoginView" class="flex-1 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+      
+      <div class="text-center space-y-1">
+        <span class="font-caveat text-4xl font-bold text-brand-500">foodaro</span>
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-700">
+          <i class="fa-solid fa-shield-halved text-brand-500 text-[9px]"></i>
+          <span>Super Admin Console</span>
+        </div>
+        <h2 class="text-lg font-black text-white pt-2">Acceso a Plataforma</h2>
+        <p class="text-xs text-zinc-400">Control maestro de comercios, suscripciones y membresías.</p>
+      </div>
+
+      <form onsubmit="handleRootLogin(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-zinc-400 uppercase text-[10px] tracking-wider mb-1.5">Usuario Root</label>
+          <div class="relative">
+            <i class="fa-solid fa-user-gear absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500"></i>
+            <input type="text" id="rootUser" required value="admin@foodaro.app" class="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-500 rounded-xl pl-9 pr-3 py-2.5 text-zinc-200 font-mono text-xs focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-zinc-400 uppercase text-[10px] tracking-wider mb-1.5">Contraseña Maestra</label>
+          <div class="relative">
+            <i class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500"></i>
+            <input type="password" id="rootPass" required value="••••••••" class="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-500 rounded-xl pl-9 pr-3 py-2.5 text-zinc-200 font-mono text-xs focus:outline-none">
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-black uppercase tracking-wider text-xs shadow-lg shadow-brand-500/20 active:scale-95 transition-all cursor-pointer">
+          Ingresar al Panel Maestro
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 2. DASHBOARD ROOT CON MEMBRESÍAS ==================== -->
+  <div id="rootDashboardView" class="hidden flex-1 flex flex-col">
+    
+    <!-- Topbar -->
+    <header class="bg-zinc-900 border-b border-zinc-800 px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="font-caveat text-3xl font-bold text-brand-500">foodaro</span>
+        <span class="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-full border border-zinc-700 font-bold">PLATFORM OWNER</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="openTenantModal()" class="bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-brand-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-plus text-[10px]"></i>
+          <span>Dar de Alta Nuevo Local</span>
+        </button>
+
+        <button onclick="logoutRoot()" class="w-8 h-8 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer" title="Cerrar Sesión">
+          <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="p-6 max-w-6xl w-full mx-auto space-y-6">
+      
+      <!-- BANDA DE MÉTRICAS SAAS / MEMBRESÍAS -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        <div class="p-4 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-1">
+          <span class="text-[10px] font-mono uppercase font-bold text-zinc-400">MRR Recurrente Activo</span>
+          <p id="kpiMRR" class="text-2xl font-black font-mono text-emerald-400">$ 94.700</p>
+          <p class="text-[10px] text-zinc-500">Suscripciones vigentes del mes</p>
+        </div>
+
+        <div class="p-4 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-1">
+          <span class="text-[10px] font-mono uppercase font-bold text-zinc-400">Estado de Cobros</span>
+          <div class="flex items-center gap-2 pt-1 font-mono text-xs">
+            <span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-bold" id="kpiActiveCount">2 Al día</span>
+            <span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 font-bold" id="kpiWarningCount">1 Por vencer</span>
+            <span class="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-500 font-bold" id="kpiOverdueCount">0 Mora</span>
+          </div>
+          <p class="text-[10px] text-zinc-500">Control de vencimientos a 7 días</p>
+        </div>
+
+        <div class="p-4 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-1">
+          <span class="text-[10px] font-mono uppercase font-bold text-zinc-400">Total Comercios</span>
+          <p id="kpiTenantsTotal" class="text-2xl font-black font-mono text-white">3</p>
+          <p class="text-[10px] text-zinc-500">Tenants con catálogo y POS activo</p>
+        </div>
+
+      </div>
+
+      <!-- ENCABEZADO Y FILTRO DE TENANTS -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div>
+          <h2 class="text-lg font-black text-white">Gestión de Membresías por Comercio</h2>
+          <p class="text-xs text-zinc-400">Ciclos de facturación, fechas de corte y registro de pagos.</p>
+        </div>
+
+        <!-- Filtro rápido de estado -->
+        <div class="inline-flex p-1 bg-zinc-900 rounded-xl text-xs font-bold border border-zinc-800">
+          <button onclick="filterTenants('all', this)" class="tenant-filter active px-3 py-1 rounded-lg bg-zinc-800 text-white cursor-pointer">Todos</button>
+          <button onclick="filterTenants('al-dia', this)" class="tenant-filter px-3 py-1 rounded-lg text-zinc-400 hover:text-white cursor-pointer">Al Día</button>
+          <button onclick="filterTenants('por-vencer', this)" class="tenant-filter px-3 py-1 rounded-lg text-zinc-400 hover:text-white cursor-pointer">Por Vencer</button>
+          <button onclick="filterTenants('vencido', this)" class="tenant-filter px-3 py-1 rounded-lg text-zinc-400 hover:text-white cursor-pointer">En Mora</button>
+        </div>
+      </div>
+
+      <!-- GRILLA DE TENANTS -->
+      <div id="tenantsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Inyectado por JS -->
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ==================== 3. MODAL: REGISTRAR PAGO & RENOVAR MEMBRESÍA ==================== -->
+  <div id="paymentModalBackdrop" onclick="closePaymentModal()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-200"></div>
+
+  <div id="paymentModal" class="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto z-50 bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-zinc-800 hidden transform scale-95 transition-all space-y-4">
+    
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+      <div>
+        <h3 class="text-base font-black text-white">Registrar Cobro de Membresía</h3>
+        <p class="text-[11px] text-zinc-400" id="pmTenantName">Comercio: -</p>
+      </div>
+      <button onclick="closePaymentModal()" class="w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+    </div>
+
+    <form onsubmit="handlePaymentSubmit(event)" class="space-y-3.5 text-xs">
+      <input type="hidden" id="pmTenantId">
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-bold text-zinc-400 text-[10px] uppercase mb-1">Monto Cobrado ($ ARS)</label>
+          <input type="number" id="pmAmount" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white font-mono font-bold focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-400 text-[10px] uppercase mb-1">Medio de Pago</label>
+          <select id="pmMethod" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-xl px-3 py-2 font-bold focus:outline-none">
+            <option value="Transferencia / CBU">Transferencia CBU/Alias</option>
+            <option value="Mercado Pago">Mercado Pago</option>
+            <option value="Efectivo">Efectivo en Mano</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-bold text-zinc-400 text-[10px] uppercase mb-1">Extensión de Membresía</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="setExtensionDays(30, this)" class="ext-btn active py-2 rounded-xl bg-brand-500/10 border border-brand-500 text-brand-400 font-bold text-xs cursor-pointer">+30 Días (Mensual)</button>
+          <button type="button" onclick="setExtensionDays(365, this)" class="ext-btn py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-400 font-bold text-xs cursor-pointer">+1 Año (Anual)</button>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="pmToggleActive" checked class="w-4 h-4 rounded text-brand-500 focus:ring-brand-500">
+          <span class="font-bold text-xs text-white">Comercio Habilitado</span>
+        </label>
+        <span class="text-[10px] text-zinc-500 font-mono">Desmarcar para congelar acceso</span>
+      </div>
+
+      <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-wider text-xs shadow-lg shadow-emerald-600/25 active:scale-95 transition-all cursor-pointer">
+        Guardar Cobro y Extender Vencimiento
+      </button>
+    </form>
+  </div>
+
+  <!-- ==================== 4. MODAL: ALTA DE NUEVO LOCAL ==================== -->
+  <div id="tenantModalBackdrop" onclick="closeTenantModal()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-200"></div>
+
+  <div id="tenantModal" class="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-zinc-900 border-l border-zinc-800 shadow-2xl p-6 flex flex-col justify-between hidden transform translate-x-full transition-transform duration-200">
+    <div class="space-y-5 overflow-y-auto pr-1 no-scrollbar flex-1">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <div>
+          <h3 class="text-base font-black text-white">Alta de Nuevo Local</h3>
+          <p class="text-[11px] text-zinc-400">Instancia de comercio y suscripción inicial</p>
+        </div>
+        <button onclick="closeTenantModal()" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <form id="tenantForm" onsubmit="handleTenantSubmit(event)" class="space-y-4 text-xs">
+        
+        <div>
+          <label class="block font-bold text-zinc-300 uppercase text-[10px] tracking-wider mb-1">Nombre Comercial</label>
+          <input type="text" id="tenantName" oninput="generateSlug(this.value)" required placeholder="Ej: Pizzería Don Mario" class="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-500 rounded-xl px-3.5 py-2.5 font-bold text-white focus:outline-none text-xs">
+        </div>
+
+        <div>
+          <label class="block font-bold text-zinc-300 uppercase text-[10px] tracking-wider mb-1">URL Asignada</label>
+          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 font-mono text-xs">
+            <span class="text-zinc-500">foodaro.app/</span>
+            <input type="text" id="tenantSlug" required placeholder="pizzeria-don-mario" class="bg-transparent text-brand-500 font-bold focus:outline-none flex-1">
+            <span class="text-[10px] text-emerald-500 font-bold ml-1"><i class="fa-solid fa-circle-check"></i> Libre</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-zinc-300 uppercase text-[10px] tracking-wider mb-1">Rubro</label>
+            <select id="tenantCategory" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-xl px-3 py-2 font-bold focus:outline-none">
+              <option value="Gastronomía">🍕 Gastronomía</option>
+              <option value="Indumentaria">👕 Indumentaria</option>
+              <option value="Dietética">🥗 Dietética</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-300 uppercase text-[10px] tracking-wider mb-1">WhatsApp Local</label>
+            <input type="text" id="tenantPhone" required placeholder="+54 9 385 4123456" class="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-500 rounded-xl px-3.5 py-2 text-zinc-200 font-mono focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Plan -->
+        <div class="space-y-1.5 pt-2 border-t border-zinc-800">
+          <label class="block font-bold text-zinc-300 uppercase text-[10px] tracking-wider">Plan Comercial</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 cursor-pointer has-[:checked]:border-brand-500 has-[:checked]:bg-brand-500/10 transition-all text-center space-y-1">
+              <input type="radio" name="tenantPlan" value="Básico" data-price="19900" checked class="sr-only">
+              <p class="font-bold text-white text-[11px]">Básico</p>
+              <p class="font-mono text-zinc-400 text-[10px]">$19.900/m</p>
+            </label>
+
+            <label class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 cursor-pointer has-[:checked]:border-brand-500 has-[:checked]:bg-brand-500/10 transition-all text-center space-y-1">
+              <input type="radio" name="tenantPlan" value="Pro" data-price="29900" class="sr-only">
+              <p class="font-bold text-white text-[11px]">Pro</p>
+              <p class="font-mono text-brand-500 text-[10px] font-black">$29.900/m</p>
+            </label>
+
+            <label class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 cursor-pointer has-[:checked]:border-brand-500 has-[:checked]:bg-brand-500/10 transition-all text-center space-y-1">
+              <input type="radio" name="tenantPlan" value="Enterprise" data-price="44900" class="sr-only">
+              <p class="font-bold text-white text-[11px]">Enterprise</p>
+              <p class="font-mono text-zinc-400 text-[10px]">$44.900/m</p>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-zinc-800 space-y-2.5">
+          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">Credenciales del Dueño</span>
+          <div class="grid grid-cols-2 gap-3">
+            <input type="email" id="ownerEmail" required placeholder="dueno@local.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-200 font-mono text-xs">
+            <input type="text" id="ownerPass" required value="foodaro2026!" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-200 font-mono text-xs">
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-brand-500/25 active:scale-95 transition-all cursor-pointer">
+          Dar de Alta Comercio & Iniciar Membresía
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <footer class="p-4 text-center text-zinc-600 text-xs font-mono border-t border-zinc-900">
+    Foodaro Cloud Architecture • Multi-Tenant Membership Engine
+  </footer>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Fechas dinámicas calculadas para la demo
+    const today = new Date();
+    
+    function addDays(d, days) {
+      const copy = new Date(d);
+      copy.setDate(copy.getDate() + days);
+      return copy;
+    }
+
+    function formatDate(d) {
+      return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    let tenants = [
+      {
+        id: 1,
+        name: 'The Burger Club',
+        slug: 'the-burger-club',
+        category: 'Gastronomía',
+        plan: 'Pro',
+        price: 29900,
+        phone: '+54 9 385 4123456',
+        ownerEmail: 'franco@burgerclub.com',
+        active: true,
+        lastPaymentDate: formatDate(addDays(today, -15)),
+        lastPaymentMethod: 'Mercado Pago',
+        expiresDate: addDays(today, 15), // Al día (faltan 15 días)
+      },
+      {
+        id: 2,
+        name: 'Napoli Pizza & Birra',
+        slug: 'napoli-pizza',
+        category: 'Gastronomía',
+        plan: 'Enterprise',
+        price: 44900,
+        phone: '+54 9 385 5987654',
+        ownerEmail: 'contacto@napolipizza.com',
+        active: true,
+        lastPaymentDate: formatDate(addDays(today, -27)),
+        lastPaymentMethod: 'Transferencia',
+        expiresDate: addDays(today, 3), // Por vencer (faltan 3 días)
+      },
+      {
+        id: 3,
+        name: 'Alma Verde Dietética',
+        slug: 'alma-verde',
+        category: 'Dietética',
+        plan: 'Básico',
+        price: 19900,
+        phone: '+54 9 385 6112233',
+        ownerEmail: 'ventas@almaverde.com',
+        active: true,
+        lastPaymentDate: formatDate(addDays(today, -35)),
+        lastPaymentMethod: 'Efectivo',
+        expiresDate: addDays(today, -5), // Vencido / En mora (hace 5 días)
+      }
+    ];
+
+    let currentFilter = 'all';
+    let extensionDaysToAdd = 30;
+
+    function formatARS(val) {
+      return '$ ' + new Intl.NumberFormat('es-AR').format(val);
+    }
+
+    function handleRootLogin(e) {
+      e.preventDefault();
+      document.getElementById('rootLoginView').classList.add('hidden');
+      document.getElementById('rootDashboardView').classList.remove('hidden');
+      renderTenants();
+    }
+
+    function logoutRoot() {
+      document.getElementById('rootDashboardView').classList.add('hidden');
+      document.getElementById('rootLoginView').classList.remove('hidden');
+    }
+
+    function getMembershipStatus(expiresDate, active) {
+      if (!active) return { label: 'SUSPENDIDO', color: 'bg-zinc-800 text-zinc-400 border-zinc-700', code: 'suspendido' };
+      
+      const diffTime = expiresDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return { label: `MORA (${Math.abs(diffDays)}d)`, color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', code: 'vencido' };
+      }
+      if (diffDays <= 5) {
+        return { label: `VENCE EN ${diffDays}d`, color: 'bg-amber-500/10 text-amber-400 border-amber-500/20', code: 'por-vencer' };
+      }
+      return { label: 'AL DÍA', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', code: 'al-dia' };
+    }
+
+    function renderTenants() {
+      const container = document.getElementById('tenantsGrid');
+      
+      // Filtrado
+      let filtered = tenants;
+      if (currentFilter !== 'all') {
+        filtered = tenants.filter(t => getMembershipStatus(t.expiresDate, t.active).code === currentFilter);
+      }
+
+      container.innerHTML = filtered.map(t => {
+        const status = getMembershipStatus(t.expiresDate, t.active);
+        return `
+          <div class="bg-zinc-900 border ${status.code === 'vencido' ? 'border-rose-500/40 ring-1 ring-rose-500/20' : 'border-zinc-800'} rounded-3xl p-5 space-y-3.5 shadow-sm hover:border-zinc-700 transition-all">
+            
+            <!-- Header Card: Plan & Estado Membresía -->
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${t.plan === 'Enterprise' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : t.plan === 'Pro' ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20' : 'bg-zinc-800 text-zinc-400'}">Plan ${t.plan}</span>
+              
+              <span class="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${status.color}">
+                ${status.label}
+              </span>
+            </div>
+
+            <!-- Datos del Local -->
+            <div>
+              <h3 class="font-black text-sm text-white">${t.name}</h3>
+              <a href="https://foodaro.app/${t.slug}" target="_blank" class="font-mono text-xs text-brand-500 hover:underline">foodaro.app/${t.slug}</a>
+            </div>
+
+            <!-- SECCIÓN CRÍTICA: ESTADO DE MEMBRESÍA Y COBRO -->
+            <div class="p-3 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 space-y-1 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] text-zinc-400 font-mono uppercase font-bold">Abono Mensual:</span>
+                <span class="font-mono font-black text-brand-500">${formatARS(t.price)}</span>
+              </div>
+              <div class="flex justify-between items-center text-[11px] font-mono">
+                <span class="text-zinc-500">Próx. Vencimiento:</span>
+                <span class="font-bold ${status.code === 'vencido' ? 'text-rose-400' : 'text-zinc-200'}">${formatDate(t.expiresDate)}</span>
+              </div>
+              <div class="flex justify-between items-center text-[10px] text-zinc-500 font-mono pt-1 border-t border-zinc-900">
+                <span>Último Cobro:</span>
+                <span>${t.lastPaymentDate} (${t.lastPaymentMethod})</span>
+              </div>
+            </div>
+
+            <!-- Footer: Acciones de Gestión de Cobro -->
+            <div class="pt-2 border-t border-zinc-800 flex items-center justify-between text-xs">
+              <button onclick="toggleTenantStatus(${t.id})" class="text-[11px] font-mono font-bold ${t.active ? 'text-zinc-400 hover:text-amber-400' : 'text-emerald-400'} cursor-pointer">
+                <i class="fa-solid ${t.active ? 'fa-pause' : 'fa-play'} mr-1"></i> ${t.active ? 'Suspender' : 'Reactivar'}
+              </button>
+
+              <button onclick="openPaymentModal(${t.id})" class="px-3 py-1.5 rounded-xl bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-600/30 text-emerald-400 hover:text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-receipt text-[11px]"></i>
+                <span>Cobrar / Renovar</span>
+              </button>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+
+      updateMRR();
+    }
+
+    function updateMRR() {
+      const activeTenants = tenants.filter(t => t.active);
+      const totalMRR = activeTenants.reduce((acc, t) => acc + t.price, 0);
+
+      document.getElementById('kpiMRR').innerText = formatARS(totalMRR);
+      document.getElementById('kpiTenantsTotal').innerText = tenants.length;
+
+      document.getElementById('kpiActiveCount').innerText = `${tenants.filter(t => getMembershipStatus(t.expiresDate, t.active).code === 'al-dia').length} Al día`;
+      document.getElementById('kpiWarningCount').innerText = `${tenants.filter(t => getMembershipStatus(t.expiresDate, t.active).code === 'por-vencer').length} Por vencer`;
+      document.getElementById('kpiOverdueCount').innerText = `${tenants.filter(t => getMembershipStatus(t.expiresDate, t.active).code === 'vencido').length} Mora`;
+    }
+
+    function filterTenants(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.tenant-filter').forEach(b => {
+        b.className = "tenant-filter px-3 py-1 rounded-lg text-zinc-400 hover:text-white cursor-pointer";
+      });
+      btn.className = "tenant-filter active px-3 py-1 rounded-lg bg-zinc-800 text-white cursor-pointer";
+      renderTenants();
+    }
+
+    // GESTIÓN DEL MODAL DE COBRO DE MEMBRESÍA
+    function openPaymentModal(tenantId) {
+      const t = tenants.find(x => x.id === tenantId);
+      if (!t) return;
+
+      document.getElementById('pmTenantId').value = t.id;
+      document.getElementById('pmTenantName').innerText = `Comercio: ${t.name} (Plan ${t.plan})`;
+      document.getElementById('pmAmount').value = t.price;
+      document.getElementById('pmToggleActive').checked = t.active;
+
+      const d = document.getElementById('paymentModal');
+      const b = document.getElementById('paymentModalBackdrop');
+      b.classList.remove('hidden');
+      d.classList.remove('hidden');
+      setTimeout(() => {
+        b.classList.remove('opacity-0');
+        d.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closePaymentModal() {
+      const d = document.getElementById('paymentModal');
+      const b = document.getElementById('paymentModalBackdrop');
+      b.classList.add('opacity-0');
+      d.classList.add('scale-95');
+      setTimeout(() => {
+        b.classList.add('hidden');
+        d.classList.add('hidden');
+      }, 150);
+    }
+
+    function setExtensionDays(days, btn) {
+      extensionDaysToAdd = days;
+      document.querySelectorAll('.ext-btn').forEach(b => {
+        b.className = "ext-btn py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-400 font-bold text-xs cursor-pointer";
+      });
+      btn.className = "ext-btn active py-2 rounded-xl bg-brand-500/10 border border-brand-500 text-brand-400 font-bold text-xs cursor-pointer";
+    }
+
+    function handlePaymentSubmit(e) {
+      e.preventDefault();
+      const id = Number(document.getElementById('pmTenantId').value);
+      const t = tenants.find(x => x.id === id);
+      if (!t) return;
+
+      const method = document.getElementById('pmMethod').value;
+      const isActive = document.getElementById('pmToggleActive').checked;
+
+      // Calcular nueva fecha base: si estaba vencido, arranca desde hoy; si estaba al día, suma a la fecha futura
+      const baseDate = t.expiresDate < today ? today : t.expiresDate;
+      t.expiresDate = addDays(baseDate, extensionDaysToAdd);
+      t.lastPaymentDate = formatDate(today);
+      t.lastPaymentMethod = method;
+      t.active = isActive;
+
+      closePaymentModal();
+      renderTenants();
+      alert(`¡Membresía renovada para ${t.name} hasta el ${formatDate(t.expiresDate)}!`);
+    }
+
+    function toggleTenantStatus(id) {
+      const t = tenants.find(x => x.id === id);
+      if (t) {
+        t.active = !t.active;
+        renderTenants();
+      }
+    }
+
+    function generateSlug(text) {
+      const slug = text.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-");
+      document.getElementById('tenantSlug').value = slug;
+    }
+
+    function openTenantModal() {
+      document.getElementById('tenantForm').reset();
+      const d = document.getElementById('tenantModal');
+      const b = document.getElementById('tenantModalBackdrop');
+      b.classList.remove('hidden');
+      d.classList.remove('hidden');
+      setTimeout(() => {
+        b.classList.remove('opacity-0');
+        d.classList.remove('translate-x-full');
+      }, 10);
+    }
+
+    function closeTenantModal() {
+      const d = document.getElementById('tenantModal');
+      const b = document.getElementById('tenantModalBackdrop');
+      b.classList.add('opacity-0');
+      d.classList.add('translate-x-full');
+      setTimeout(() => {
+        b.classList.add('hidden');
+        d.classList.add('hidden');
+      }, 200);
+    }
+
+    function handleTenantSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('tenantName').value.trim();
+      const slug = document.getElementById('tenantSlug').value.trim();
+      const category = document.getElementById('tenantCategory').value;
+      const phone = document.getElementById('tenantPhone').value.trim();
+      const selectedPlan = document.querySelector('input[name="tenantPlan"]:checked');
+      const plan = selectedPlan.value;
+      const price = Number(selectedPlan.dataset.price);
+      const ownerEmail = document.getElementById('ownerEmail').value.trim();
+
+      tenants.unshift({
+        id: Date.now(),
+        name,
+        slug,
+        category,
+        plan,
+        price,
+        phone,
+        ownerEmail,
+        active: true,
+        lastPaymentDate: formatDate(today),
+        lastPaymentMethod: 'Alta Inicial',
+        expiresDate: addDays(today, 30) // Arranca con 30 días bonificados/pagos
+      });
+
+      closeTenantModal();
+      renderTenants();
+    }
+  </script>
+</body>
+</html>

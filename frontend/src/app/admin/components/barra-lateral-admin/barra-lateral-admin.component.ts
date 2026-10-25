@@ -31,6 +31,7 @@ export class BarraLateralAdminComponente {
   readonly items: ItemNavegacionAdmin[] = [
     { ruta: 'inicio', etiqueta: 'Inicio', icono: 'fa-house', indicador: 'flecha' },
     { ruta: 'perfil', etiqueta: 'Datos del Local', icono: 'fa-store', indicador: 'flecha' },
+    { ruta: 'pedidos', etiqueta: 'Pedidos y Envíos', icono: 'fa-truck-fast', indicador: 'flecha' },
     { ruta: 'productos', etiqueta: 'Gestión de Productos', icono: 'fa-boxes-stacked', indicador: 'contador' },
     { ruta: 'promociones', etiqueta: 'Promociones', icono: 'fa-tags', indicador: 'punto' },
     { ruta: 'cupones', etiqueta: 'Cupones', icono: 'fa-ticket', indicador: 'flecha' },

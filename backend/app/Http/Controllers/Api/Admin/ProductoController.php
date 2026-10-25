@@ -55,6 +55,24 @@ class ProductoController extends Controller
         return new ProductoResource($producto->load('gruposOpciones.opciones'));
     }
 
+    /** PATCH /api/admin/productos/reordenar — actualiza el orden de los productos del local. */
+    public function reordenar(Request $request): AnonymousResourceCollection
+    {
+        $datos = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $local = $request->user()->local;
+        \Illuminate\Support\Facades\DB::transaction(function () use ($local, $datos) {
+            foreach (array_values($datos['ids']) as $indice => $id) {
+                $local->productos()->where('id', (int) $id)->update(['orden' => $indice]);
+            }
+        });
+
+        return ProductoResource::collection($local->productos()->with('gruposOpciones.opciones')->get());
+    }
+
     public function destroy(Producto $producto): JsonResponse
     {
         $this->authorize('delete', $producto);
