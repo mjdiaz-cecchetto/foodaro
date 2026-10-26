@@ -1,12 +1,15 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { environment } from '../../../../environments/environment';
 import { ModalComponente } from '../../../shared/components/modal/modal.component';
 import { LogoComponente } from '../../../shared/components/logo/logo.component';
 import { AlternarTemaComponente } from '../../../shared/components/alternar-tema/alternar-tema.component';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { SLUG_LOCAL_DEMO } from '../../../shared/mocks';
+import { RespuestaApi } from '../../../shared/utils/api';
 import { ClaveRubro, DemoRubro, Plan } from '../../interfaces';
 import {
   DEMOS_RUBRO,
@@ -30,6 +33,7 @@ import {
   styleUrl: './landing-plataforma.component.scss',
 })
 export class LandingPlataformaComponente implements OnInit {
+  private readonly http = inject(HttpClient);
   private readonly ruta = inject(ActivatedRoute);
   private readonly notificaciones = inject(NotificacionesServicio);
   private readonly fb = inject(FormBuilder);
@@ -37,7 +41,10 @@ export class LandingPlataformaComponente implements OnInit {
   /* ------------------------------ Datos ------------------------------ */
   readonly enlaceDemo = ['/', SLUG_LOCAL_DEMO];
   readonly rubros = DEMOS_RUBRO;
-  readonly planes = PLANES;
+  readonly planesLista = signal<Plan[]>(PLANES);
+  get planes(): Plan[] {
+    return this.planesLista();
+  }
   readonly preguntas = PREGUNTAS_FRECUENTES;
   readonly whatsappVentas = `https://wa.me/${WHATSAPP_VENTAS_FOODARO}?text=${encodeURIComponent('Hola! Quiero conocer Foodaro para mi comercio')}`;
   readonly qrVistaPrevia = 'https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https://foodaro.net';
@@ -68,6 +75,16 @@ export class LandingPlataformaComponente implements OnInit {
   ngOnInit(): void {
     this.notificaciones.definirPosicion('arriba');
     this.slugFaltante.set(this.ruta.snapshot.queryParamMap.get('local'));
+    this.http.get<RespuestaApi<Plan[]>>(`${environment.apiUrl}/planes`).subscribe({
+      next: ({ data }) => {
+        if (data?.length) {
+          this.planesLista.set(data.map((p) => ({ ...p, id: String(p.nombre) })));
+        }
+      },
+      error: () => {
+        /* mantiene PLANES por defecto */
+      },
+    });
   }
 
   /* ------------------------------ Acciones ------------------------------ */

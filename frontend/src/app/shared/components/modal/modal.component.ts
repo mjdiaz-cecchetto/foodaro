@@ -39,9 +39,19 @@ export class ModalComponente {
   /** Para `dialogo`: estado visual (opacidad/escala) separado del montaje. */
   readonly visible = signal(false);
 
+  /** Desplazamiento vertical en vivo al arrastrar la hoja hacia abajo con el dedo. */
+  readonly desplazamientoY = signal(0);
+  readonly arrastrando = signal(false);
+  private toqueInicioY = 0;
+  private puedeArrastrar = false;
+
   constructor() {
     effect(() => {
       const estaAbierto = this.abierto();
+      if (!estaAbierto) {
+        this.desplazamientoY.set(0);
+        this.arrastrando.set(false);
+      }
       if (this.variante() !== 'dialogo') return;
       if (estaAbierto) {
         this.renderizado.set(true);
@@ -62,10 +72,65 @@ export class ModalComponente {
     this.cerrado.emit();
   }
 
+  /* ----------------------- Gesto swipe hacia abajo (móvil) ----------------------- */
+
+  alIniciarToque(event: TouchEvent): void {
+    if (!this.abierto() || event.touches.length !== 1) return;
+    if (this.contenedorScrolleado(event.target as HTMLElement | null)) {
+      this.puedeArrastrar = false;
+      return;
+    }
+    this.puedeArrastrar = true;
+    this.toqueInicioY = event.touches[0].clientY;
+    this.desplazamientoY.set(0);
+    this.arrastrando.set(false);
+  }
+
+  alMoverToque(event: TouchEvent): void {
+    if (!this.puedeArrastrar || event.touches.length !== 1) return;
+    const deltaY = event.touches[0].clientY - this.toqueInicioY;
+
+    if (deltaY < -6 && !this.arrastrando()) {
+      this.puedeArrastrar = false;
+      this.desplazamientoY.set(0);
+      return;
+    }
+
+    if (deltaY > 6) {
+      if (!this.arrastrando() && this.contenedorScrolleado(event.target as HTMLElement | null)) {
+        this.puedeArrastrar = false;
+        return;
+      }
+      this.arrastrando.set(true);
+      this.desplazamientoY.set(deltaY);
+    }
+  }
+
+  alTerminarToque(): void {
+    if (!this.puedeArrastrar) return;
+    const distancia = this.desplazamientoY();
+    this.puedeArrastrar = false;
+    this.arrastrando.set(false);
+    this.desplazamientoY.set(0);
+
+    if (distancia > 70) {
+      this.cerrado.emit();
+    }
+  }
+
+  private contenedorScrolleado(el: HTMLElement | null): boolean {
+    let actual = el;
+    while (actual && actual.getAttribute('role') !== 'dialog') {
+      if (actual.scrollTop > 2) return true;
+      actual = actual.parentElement;
+    }
+    return false;
+  }
+
   /* ----------------------- Variante HOJA ----------------------- */
 
   private static readonly HOJA_BASE =
-    'fixed pointer-events-none sheet-transition overflow-hidden bg-white dark:bg-dark-surface shadow-modal inset-x-0 bottom-0 rounded-t-[32px] flex flex-col border border-gray-100 dark:border-dark-border';
+    'fixed pointer-events-none overflow-hidden bg-white dark:bg-dark-surface shadow-modal inset-x-0 bottom-0 rounded-t-[32px] flex flex-col border border-gray-100 dark:border-dark-border';
 
   private static readonly HOJA_ESCRITORIO: Record<PuntoCorteModal, string> = {
     sm: 'sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:rounded-3xl',
@@ -86,6 +151,7 @@ export class ModalComponente {
     const pc = this.puntoCorte();
     return [
       ModalComponente.HOJA_BASE,
+      this.arrastrando() ? 'transition-none' : 'sheet-transition',
       this.claseZ(),
       ModalComponente.HOJA_ESCRITORIO[pc],
       this.claseAncho(),

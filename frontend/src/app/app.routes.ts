@@ -2,10 +2,13 @@ import { Routes } from '@angular/router';
 
 import { autenticacionGuardia } from './core/guards/autenticacion.guard';
 import { localGuardia } from './core/guards/local.guard';
+import { rootGuardia } from './core/guards/root.guard';
 
 /**
  * Estructura multi-local (tenant):
  *   /                      landing de la plataforma (foodaro.net)
+ *   /root                  consola maestra del Superadmin (Root) de Foodaro
+ *   /root/login            ingreso exclusivo del Superadmin
  *   /:local                portada del local (banner, accesos, info, QR)
  *   /:local/menu           carta de solo lectura
  *   /:local/pedido         carta con carrito y confirmación de pedido
@@ -19,6 +22,19 @@ export const rutas: Routes = [
     loadComponent: () =>
       import('./platform/pages/landing-plataforma/landing-plataforma.component').then((m) => m.LandingPlataformaComponente),
     title: 'Foodaro • Catálogo Digital y Plataforma de Ventas para tu Comercio',
+  },
+  {
+    path: 'root/login',
+    loadComponent: () =>
+      import('./root/pages/ingreso-root/ingreso-root.component').then((m) => m.IngresoRootComponente),
+    title: 'Foodaro Root • Ingreso Superadmin',
+  },
+  {
+    path: 'root',
+    canActivate: [rootGuardia],
+    loadComponent: () =>
+      import('./root/pages/pagina-panel-root/pagina-panel-root.component').then((m) => m.PaginaPanelRootComponente),
+    title: 'Foodaro Root • Consola General',
   },
   {
     path: ':local',

@@ -1,134 +1,456 @@
+@let m = metricas();
+@let a = m.arqueo;
+
 <section class="space-y-3.5">
   <app-encabezado-pagina
     titulo="Pedidos y Envíos"
-    subtitulo="Dónde recibís los pedidos por WhatsApp, tarifas de entrega a domicilio y datos para pagos."
-    [etiquetaAccion]="guardando() ? 'Guardando…' : 'Guardar cambios'"
-    iconoAccion="fa-floppy-disk"
-    (accion)="guardar()"
+    subtitulo="Seguimiento básico de pedidos recibidos desde la carta y configuración de WhatsApp, envíos y cobros."
+    [etiquetaAccion]="pestania() === 'configuracion' ? (guardando() ? 'Guardando…' : 'Guardar cambios') : 'Actualizar pedidos'"
+    [iconoAccion]="pestania() === 'configuracion' ? 'fa-floppy-disk' : 'fa-rotate'"
+    (accion)="pestania() === 'configuracion' ? guardar() : cargarPedidos()"
   />
 
-  <form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate class="space-y-3.5">
-    <!-- Número que recibe los pedidos (destacado) -->
-    <div class="rounded-2xl border-2 border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-500/10 p-4 shadow-soft">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
-        <div class="flex items-start gap-3 min-w-0">
-          <span class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
-            <i class="fa-brands fa-whatsapp"></i>
-          </span>
-          <div class="min-w-0">
-            <h3 class="font-extrabold text-sm sm:text-[15px] text-zinc-900 dark:text-white leading-tight">
-              WhatsApp que recibe los pedidos
-            </h3>
-            <p class="text-xs text-zinc-600 dark:text-zinc-300 mt-0.5 leading-relaxed">
-              Cada pedido que confirma un cliente se abre en WhatsApp hacia <span class="font-bold text-zinc-900 dark:text-white">este número</span>. Puede ser el de cocina o del encargado (no tiene que ser el de contacto público). Ej: <span class="font-mono font-bold">+54 9 385 311 5268</span>.
+  <!-- Pestañas -->
+  <nav class="flex gap-1.5 p-1 rounded-2xl bg-zinc-200/70 dark:bg-surface-cardDark text-xs sm:text-[13px] font-bold overflow-x-auto no-scrollbar">
+    <button
+      type="button"
+      (click)="pestania.set('recibidos')"
+      class="flex-1 min-w-max px-4 py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+      [class]="pestania() === 'recibidos'
+        ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm ring-1 ring-zinc-200/80 dark:ring-surface-borderDark'
+        : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'"
+    >
+      <i class="fa-solid fa-receipt"></i>
+      <span>Pedidos Recibidos</span>
+      <span class="ml-1 text-[11px] px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-black">{{ pedidos().length }}</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="pestania.set('configuracion')"
+      class="flex-1 min-w-max px-4 py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+      [class]="pestania() === 'configuracion'
+        ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm ring-1 ring-zinc-200/80 dark:ring-surface-borderDark'
+        : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'"
+    >
+      <i class="fa-solid fa-truck-fast"></i>
+      <span>Configuración de WhatsApp, Envíos y Pagos</span>
+    </button>
+  </nav>
+
+  <!-- =========================================================================
+       PESTAÑA 1: LISTADO BÁSICO DE PEDIDOS RECIBIDOS
+       ========================================================================= -->
+  @if (pestania() === 'recibidos') {
+    <div class="space-y-3.5">
+      <!-- Comparativa fija: Hoy / Esta semana / Este mes (sin cancelados) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        @for (c of [
+          { titulo: 'Ventas de hoy', icono: 'fa-sun', color: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600', datos: m.comparativa.hoy, periodo: 'hoy' },
+          { titulo: 'Esta semana', icono: 'fa-calendar-week', color: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600', datos: m.comparativa.semana, periodo: 'semana' },
+          { titulo: 'Este mes', icono: 'fa-calendar', color: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600', datos: m.comparativa.mes, periodo: 'mes' }
+        ]; track c.titulo) {
+          <button
+            type="button"
+            (click)="seleccionarPeriodo($any(c.periodo))"
+            class="text-left bg-white dark:bg-surface-dark rounded-2xl p-3.5 shadow-soft border flex items-center gap-3 transition cursor-pointer hover:border-brand-400"
+            [class]="periodoActivo() === c.periodo ? 'border-brand-500 ring-2 ring-brand-500/15' : 'border-zinc-200/70 dark:border-surface-borderDark'"
+          >
+            <span class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0" [class]="c.color">
+              <i class="fa-solid" [class]="c.icono"></i>
+            </span>
+            <div class="min-w-0">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{{ c.titulo }}</p>
+              <p class="text-lg font-black text-zinc-900 dark:text-white leading-tight">{{ c.datos.monto | precio }}</p>
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
+                {{ c.datos.pedidos }} pedidos
+                @if (c.datos.cancelados > 0) {
+                  <span class="text-red-500">· {{ c.datos.cancelados }} cancelados</span>
+                }
+              </p>
+            </div>
+          </button>
+        }
+      </div>
+
+      <!-- Selector de período + Arqueo de caja -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          <div class="flex items-center gap-1.5 flex-wrap text-xs font-bold">
+            @for (per of periodosDisponibles; track per.valor) {
+              <button
+                type="button"
+                (click)="seleccionarPeriodo(per.valor)"
+                class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+                [class]="periodoActivo() === per.valor ? 'border-brand-600 bg-brand-600 text-white' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400 hover:border-zinc-400'"
+              >
+                {{ per.etiqueta }}
+              </button>
+            }
+          </div>
+
+          @if (periodoActivo() === 'personalizado') {
+            <div class="flex items-center gap-2 text-xs">
+              <input type="date" [ngModel]="fechaDesde()" (ngModelChange)="fechaDesde.set($event)" [class]="claseCampo + ' !w-auto !py-1.5'" />
+              <span class="text-zinc-400">a</span>
+              <input type="date" [ngModel]="fechaHasta()" (ngModelChange)="fechaHasta.set($event)" [class]="claseCampo + ' !w-auto !py-1.5'" />
+              <button
+                type="button"
+                (click)="aplicarRangoFechas()"
+                class="h-8 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold cursor-pointer"
+              >
+                Ver
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Totales del período -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <div class="rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 p-3">
+            <p class="text-[10px] font-bold uppercase tracking-wider opacity-70">Vendido · {{ etiquetaPeriodoActivo() }}</p>
+            <p class="text-lg font-black leading-tight mt-0.5">{{ a.totalVendido | precio }}</p>
+          </div>
+          <div class="rounded-xl bg-zinc-50 dark:bg-surface-cardDark p-3">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Pedidos válidos</p>
+            <p class="text-lg font-black text-zinc-900 dark:text-white leading-tight mt-0.5">{{ a.pedidosValidos }}</p>
+          </div>
+          <div class="rounded-xl bg-zinc-50 dark:bg-surface-cardDark p-3">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Ticket promedio</p>
+            <p class="text-lg font-black text-zinc-900 dark:text-white leading-tight mt-0.5">{{ a.ticketPromedio | precio }}</p>
+          </div>
+          <div class="rounded-xl bg-zinc-50 dark:bg-surface-cardDark p-3">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">En curso / Cancelados</p>
+            <p class="text-lg font-black leading-tight mt-0.5">
+              <span class="text-amber-600">{{ a.pedidosEnCurso }}</span>
+              <span class="text-zinc-300 mx-1">/</span>
+              <span class="text-red-500">{{ a.pedidosCancelados }}</span>
             </p>
           </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
-          <input
-            type="tel"
-            formControlName="whatsappPedidos"
-            placeholder="+54 9 ..."
-            [class]="claseCampo + ' sm:w-56 font-extrabold tracking-wide bg-white dark:bg-surface-dark border-emerald-300 dark:border-emerald-500/40'"
-          />
-          @if (enlacePruebaPedidos(); as enlace) {
-            <a
-              [href]="enlace"
-              target="_blank"
-              rel="noopener"
-              class="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 tap-scale shrink-0 shadow-sm transition"
+        <!-- Arqueo: medios de pago y modalidad -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          <div class="rounded-xl border border-zinc-200 dark:border-surface-borderDark p-3">
+            <p class="text-[11px] font-extrabold uppercase tracking-wider text-brand-600 mb-2">
+              <i class="fa-solid fa-cash-register mr-1"></i>Arqueo por medio de pago
+            </p>
+            <div class="space-y-1.5 text-xs">
+              @for (mp of [
+                { etiqueta: 'Efectivo', icono: 'fa-money-bill-wave text-emerald-600', d: a.porMedioPago.efectivo },
+                { etiqueta: 'Transferencia', icono: 'fa-building-columns text-sky-600', d: a.porMedioPago.transferencia },
+                { etiqueta: 'Débito', icono: 'fa-credit-card text-violet-600', d: a.porMedioPago.debito }
+              ]; track mp.etiqueta) {
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-zinc-700 dark:text-zinc-200">
+                    <i class="fa-solid w-4 mr-1" [class]="mp.icono"></i>{{ mp.etiqueta }}
+                    <span class="text-zinc-400 font-medium">({{ mp.d.cantidad }})</span>
+                  </span>
+                  <span class="font-black text-zinc-900 dark:text-white">{{ mp.d.monto | precio }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-zinc-200 dark:border-surface-borderDark p-3">
+            <p class="text-[11px] font-extrabold uppercase tracking-wider text-brand-600 mb-2">
+              <i class="fa-solid fa-truck-fast mr-1"></i>Por modalidad de entrega
+            </p>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-zinc-700 dark:text-zinc-200">
+                  <i class="fa-solid fa-motorcycle w-4 mr-1 text-brand-600"></i>Envío a domicilio
+                  <span class="text-zinc-400 font-medium">({{ a.porModoEntrega.envio.cantidad }})</span>
+                </span>
+                <span class="font-black text-zinc-900 dark:text-white">{{ a.porModoEntrega.envio.monto | precio }}</span>
+              </div>
+              <div class="flex items-center justify-between pl-5 text-[11px] text-zinc-500">
+                <span>Incluye costo de envíos cobrado</span>
+                <span class="font-bold">{{ a.porModoEntrega.envio.costoEnviosCobrado | precio }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-zinc-700 dark:text-zinc-200">
+                  <i class="fa-solid fa-store w-4 mr-1 text-zinc-500"></i>Retiro en local
+                  <span class="text-zinc-400 font-medium">({{ a.porModoEntrega.retiro.cantidad }})</span>
+                </span>
+                <span class="font-black text-zinc-900 dark:text-white">{{ a.porModoEntrega.retiro.monto | precio }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desglose día por día -->
+        @if (a.ventasPorDia.length > 1) {
+          <div>
+            <button
+              type="button"
+              (click)="mostrarDesgloseDiario.set(!mostrarDesgloseDiario())"
+              class="text-xs font-bold text-brand-600 hover:underline cursor-pointer"
             >
-              <i class="fa-solid fa-paper-plane"></i>Enviar prueba
-            </a>
+              <i class="fa-solid mr-1" [class]="mostrarDesgloseDiario() ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              {{ mostrarDesgloseDiario() ? 'Ocultar' : 'Ver' }} desglose día por día ({{ a.ventasPorDia.length }} días)
+            </button>
+
+            @if (mostrarDesgloseDiario()) {
+              <div class="mt-2 overflow-x-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark">
+                <table class="w-full text-xs">
+                  <thead class="bg-zinc-50 dark:bg-surface-cardDark text-[10px] uppercase tracking-wider text-zinc-500">
+                    <tr>
+                      <th class="text-left px-3 py-2">Día</th>
+                      <th class="text-right px-3 py-2">Pedidos</th>
+                      <th class="text-right px-3 py-2">Efectivo</th>
+                      <th class="text-right px-3 py-2">Transf.</th>
+                      <th class="text-right px-3 py-2">Débito</th>
+                      <th class="text-right px-3 py-2">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+                    @for (d of a.ventasPorDia; track d.fecha) {
+                      <tr class="text-zinc-700 dark:text-zinc-200">
+                        <td class="px-3 py-1.5 font-bold capitalize">{{ formatearFechaDia(d.fecha) }}</td>
+                        <td class="px-3 py-1.5 text-right">{{ d.pedidos }}</td>
+                        <td class="px-3 py-1.5 text-right">{{ d.efectivo | precio }}</td>
+                        <td class="px-3 py-1.5 text-right">{{ d.transferencia | precio }}</td>
+                        <td class="px-3 py-1.5 text-right">{{ d.debito | precio }}</td>
+                        <td class="px-3 py-1.5 text-right font-black text-zinc-900 dark:text-white">{{ d.total | precio }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        }
+
+        <p class="text-[10px] text-zinc-400">
+          <i class="fa-solid fa-circle-info mr-1"></i>Los pedidos cancelados no suman a las ventas. Semana: de lunes a hoy · Mes: desde el día 1.
+        </p>
+      </div>
+
+      <!-- Filtros simples y listado -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-1.5 flex-wrap text-xs font-bold">
+            <button
+              type="button"
+              (click)="filtroEstado.set('todos')"
+              class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+              [class]="filtroEstado() === 'todos' ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+            >
+              Todos
+            </button>
+            @for (est of estadosDisponibles; track est.valor) {
+              <button
+                type="button"
+                (click)="filtroEstado.set(est.valor)"
+                class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+                [class]="filtroEstado() === est.valor ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+              >
+                {{ est.etiqueta }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+          @for (p of pedidosFiltrados(); track p.id) {
+            <div class="py-3 first:pt-1 last:pb-1 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <!-- Info principal del pedido -->
+              <div class="space-y-1 min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
+                    #{{ formatearNumero(p.numero) }}
+                  </span>
+                  <span class="text-xs font-extrabold text-zinc-900 dark:text-white">{{ p.cliente.nombre }}</span>
+                  <a
+                    [href]="enlaceWhatsAppCliente(p.cliente.telefono)"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-[11px] font-bold text-emerald-600 hover:underline inline-flex items-center gap-1"
+                  >
+                    <i class="fa-brands fa-whatsapp"></i>{{ p.cliente.telefono }}
+                  </a>
+                  <span class="text-[11px] text-zinc-400">· {{ formatearFecha(p.creadoEn) }}</span>
+                  <span
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                    [class]="p.modoEntrega === 'envio' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300'"
+                  >
+                    <i class="fa-solid mr-1" [class]="p.modoEntrega === 'envio' ? 'fa-motorcycle' : 'fa-store'"></i>
+                    {{ p.modoEntrega === 'envio' ? 'Envío' : 'Retiro' }}
+                  </span>
+                </div>
+
+                <!-- Platos del pedido -->
+                <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-snug">
+                  @for (item of p.items; track item.id; let ultimo = $last) {
+                    <span class="font-bold text-zinc-800 dark:text-zinc-100">{{ item.cantidad }}x</span> {{ item.nombre }}@if (!ultimo) {<span>, </span>}
+                  }
+                </p>
+
+                @if (p.modoEntrega === 'envio' && p.direccion) {
+                  <p class="text-[11px] text-zinc-400">
+                    <i class="fa-solid fa-location-dot mr-1"></i>{{ p.direccion.calle }} {{ p.direccion.pisoDepto }} {{ p.direccion.referencia ? '(' + p.direccion.referencia + ')' : '' }}
+                  </p>
+                }
+              </div>
+
+              <!-- Importe y Estado -->
+              <div class="flex items-center justify-between lg:justify-end gap-3 shrink-0">
+                <div class="text-left lg:text-right">
+                  <p class="text-sm font-black text-zinc-900 dark:text-white leading-none">{{ p.totales.total | precio }}</p>
+                  <p class="text-[10px] text-zinc-400 uppercase font-bold mt-1">{{ p.medioPago }}</p>
+                </div>
+
+                <select
+                  [ngModel]="p.estado"
+                  (ngModelChange)="cambiarEstadoPedido(p, $event)"
+                  class="text-xs font-bold px-3 py-1.5 rounded-xl border focus:outline-none cursor-pointer"
+                  [class]="claseEstado(p.estado)"
+                >
+                  @for (est of estadosDisponibles; track est.valor) {
+                    <option [value]="est.valor" class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">{{ est.etiqueta }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          } @empty {
+            <div class="py-10 text-center text-xs text-zinc-400">
+              <i class="fa-solid fa-receipt text-2xl mb-2 block opacity-40"></i>
+              Todavía no hay pedidos registrados con este filtro. Cuando un cliente confirme desde la carta, aparecerá acá automáticamente.
+            </div>
           }
         </div>
       </div>
-
-      @if (formulario.controls.whatsappPedidos.invalid && formulario.controls.whatsappPedidos.touched) {
-        <p class="mt-2 text-[11px] font-bold text-red-600">Ingresá un número válido: sin este dato no se pueden recibir pedidos.</p>
-      }
     </div>
+  }
 
-    <!-- Grilla de 3 tarjetas: Envío a domicilio, Transferencia y Cargo por servicio -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
-      <!-- Envío a domicilio -->
-      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
-        <div class="flex items-start gap-2.5">
-          <span class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 flex items-center justify-center text-sm shrink-0">
-            <i class="fa-solid fa-motorcycle"></i>
-          </span>
-          <div>
-            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Envío a domicilio</h3>
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Costo e importe mínimo cuando eligen entrega a domicilio.</p>
+  <!-- =========================================================================
+       PESTAÑA 2: CONFIGURACIÓN DE WHATSAPP, ENVÍOS Y PAGOS
+       ========================================================================= -->
+  @if (pestania() === 'configuracion') {
+    <form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate class="space-y-3.5">
+      <!-- Número que recibe los pedidos (destacado) -->
+      <div class="rounded-2xl border-2 border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-500/10 p-4 shadow-soft">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+          <div class="flex items-start gap-3 min-w-0">
+            <span class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+              <i class="fa-brands fa-whatsapp"></i>
+            </span>
+            <div class="min-w-0">
+              <h3 class="font-extrabold text-sm sm:text-[15px] text-zinc-900 dark:text-white leading-tight">
+                WhatsApp que recibe los pedidos
+              </h3>
+              <p class="text-xs text-zinc-600 dark:text-zinc-300 mt-0.5 leading-relaxed">
+                Cada pedido que confirma un cliente se abre en WhatsApp hacia <span class="font-bold text-zinc-900 dark:text-white">este número</span>. Puede ser el de cocina o del encargado (no tiene que ser el de contacto público). Ej: <span class="font-mono font-bold">+54 9 385 311 5268</span>.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+            <input
+              type="tel"
+              formControlName="whatsappPedidos"
+              placeholder="+54 9 ..."
+              [class]="claseCampo + ' sm:w-56 font-extrabold tracking-wide bg-white dark:bg-surface-dark border-emerald-300 dark:border-emerald-500/40'"
+            />
+            @if (enlacePruebaPedidos(); as enlace) {
+              <a
+                [href]="enlace"
+                target="_blank"
+                rel="noopener"
+                class="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 tap-scale shrink-0 shadow-sm transition"
+              >
+                <i class="fa-solid fa-paper-plane"></i>Enviar prueba
+              </a>
+            }
           </div>
         </div>
 
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Costo de envío ($)</label>
-            <input type="number" min="0" formControlName="costoEnvio" placeholder="0 = sin cargo" [class]="claseCampo + ' font-extrabold'" />
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Se suma automáticamente al elegir "Envío a domicilio".</p>
+        @if (formulario.controls.whatsappPedidos.invalid && formulario.controls.whatsappPedidos.touched) {
+          <p class="mt-2 text-[11px] font-bold text-red-600">Ingresá un número válido: sin este dato no se pueden recibir pedidos.</p>
+        }
+      </div>
+
+      <!-- Grilla de 3 tarjetas: Envío a domicilio, Transferencia y Cargo por servicio -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+        <!-- Envío a domicilio -->
+        <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+          <div class="flex items-start gap-2.5">
+            <span class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 flex items-center justify-center text-sm shrink-0">
+              <i class="fa-solid fa-motorcycle"></i>
+            </span>
+            <div>
+              <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Envío a domicilio</h3>
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Costo e importe mínimo cuando eligen entrega a domicilio.</p>
+            </div>
           </div>
-          <div>
-            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Compra mínima para envío ($)</label>
-            <input type="number" min="0" formControlName="montoMinimoEnvio" placeholder="0 = sin mínimo" [class]="claseCampo + ' font-extrabold'" />
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Si el subtotal es menor, avisa cuánto falta.</p>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Costo de envío ($)</label>
+              <input type="number" min="0" formControlName="costoEnvio" placeholder="0 = sin cargo" [class]="claseCampo + ' font-extrabold'" />
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Se suma automáticamente al elegir "Envío a domicilio".</p>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Compra mínima para envío ($)</label>
+              <input type="number" min="0" formControlName="montoMinimoEnvio" placeholder="0 = sin mínimo" [class]="claseCampo + ' font-extrabold'" />
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Si el subtotal es menor, avisa cuánto falta.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Datos para Transferencia -->
+        <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+          <div class="flex items-start gap-2.5">
+            <span class="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 flex items-center justify-center text-sm shrink-0">
+              <i class="fa-solid fa-building-columns"></i>
+            </span>
+            <div>
+              <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Datos para Transferencia</h3>
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Se muestran al pagar por Transferencia con botón para copiar.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Alias o CBU / CVU</label>
+              <input type="text" formControlName="aliasTransferencia" placeholder="Ej: demolocal.mp" [class]="claseCampo + ' font-mono font-bold'" />
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">El cliente puede copiarlo en un toque al confirmar.</p>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Titular / Entidad bancaria</label>
+              <input type="text" formControlName="titularTransferencia" placeholder="Ej: Juan Pérez · Mercado Pago" [class]="claseCampo" />
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Para que el cliente verifique a quién transfiere.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cargo por servicio o empaque -->
+        <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+          <div class="flex items-start gap-2.5">
+            <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 flex items-center justify-center text-sm shrink-0">
+              <i class="fa-solid fa-box-open"></i>
+            </span>
+            <div>
+              <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Cargo por servicio</h3>
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Opcional: recargo fijo por empaque o cubiertos (0 desactiva).</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Importe ($)</label>
+              <input type="number" min="0" formControlName="cargoServicio" placeholder="0" [class]="claseCampo + ' font-extrabold'" />
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Dejá en 0 si no cobrás cargo adicional.</p>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Etiqueta visible</label>
+              <input type="text" formControlName="etiquetaCargoServicio" placeholder="Servicio / empaque" [class]="claseCampo" />
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Nombre con el que aparece en el desglose del pedido.</p>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Datos para Transferencia -->
-      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
-        <div class="flex items-start gap-2.5">
-          <span class="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 flex items-center justify-center text-sm shrink-0">
-            <i class="fa-solid fa-building-columns"></i>
-          </span>
-          <div>
-            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Datos para Transferencia</h3>
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Se muestran al pagar por Transferencia con botón para copiar.</p>
-          </div>
-        </div>
-
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Alias o CBU / CVU</label>
-            <input type="text" formControlName="aliasTransferencia" placeholder="Ej: demolocal.mp" [class]="claseCampo + ' font-mono font-bold'" />
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">El cliente puede copiarlo en un toque al confirmar.</p>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Titular / Entidad bancaria</label>
-            <input type="text" formControlName="titularTransferencia" placeholder="Ej: Juan Pérez · Mercado Pago" [class]="claseCampo" />
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Para que el cliente verifique a quién transfiere.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Cargo por servicio o empaque -->
-      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
-        <div class="flex items-start gap-2.5">
-          <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 flex items-center justify-center text-sm shrink-0">
-            <i class="fa-solid fa-box-open"></i>
-          </span>
-          <div>
-            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Cargo por servicio</h3>
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Opcional: recargo fijo por empaque o cubiertos (0 desactiva).</p>
-          </div>
-        </div>
-
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Importe ($)</label>
-            <input type="number" min="0" formControlName="cargoServicio" placeholder="0" [class]="claseCampo + ' font-extrabold'" />
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Dejá en 0 si no cobrás cargo adicional.</p>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">Etiqueta visible</label>
-            <input type="text" formControlName="etiquetaCargoServicio" placeholder="Servicio / empaque" [class]="claseCampo" />
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Nombre con el que aparece en el desglose del pedido.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </form>
+    </form>
+  }
 </section>

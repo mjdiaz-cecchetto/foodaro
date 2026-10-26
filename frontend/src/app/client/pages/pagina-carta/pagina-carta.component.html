@@ -76,3 +76,16 @@
 </div>
 
 <app-modal-detalle-producto [productoId]="productoSeleccionadoId()" (cerrado)="cerrarProducto()" />
+
+@if (mostrarVolverArriba()) {
+  <button
+    type="button"
+    (click)="volverAlComienzo()"
+    class="fixed right-4 sm:right-6 z-30 w-9 h-9 rounded-full bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md border border-gray-200/80 dark:border-dark-border text-gray-700 dark:text-white hover:bg-brand-600 hover:text-white hover:border-brand-600 shadow-md flex items-center justify-center tap-scale transition-all cursor-pointer"
+    [class]="ui.pedidosHabilitados() && !carrito.estaVacio() && !carrito.hojaAbierta() ? 'bottom-20 lg:bottom-6' : 'bottom-5 lg:bottom-6'"
+    title="Volver al comienzo del menú"
+    aria-label="Volver al comienzo del menú"
+  >
+    <i class="fa-solid fa-arrow-up text-xs"></i>
+  </button>
+}

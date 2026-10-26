@@ -1,0 +1,84 @@
+<div class="min-h-screen bg-[#F8F9FA] dark:bg-surface-darker text-zinc-900 dark:text-zinc-100 flex flex-col justify-between p-4 sm:p-6">
+  <!-- Barra superior -->
+  <header class="max-w-5xl w-full mx-auto flex items-center justify-between">
+    <a routerLink="/" class="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition">
+      <i class="fa-solid fa-arrow-left"></i> Volver a foodaro.net
+    </a>
+    <app-alternar-tema variante="admin" />
+  </header>
+
+  <!-- Tarjeta central de ingreso Root -->
+  <main class="max-w-md w-full mx-auto my-8">
+    <div class="bg-white dark:bg-surface-dark rounded-3xl p-6 sm:p-8 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center mb-3">
+          <app-logo variante="completo" tamanio="md" />
+        </div>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest mb-2">
+          <i class="fa-solid fa-crown text-amber-400 dark:text-amber-500"></i> Consola Maestra · Root
+        </div>
+        <h1 class="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+          Administración General
+        </h1>
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          Gestión de locales, suscripciones, planes y usuarios de toda la plataforma.
+        </p>
+      </div>
+
+      @if (error()) {
+        <div class="mb-4 p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Email Superadmin</label>
+          <div class="relative">
+            <i class="fa-regular fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-xs"></i>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="root@foodaro.com"
+              class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl pl-9 pr-4 py-2.5 text-xs sm:text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">Contraseña</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-xs"></i>
+            <input
+              [type]="mostrarContrasenia() ? 'text' : 'password'"
+              formControlName="contrasenia"
+              placeholder="••••••••"
+              class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl pl-9 pr-10 py-2.5 text-xs sm:text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+            <button
+              type="button"
+              (click)="alternarContrasenia()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-xs cursor-pointer"
+            >
+              <i class="fa-regular" [class]="mostrarContrasenia() ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="cargando()"
+          class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-extrabold text-xs sm:text-sm shadow-coral tap-scale transition cursor-pointer flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>{{ cargando() ? 'Ingresando…' : 'Ingresar al Panel Root' }}</span>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <footer class="text-center text-[11px] text-zinc-400 font-medium">
+    Foodaro SaaS · Consola de Administración Central
+  </footer>
+</div>

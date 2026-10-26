@@ -251,6 +251,14 @@
                 </button>
                 <button
                   type="button"
+                  (click)="duplicarProducto(p)"
+                  class="text-zinc-400 hover:text-sky-500 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Duplicar Producto con sus opciones"
+                >
+                  <i class="fa-regular fa-copy text-xs"></i>
+                </button>
+                <button
+                  type="button"
                   (click)="abrirEdicionProducto(p)"
                   class="text-zinc-400 hover:text-brand-500 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   title="Editar Producto"

@@ -9,7 +9,10 @@ import { CredencialesIngreso, RespuestaIngreso, UsuarioAutenticado } from '../in
 const CLAVE_TOKEN = 'foodaro_token';
 const CLAVE_USUARIO = 'foodaro_usuario';
 
-/** Autenticación del panel admin contra el API (tokens de Sanctum). */
+/**
+ * Autenticación del panel del LOCAL contra el API (tokens de Sanctum).
+ * Es independiente de la sesión Root (ver `RootAutenticacionServicio`): solo admite administradores de local.
+ */
 @Injectable({ providedIn: 'root' })
 export class AutenticacionServicio {
   private readonly http = inject(HttpClient);
@@ -17,7 +20,23 @@ export class AutenticacionServicio {
   readonly token = signal<string | null>(this.leer(CLAVE_TOKEN));
   readonly usuario = signal<UsuarioAutenticado | null>(this.leerJson<UsuarioAutenticado>(CLAVE_USUARIO));
 
-  readonly estaAutenticado = computed(() => !!this.token());
+  readonly estaAutenticado = computed(() => !!this.token() && this.usuario()?.rol === 'administrador');
+
+  constructor() {
+    // Sesiones antiguas de un Root guardadas en el panel del local se descartan.
+    if (this.usuario() && this.usuario()?.rol !== 'administrador') {
+      this.limpiarSesion();
+    }
+  }
+
+  actualizarUsuario(usuario: UsuarioAutenticado): void {
+    this.usuario.set(usuario);
+    try {
+      localStorage.setItem(CLAVE_USUARIO, JSON.stringify(usuario));
+    } catch {
+      /* ignorar */
+    }
+  }
 
   /** POST /auth/ingreso */
   ingresar(credenciales: CredencialesIngreso): Observable<RespuestaIngreso> {

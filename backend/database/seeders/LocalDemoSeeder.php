@@ -49,6 +49,9 @@ class LocalDemoSeeder extends Seeder
                 'cargo_servicio' => $c['cargoServicio'],
                 'etiqueta_cargo_servicio' => $c['etiquetaCargoServicio'],
                 'activo' => true,
+                'plan_id' => \App\Models\Plan::query()->where('destacado', true)->value('id') ?? \App\Models\Plan::query()->value('id'),
+                'estado_suscripcion' => 'al_dia',
+                'vencimiento_suscripcion' => now()->addMonth()->toDateString(),
             ]);
 
             app(HorariosServicio::class)->guardar($local, $p['horarios']['semana'], $p['horarios']['excepciones']);
@@ -61,6 +64,18 @@ class LocalDemoSeeder extends Seeder
                 'rol' => RolUsuario::Administrador,
                 'activo' => true,
             ]);
+
+            Usuario::updateOrCreate(
+                ['email' => env('ROOT_ADMIN_EMAIL', 'root@foodaro.com')],
+                [
+                    // El Root de Foodaro NO pertenece a ningún local: solo gestiona la plataforma.
+                    'local_id' => null,
+                    'nombre' => 'Root Foodaro',
+                    'password' => env('ROOT_ADMIN_PASSWORD', 'root1234'),
+                    'rol' => RolUsuario::Superadmin,
+                    'activo' => true,
+                ]
+            );
 
             // Categorías: el id textual del mock pasa a ser el slug
             $categoriasPorSlug = [];

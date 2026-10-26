@@ -11,7 +11,17 @@
     (click)="solicitarCierre()"
   ></div>
 
-  <div [class]="clasesHoja()" role="dialog" aria-modal="true" [attr.aria-hidden]="!abierto()">
+  <div
+    [class]="clasesHoja()"
+    [style.transform]="desplazamientoY() > 0 ? 'translateY(' + desplazamientoY() + 'px)' : null"
+    (touchstart)="alIniciarToque($event)"
+    (touchmove)="alMoverToque($event)"
+    (touchend)="alTerminarToque()"
+    (touchcancel)="alTerminarToque()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-hidden]="!abierto()"
+  >
     <ng-container *ngTemplateOutlet="contenido" />
   </div>
 } @else {

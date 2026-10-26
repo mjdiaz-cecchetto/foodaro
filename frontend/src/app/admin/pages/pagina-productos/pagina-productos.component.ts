@@ -138,19 +138,31 @@ export class PaginaProductosComponente {
     this.modalProductoAbierto.set(true);
   }
 
+  duplicarProducto(producto: Producto): void {
+    const copia: Producto = {
+      ...structuredClone(producto),
+      id: 0,
+      nombre: `${producto.nombre} (copia)`,
+    };
+    this.productoEditando.set(copia);
+    this.modalProductoAbierto.set(true);
+    this.notificaciones.mostrar('Revisá el nombre o precio y tocá Guardar para crear la copia');
+  }
+
   cerrarModalProducto(): void {
     this.modalProductoAbierto.set(false);
   }
 
   guardarProducto(valor: ValorFormularioProducto): void {
     const actual = this.productoEditando();
-    const peticion = actual
+    const esEdicionReal = actual && actual.id > 0;
+    const peticion = esEdicionReal
       ? this.catalogo.actualizarProducto(actual.id, valor)
       : this.catalogo.crearProducto(valor);
     peticion.subscribe({
       next: (prod) => {
         this.imagenesRotas.update((mapa) => ({ ...mapa, [prod.id]: false }));
-        this.notificaciones.mostrar(actual ? 'Producto y modificadores actualizados' : 'Producto agregado a la carta');
+        this.notificaciones.mostrar(esEdicionReal ? 'Producto y modificadores actualizados' : 'Producto agregado a la carta');
         this.cerrarModalProducto();
       },
       error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar el producto')),

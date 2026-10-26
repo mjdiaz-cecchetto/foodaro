@@ -1,9 +1,10 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
 
 import { CartaServicio } from '../../services/carta.service';
+import { CarritoServicio } from '../../services/carrito.service';
 import { UiClienteServicio } from '../../services/ui-cliente.service';
 import { NavegacionCartaServicio } from '../../services/navegacion-carta.service';
-import { PREFIJO_SECCION_CATEGORIA } from '../../interfaces';
+import { ID_CATEGORIA_TODO, PREFIJO_SECCION_CATEGORIA } from '../../interfaces';
 import { BannerLocalComponente } from '../../components/banner-local/banner-local.component';
 import { CarruselPromocionesComponente } from '../../components/carrusel-promociones/carrusel-promociones.component';
 import { CarruselCategoriasComponente } from '../../components/carrusel-categorias/carrusel-categorias.component';
@@ -34,6 +35,7 @@ import { ModalDetalleProductoComponente } from '../../components/modal-detalle-p
 export class PaginaCartaComponente {
   private readonly carta = inject(CartaServicio);
   private readonly navegacion = inject(NavegacionCartaServicio);
+  readonly carrito = inject(CarritoServicio);
   readonly ui = inject(UiClienteServicio);
 
   readonly PREFIJO_SECCION = PREFIJO_SECCION_CATEGORIA;
@@ -43,6 +45,8 @@ export class PaginaCartaComponente {
 
   /** Id del producto abierto en el detalle (null = cerrado). */
   readonly productoSeleccionadoId = signal<number | null>(null);
+  /** Muestra el botón compacto para volver al inicio de la carta al bajar en la página. */
+  readonly mostrarVolverArriba = signal(false);
 
   private ticket: number | null = null;
 
@@ -52,8 +56,13 @@ export class PaginaCartaComponente {
     if (this.ticket !== null) return;
     this.ticket = requestAnimationFrame(() => {
       this.ticket = null;
+      this.mostrarVolverArriba.set(window.scrollY > 320);
       this.navegacion.actualizarDesdeScroll();
     });
+  }
+
+  volverAlComienzo(): void {
+    this.navegacion.irACategoria(ID_CATEGORIA_TODO);
   }
 
   abrirProducto(id: number): void {

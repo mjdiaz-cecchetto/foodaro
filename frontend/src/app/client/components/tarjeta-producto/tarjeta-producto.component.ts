@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 
 import { Producto } from '../../../shared/models';
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
@@ -17,9 +17,6 @@ export class TarjetaProductoComponente {
 
   readonly producto = input.required<Producto>();
   readonly seleccionado = output<number>();
-
-  /** Indica si el producto tiene opciones a elegir (muestra "desde"). */
-  readonly tieneOpciones = computed(() => this.producto().gruposOpciones.length > 0);
 
   abrir(): void {
     this.seleccionado.emit(this.producto().id);

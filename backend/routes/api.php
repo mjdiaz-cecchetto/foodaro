@@ -10,13 +10,16 @@ use App\Http\Controllers\Api\Admin\PromocionController;
 use App\Http\Controllers\Api\Auth\AutenticacionController;
 use App\Http\Controllers\Api\Publico\LocalPublicoController;
 use App\Http\Controllers\Api\Publico\PedidoPublicoController;
+use App\Http\Controllers\Api\Root\RootController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API pública (carta digital)
+| API pública (carta digital y planes de la landing)
 |--------------------------------------------------------------------------
 */
+Route::get('planes', [RootController::class, 'planesPublicos']);
+
 Route::prefix('locales/{slug}')->group(function () {
     Route::get('/', [LocalPublicoController::class, 'show']);
     Route::post('pedidos', [PedidoPublicoController::class, 'store'])->middleware('throttle:20,1');
@@ -24,12 +27,12 @@ Route::prefix('locales/{slug}')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Autenticación (panel admin)
+| Autenticación del panel del LOCAL (solo administradores de locales)
 |--------------------------------------------------------------------------
 */
 Route::prefix('auth')->group(function () {
     Route::post('ingreso', [AutenticacionController::class, 'ingresar'])->middleware('throttle:10,1');
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'solo.admin'])->group(function () {
         Route::get('yo', [AutenticacionController::class, 'yo']);
         Route::post('salir', [AutenticacionController::class, 'salir']);
     });
@@ -37,10 +40,10 @@ Route::prefix('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Panel admin del local (requiere token)
+| Panel admin del local (requiere token del login del local)
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
+Route::prefix('admin')->middleware(['auth:sanctum', 'solo.admin'])->group(function () {
     Route::get('local', [LocalAdminController::class, 'show']);
     Route::put('local', [LocalAdminController::class, 'update']);
 
@@ -61,7 +64,37 @@ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         ->except('show')
         ->parameters(['plantillas-opciones' => 'plantilla']);
 
+    Route::get('pedidos/metricas', [PedidoAdminController::class, 'metricas']);
     Route::get('pedidos', [PedidoAdminController::class, 'index']);
     Route::get('pedidos/{pedido}', [PedidoAdminController::class, 'show']);
     Route::patch('pedidos/{pedido}/estado', [PedidoAdminController::class, 'cambiarEstado']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Panel Root de Foodaro (Superadmin) — login y token independientes
+|--------------------------------------------------------------------------
+*/
+Route::post('root/auth/ingreso', [AutenticacionController::class, 'ingresarRoot'])->middleware('throttle:10,1');
+
+Route::prefix('root')->middleware(['auth:sanctum', 'solo.root'])->group(function () {
+    Route::get('auth/yo', [AutenticacionController::class, 'yo']);
+    Route::post('auth/salir', [AutenticacionController::class, 'salir']);
+
+    Route::get('resumen', [RootController::class, 'resumen']);
+
+    Route::post('locales', [RootController::class, 'crearLocal']);
+    Route::put('locales/{local}', [RootController::class, 'actualizarLocal']);
+    Route::patch('locales/{local}/estado', [RootController::class, 'alternarEstadoLocal']);
+    Route::delete('locales/{local}', [RootController::class, 'eliminarLocal']);
+
+    Route::post('usuarios', [RootController::class, 'crearUsuario']);
+    Route::put('usuarios/{usuario}', [RootController::class, 'actualizarUsuario']);
+    Route::patch('usuarios/{usuario}/contrasenia', [RootController::class, 'cambiarContraseniaUsuario']);
+    Route::patch('usuarios/{usuario}/estado', [RootController::class, 'alternarEstadoUsuario']);
+    Route::delete('usuarios/{usuario}', [RootController::class, 'eliminarUsuario']);
+
+    Route::post('planes', [RootController::class, 'crearPlan']);
+    Route::put('planes/{plan}', [RootController::class, 'actualizarPlan']);
+    Route::delete('planes/{plan}', [RootController::class, 'eliminarPlan']);
 });

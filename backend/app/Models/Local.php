@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Local (tenant) de la plataforma. */
@@ -16,7 +17,7 @@ class Local extends Model
         'whatsapp', 'whatsapp_pedidos', 'instagram', 'tiktok', 'telefono',
         'moneda', 'cargo_servicio', 'etiqueta_cargo_servicio',
         'costo_envio', 'monto_minimo_envio', 'alias_transferencia', 'titular_transferencia',
-        'activo',
+        'activo', 'plan_id', 'estado_suscripcion', 'vencimiento_suscripcion',
     ];
 
     protected function casts(): array
@@ -26,7 +27,13 @@ class Local extends Model
             'costo_envio' => 'decimal:2',
             'monto_minimo_envio' => 'decimal:2',
             'activo' => 'boolean',
+            'vencimiento_suscripcion' => 'date:Y-m-d',
         ];
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class, 'plan_id');
     }
 
     public function usuarios(): HasMany

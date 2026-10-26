@@ -1,0 +1,955 @@
+@let m = root.metricas();
+@let usuarioActual = autenticacion.usuario();
+
+<div class="min-h-screen bg-[#F8F9FA] dark:bg-surface-darker text-zinc-900 dark:text-zinc-100 flex flex-col">
+  <!-- Barra superior fija del Panel Root -->
+  <header class="sticky top-0 z-30 h-16 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-surface-borderDark px-4 sm:px-7 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3 min-w-0">
+      <app-logo variante="completo" tamanio="sm" [href]="'/'" />
+      <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-wider">
+        <i class="fa-solid fa-crown text-amber-400 dark:text-amber-500"></i> Panel Root
+      </span>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      <a
+        routerLink="/"
+        target="_blank"
+        class="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 text-xs font-bold hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5"
+      >
+        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+        <span class="hidden sm:inline">Ver Landing</span>
+      </a>
+
+      <app-alternar-tema variante="admin" />
+
+      <div class="hidden md:flex items-center gap-2 pl-2 border-l border-zinc-200 dark:border-surface-borderDark">
+        <span class="w-8 h-8 rounded-full bg-brand-600 text-white text-xs font-black flex items-center justify-center">
+          R
+        </span>
+        <div class="leading-tight">
+          <p class="text-xs font-extrabold text-zinc-900 dark:text-white">{{ usuarioActual?.nombre || 'Root Foodaro' }}</p>
+          <p class="text-[10px] text-zinc-400">{{ usuarioActual?.email }}</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        (click)="cerrarSesion()"
+        class="px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition flex items-center gap-1.5 cursor-pointer"
+      >
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="hidden sm:inline">Salir</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Contenido principal compacto -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-7 py-4 space-y-4">
+    <!-- Bienvenida + Acciones rápidas globales -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-extrabold text-brand-600 uppercase tracking-wider">Consola Maestra SaaS</span>
+          <span class="text-zinc-300 dark:text-zinc-700">·</span>
+          <span class="text-xs text-zinc-500 dark:text-zinc-400">Administración central de comercios, planes, suscripciones y accesos.</span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white leading-tight">
+          Panel General de Foodaro
+        </h1>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          (click)="abrirNuevoUsuario()"
+          class="py-2 px-3.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold flex items-center gap-1.5 tap-scale transition cursor-pointer"
+        >
+          <i class="fa-solid fa-user-plus"></i><span>Nuevo usuario</span>
+        </button>
+        <button
+          type="button"
+          (click)="abrirNuevoLocal()"
+          class="py-2 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-coral flex items-center gap-1.5 tap-scale transition cursor-pointer"
+        >
+          <i class="fa-solid fa-plus"></i><span>Alta de Local</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 4 Indicadores de Métricas Globales (compactos horizontales) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <!-- Locales -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/70 dark:border-surface-borderDark flex items-center gap-3.5">
+        <span class="w-11 h-11 rounded-2xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 flex items-center justify-center text-base shrink-0">
+          <i class="fa-solid fa-store"></i>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-2xl font-black text-zinc-900 dark:text-white leading-none">{{ m.totalLocales }}</p>
+          <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300 mt-1 leading-tight">Locales en Foodaro</p>
+          <p class="text-[11px] text-zinc-400 mt-0.5 truncate">
+            <span class="text-emerald-600 font-bold">{{ m.localesActivos }} activos</span> · {{ m.localesPausados }} pausados
+          </p>
+        </div>
+      </div>
+
+      <!-- Facturación Mensual Estimada -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/70 dark:border-surface-borderDark flex items-center gap-3.5">
+        <span class="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-base shrink-0">
+          <i class="fa-solid fa-sack-dollar"></i>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white leading-none truncate">
+            {{ m.ingresosMensualesEstimados | precio }}
+          </p>
+          <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300 mt-1 leading-tight">Ingreso Mensual Est.</p>
+          <p class="text-[11px] text-zinc-400 mt-0.5 truncate">Según planes de locales activos</p>
+        </div>
+      </div>
+
+      <!-- Estado de Suscripciones -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/70 dark:border-surface-borderDark flex items-center gap-3.5">
+        <span class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 flex items-center justify-center text-base shrink-0">
+          <i class="fa-solid fa-calendar-check"></i>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-2xl font-black text-zinc-900 dark:text-white leading-none">{{ m.suscripcionesAlDia }}</p>
+          <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300 mt-1 leading-tight">Abonos al día</p>
+          <p class="text-[11px] text-zinc-400 mt-0.5 truncate">
+            {{ m.suscripcionesPorVencer }} por vencer · <span [class.text-red-500]="m.suscripcionesVencidas > 0" [class.font-bold]="m.suscripcionesVencidas > 0">{{ m.suscripcionesVencidas }} vencidos</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Volumen Global -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/70 dark:border-surface-borderDark flex items-center gap-3.5">
+        <span class="w-11 h-11 rounded-2xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 flex items-center justify-center text-base shrink-0">
+          <i class="fa-solid fa-chart-simple"></i>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-2xl font-black text-zinc-900 dark:text-white leading-none">{{ m.totalProductos }}</p>
+          <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300 mt-1 leading-tight">Productos cargados</p>
+          <p class="text-[11px] text-zinc-400 mt-0.5 truncate">
+            {{ m.totalPedidos }} pedidos · {{ m.totalUsuarios }} usuarios
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pestañas de navegación Root -->
+    <nav class="flex gap-1.5 p-1 rounded-2xl bg-zinc-200/70 dark:bg-surface-cardDark text-xs sm:text-[13px] font-bold overflow-x-auto no-scrollbar">
+      <button
+        type="button"
+        (click)="pestania.set('locales')"
+        class="flex-1 min-w-max px-4 py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+        [class]="pestania() === 'locales'
+          ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm ring-1 ring-zinc-200/80 dark:ring-surface-borderDark'
+          : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'"
+      >
+        <i class="fa-solid fa-store"></i>
+        <span>Locales y Suscripciones</span>
+        <span class="ml-1 text-[11px] px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-black">{{ root.locales().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="pestania.set('usuarios')"
+        class="flex-1 min-w-max px-4 py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+        [class]="pestania() === 'usuarios'
+          ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm ring-1 ring-zinc-200/80 dark:ring-surface-borderDark'
+          : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'"
+      >
+        <i class="fa-solid fa-users-gear"></i>
+        <span>Usuarios y Contraseñas</span>
+        <span class="ml-1 text-[11px] px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-black">{{ root.usuarios().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="pestania.set('planes')"
+        class="flex-1 min-w-max px-4 py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+        [class]="pestania() === 'planes'
+          ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm ring-1 ring-zinc-200/80 dark:ring-surface-borderDark'
+          : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'"
+      >
+        <i class="fa-solid fa-gem"></i>
+        <span>Planes Comerciales</span>
+        <span class="ml-1 text-[11px] px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-black">{{ root.planes().length }}</span>
+      </button>
+    </nav>
+
+    <!-- =========================================================================
+         PESTAÑA 1: LOCALES Y SUSCRIPCIONES
+         ========================================================================= -->
+    @if (pestania() === 'locales') {
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 sm:p-5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <!-- Barra de búsqueda y filtros -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div class="relative flex-1 max-w-md">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-xs"></i>
+            <input
+              type="text"
+              [ngModel]="busquedaLocal()"
+              (ngModelChange)="busquedaLocal.set($event)"
+              placeholder="Buscar por nombre, slug, rubro o plan..."
+              class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl pl-9 pr-3.5 py-2 text-xs font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-wrap text-xs font-bold">
+            <button
+              type="button"
+              (click)="filtroEstadoLocal.set('todos')"
+              class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+              [class]="filtroEstadoLocal() === 'todos' ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+            >
+              Todos
+            </button>
+            <button
+              type="button"
+              (click)="filtroEstadoLocal.set('activos')"
+              class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+              [class]="filtroEstadoLocal() === 'activos' ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+            >
+              Activos
+            </button>
+            <button
+              type="button"
+              (click)="filtroEstadoLocal.set('pausados')"
+              class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+              [class]="filtroEstadoLocal() === 'pausados' ? 'border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+            >
+              Pausados
+            </button>
+            <button
+              type="button"
+              (click)="filtroEstadoLocal.set('alerta')"
+              class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+              [class]="filtroEstadoLocal() === 'alerta' ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10 text-amber-700' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+            >
+              Por vencer / Vencidos
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de locales -->
+        <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+          @for (local of localesFiltrados(); track local.id) {
+            <div class="py-3 first:pt-1 last:pb-1 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <!-- Identidad del Local -->
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <img
+                  [src]="local.logoUrl"
+                  alt=""
+                  class="w-11 h-11 rounded-xl object-cover ring-1 ring-zinc-200 dark:ring-zinc-700 shrink-0"
+                  [class.grayscale]="!local.activo"
+                />
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-sm font-extrabold text-zinc-900 dark:text-white truncate">{{ local.nombre }}</h3>
+                    <a
+                      [href]="'/' + local.slug"
+                      target="_blank"
+                      class="text-[11px] font-mono font-bold text-brand-600 bg-brand-50 dark:bg-brand-500/10 px-2 py-0.5 rounded-md hover:underline"
+                    >
+                      /{{ local.slug }}
+                    </a>
+                    @if (!local.activo) {
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">Pausado</span>
+                    }
+                  </div>
+                  <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                    {{ local.rubro || 'Sin rubro' }} · <i class="fa-brands fa-whatsapp text-emerald-500 ml-1"></i> {{ local.whatsapp }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Métricas simples del local + Plan y Suscripción -->
+              <div class="flex flex-wrap items-center gap-2.5 lg:gap-4 text-xs">
+                <!-- Métricas simples integradas (Punto 2) -->
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200/70 dark:border-surface-borderDark text-[11px] font-bold text-zinc-600 dark:text-zinc-300">
+                  <span title="Productos"><i class="fa-solid fa-utensils text-brand-500 mr-1"></i>{{ local.productosCount }} prod.</span>
+                  <span class="text-zinc-300 dark:text-zinc-600">·</span>
+                  <span title="Categorías">{{ local.categoriasCount }} cat.</span>
+                  <span class="text-zinc-300 dark:text-zinc-600">·</span>
+                  <span title="Pedidos registrados"><i class="fa-solid fa-receipt text-emerald-500 mr-1"></i>{{ local.pedidosCount }} ped.</span>
+                  <span class="text-zinc-300 dark:text-zinc-600">·</span>
+                  <button type="button" (click)="verUsuariosDeLocal(local)" class="hover:text-brand-600 underline cursor-pointer" title="Ver usuarios de este local">
+                    {{ local.usuariosCount }} usu.
+                  </button>
+                </div>
+
+                <!-- Plan y vencimiento (Punto 4) -->
+                <div class="flex items-center gap-2">
+                  <div class="text-right">
+                    <p class="text-xs font-extrabold text-zinc-900 dark:text-white leading-tight">{{ local.planNombre }}</p>
+                    <p class="text-[10px] text-zinc-400">
+                      {{ local.planMensual | precio }}/mes
+                      @if (local.vencimientoSuscripcion) {
+                        · Vence {{ local.vencimientoSuscripcion }}
+                      }
+                    </p>
+                  </div>
+                  <span
+                    class="text-[11px] font-bold px-2.5 py-1 rounded-lg border shrink-0"
+                    [class]="claseSuscripcion(local.estadoSuscripcion)"
+                  >
+                    {{ etiquetaSuscripcion(local.estadoSuscripcion) }}
+                  </span>
+                </div>
+
+                <!-- Acciones del Local -->
+                <div class="flex items-center gap-1.5">
+                  <!-- Switch Activo / Pausado -->
+                  <button
+                    type="button"
+                    (click)="alternarEstadoLocal(local)"
+                    class="w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer shrink-0"
+                    [class]="local.activo ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'"
+                    [title]="local.activo ? 'Local activo (clic para pausar)' : 'Local pausado (clic para activar)'"
+                  >
+                    <span class="block w-4 h-4 rounded-full bg-white shadow transition-transform" [class.translate-x-4]="local.activo"></span>
+                  </button>
+
+                  <!-- Editar Local / Suscripción -->
+                  <button
+                    type="button"
+                    (click)="abrirEditarLocal(local)"
+                    class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 hover:text-brand-600 flex items-center justify-center cursor-pointer"
+                    title="Editar local y suscripción"
+                  >
+                    <i class="fa-solid fa-pen text-xs"></i>
+                  </button>
+
+                  <!-- Eliminar Local -->
+                  <button
+                    type="button"
+                    (click)="eliminarLocal(local)"
+                    class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-400 hover:text-red-600 flex items-center justify-center cursor-pointer"
+                    title="Eliminar local"
+                  >
+                    <i class="fa-solid fa-trash-can text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="py-10 text-center text-xs text-zinc-400">
+              No se encontraron locales con ese filtro.
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- =========================================================================
+         PESTAÑA 2: USUARIOS Y BLANQUEO DE CONTRASEÑAS
+         ========================================================================= -->
+    @if (pestania() === 'usuarios') {
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 sm:p-5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
+            <div class="relative flex-1 max-w-sm">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-xs"></i>
+              <input
+                type="text"
+                [ngModel]="busquedaUsuario()"
+                (ngModelChange)="busquedaUsuario.set($event)"
+                placeholder="Buscar por nombre, email o local..."
+                class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl pl-9 pr-3.5 py-2 text-xs font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+              />
+            </div>
+
+            <select
+              [ngModel]="filtroLocalUsuario()"
+              (ngModelChange)="filtroLocalUsuario.set($event === 'todos' ? 'todos' : +$event)"
+              class="bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 focus:outline-none focus:border-brand-600"
+            >
+              <option value="todos">Todos los locales</option>
+              @for (l of root.locales(); track l.id) {
+                <option [value]="l.id">{{ l.nombre }} (/{{ l.slug }})</option>
+              }
+            </select>
+          </div>
+
+          <button
+            type="button"
+            (click)="abrirNuevoUsuario(filtroLocalUsuario() === 'todos' ? null : $any(filtroLocalUsuario()))"
+            class="py-2 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-coral flex items-center justify-center gap-1.5 tap-scale cursor-pointer shrink-0"
+          >
+            <i class="fa-solid fa-user-plus"></i><span>Crear Usuario</span>
+          </button>
+        </div>
+
+        <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+          @for (u of usuariosFiltrados(); track u.id) {
+            <div class="py-3 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <span
+                  class="w-9 h-9 rounded-xl font-black text-xs flex items-center justify-center shrink-0"
+                  [class]="u.rol === 'superadmin' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'bg-brand-50 dark:bg-brand-500/10 text-brand-600'"
+                >
+                  {{ u.nombre.slice(0, 1).toUpperCase() }}
+                </span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="text-xs sm:text-[13px] font-extrabold text-zinc-900 dark:text-white truncate">{{ u.nombre }}</p>
+                    @if (u.rol === 'superadmin') {
+                      <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
+                        <i class="fa-solid fa-crown text-amber-400 mr-1"></i>Root
+                      </span>
+                    } @else {
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300">
+                        Admin Local
+                      </span>
+                    }
+                    @if (!u.activo) {
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-50 text-red-600">Inactivo</span>
+                    }
+                  </div>
+                  <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                    <span class="font-mono">{{ u.email }}</span>
+                    @if (u.localNombre) {
+                      · Local: <span class="font-bold text-zinc-700 dark:text-zinc-300">{{ u.localNombre }}</span> (/{{ u.localSlug }})
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <!-- Switch activo -->
+                @if (u.id !== usuarioActual?.id) {
+                  <button
+                    type="button"
+                    (click)="alternarEstadoUsuario(u)"
+                    class="w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer"
+                    [class]="u.activo ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'"
+                    [title]="u.activo ? 'Usuario activo' : 'Usuario desactivado'"
+                  >
+                    <span class="block w-4 h-4 rounded-full bg-white shadow transition-transform" [class.translate-x-4]="u.activo"></span>
+                  </button>
+                }
+
+                <!-- Blanquear Contraseña -->
+                <button
+                  type="button"
+                  (click)="abrirModalClave(u)"
+                  class="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  title="Cambiar o blanquear contraseña"
+                >
+                  <i class="fa-solid fa-key"></i>
+                  <span>Blanquear clave</span>
+                </button>
+
+                <!-- Editar Usuario -->
+                <button
+                  type="button"
+                  (click)="abrirEditarUsuario(u)"
+                  class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 hover:text-brand-600 flex items-center justify-center cursor-pointer"
+                  title="Editar usuario"
+                >
+                  <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+
+                @if (u.id !== usuarioActual?.id) {
+                  <button
+                    type="button"
+                    (click)="eliminarUsuario(u)"
+                    class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-400 hover:text-red-600 flex items-center justify-center cursor-pointer"
+                    title="Eliminar usuario"
+                  >
+                    <i class="fa-solid fa-trash-can text-xs"></i>
+                  </button>
+                }
+              </div>
+            </div>
+          } @empty {
+            <div class="py-8 text-center text-xs text-zinc-400">
+              No hay usuarios para ese filtro.
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- =========================================================================
+         PESTAÑA 3: GESTIÓN DE PLANES COMERCIALES (3 planes por defecto)
+         ========================================================================= -->
+    @if (pestania() === 'planes') {
+      <div class="space-y-3.5">
+        <div class="bg-white dark:bg-surface-dark rounded-2xl px-5 py-3.5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div>
+            <h3 class="font-extrabold text-xs sm:text-[13px] uppercase tracking-wider text-brand-600">Planes de Suscripción de Foodaro</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">Estos planes se muestran en la Landing principal y se asignan a cada local al darlo de alta.</p>
+          </div>
+          <button
+            type="button"
+            (click)="abrirNuevoPlan()"
+            class="py-2 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-coral flex items-center gap-1.5 tap-scale cursor-pointer shrink-0"
+          >
+            <i class="fa-solid fa-plus"></i><span>Nuevo Plan</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+          @for (plan of root.planes(); track plan.id) {
+            <div
+              class="rounded-2xl p-5 shadow-soft border flex flex-col justify-between transition"
+              [class]="plan.destacado
+                ? 'bg-zinc-900 text-white border-brand-500 ring-2 ring-brand-500/30'
+                : 'bg-white dark:bg-surface-dark text-zinc-900 dark:text-white border-zinc-200/80 dark:border-surface-borderDark'"
+            >
+              <div class="space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                  <span
+                    class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
+                    [class]="plan.destacado ? 'bg-brand-600 text-white' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300'"
+                  >
+                    {{ plan.nivel }}
+                  </span>
+                  <div class="flex items-center gap-1.5">
+                    @if (plan.destacado) {
+                      <span class="text-[10px] font-black text-amber-400 uppercase"><i class="fa-solid fa-star mr-1"></i>Más elegido</span>
+                    }
+                    <span
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                      [class]="plan.destacado ? 'bg-white/10 text-zinc-200' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-500'"
+                    >
+                      {{ plan.localesCount }} locales
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 class="text-base font-extrabold tracking-tight">{{ plan.nombre }}</h4>
+                  <p class="text-xs mt-1 leading-relaxed" [class]="plan.destacado ? 'text-zinc-300' : 'text-zinc-500 dark:text-zinc-400'">
+                    {{ plan.descripcion }}
+                  </p>
+                </div>
+
+                <div class="pt-1 flex items-baseline gap-2">
+                  <span class="text-2xl font-black">{{ plan.mensual | precio }}</span>
+                  <span class="text-xs font-semibold" [class]="plan.destacado ? 'text-zinc-400' : 'text-zinc-400'">/ mes</span>
+                  <span class="text-[11px] ml-auto font-bold text-emerald-500">
+                    Anual: {{ plan.anual | precio }}/mes
+                  </span>
+                </div>
+
+                <ul class="space-y-1.5 pt-2 border-t text-xs" [class]="plan.destacado ? 'border-zinc-800 text-zinc-200' : 'border-zinc-100 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-300'">
+                  @for (c of plan.caracteristicas; track c) {
+                    <li class="flex items-start gap-2">
+                      <i class="fa-solid fa-check text-emerald-500 mt-0.5 text-[11px] shrink-0"></i>
+                      <span>{{ c }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+
+              <div class="pt-4 mt-4 border-t flex items-center justify-between gap-2" [class]="plan.destacado ? 'border-zinc-800' : 'border-zinc-100 dark:border-surface-borderDark'">
+                <button
+                  type="button"
+                  (click)="abrirEditarPlan(plan)"
+                  class="flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  [class]="plan.destacado
+                    ? 'bg-brand-600 hover:bg-brand-700 text-white'
+                    : 'bg-zinc-100 dark:bg-surface-cardDark hover:bg-zinc-200 text-zinc-800 dark:text-zinc-200'"
+                >
+                  <i class="fa-solid fa-pen"></i><span>Editar Plan</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="eliminarPlan(plan)"
+                  class="w-9 h-9 rounded-xl flex items-center justify-center transition cursor-pointer"
+                  [class]="plan.destacado ? 'bg-white/10 text-zinc-300 hover:text-red-400' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-400 hover:text-red-600'"
+                  title="Eliminar plan"
+                >
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </main>
+</div>
+
+<!-- =========================================================================
+     MODAL 1: ALTA / EDICIÓN DE LOCAL Y SUSCRIPCIÓN
+     ========================================================================= -->
+<app-modal [abierto]="modalLocalAbierto()" variante="dialogo" claseAncho="max-w-xl" (cerrado)="cerrarModalLocal()">
+  <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-borderDark">
+    <div>
+      <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">
+        {{ localEditando() ? 'Editar Local y Suscripción' : 'Alta de Nuevo Local en Foodaro' }}
+      </h3>
+      <p class="text-xs text-zinc-400">
+        {{ localEditando() ? 'Modificá los datos comerciales, plan o vencimiento del local.' : 'Creá el comercio, asignale su plan y generá su usuario administrador.' }}
+      </p>
+    </div>
+    <button type="button" (click)="cerrarModalLocal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center cursor-pointer">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form [formGroup]="formLocal" (ngSubmit)="guardarLocal()" novalidate class="mt-4 space-y-3.5 text-xs">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre del comercio *</label>
+        <input
+          type="text"
+          formControlName="nombre"
+          (input)="sugerirSlugDesdeNombre()"
+          placeholder="Ej: Burger Salta"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+        />
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Slug URL (foodaro.net/slug) *</label>
+        <input
+          type="text"
+          formControlName="slug"
+          placeholder="ej: burgersalta"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-mono font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+        />
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Rubro</label>
+        <input
+          type="text"
+          formControlName="rubro"
+          placeholder="Ej: Hamburguesería · Bar"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+        />
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">WhatsApp del comercio *</label>
+        <input
+          type="text"
+          formControlName="whatsapp"
+          placeholder="+54 9 385 ..."
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+        />
+      </div>
+    </div>
+
+    <!-- Plan y Estado de Suscripción -->
+    <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark/60 border border-zinc-200/80 dark:border-surface-borderDark space-y-3">
+      <p class="font-extrabold text-[11px] uppercase tracking-wider text-brand-600">Plan y Control de Suscripción</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Plan asignado</label>
+          <select
+            formControlName="planId"
+            class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+          >
+            @for (p of root.planes(); track p.id) {
+              <option [ngValue]="p.id">{{ p.nombre }} ({{ p.mensual | precio }})</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Estado del abono</label>
+          <select
+            formControlName="estadoSuscripcion"
+            class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+          >
+            <option value="al_dia">Al día</option>
+            <option value="prueba">En prueba (14 días)</option>
+            <option value="por_vencer">Por vencer</option>
+            <option value="vencido">Vencido</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Próximo vencimiento</label>
+          <input
+            type="date"
+            formControlName="vencimientoSuscripcion"
+            class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Usuario Admin inicial (solo al dar de alta un nuevo local) -->
+    @if (!localEditando()) {
+      <div class="p-3.5 rounded-2xl bg-brand-50/40 dark:bg-brand-500/5 border border-brand-200/70 dark:border-brand-500/20 space-y-3">
+        <p class="font-extrabold text-[11px] uppercase tracking-wider text-brand-600">
+          <i class="fa-solid fa-user-shield mr-1"></i> Usuario Administrador Inicial del Local
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre encargado</label>
+            <input
+              type="text"
+              formControlName="adminNombre"
+              placeholder="Ej: Juan Encargado"
+              class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Email de acceso</label>
+            <input
+              type="email"
+              formControlName="adminEmail"
+              placeholder="admin@local.com"
+              class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 font-mono text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Contraseña inicial</label>
+            <input
+              type="text"
+              formControlName="adminContrasenia"
+              placeholder="Mínimo 4 caracteres"
+              class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 font-mono font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-surface-borderDark">
+      <button type="button" (click)="cerrarModalLocal()" class="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer">
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        [disabled]="guardandoLocal()"
+        class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral tap-scale cursor-pointer"
+      >
+        {{ guardandoLocal() ? 'Guardando…' : localEditando() ? 'Guardar Cambios' : 'Crear Local y Acceso' }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- =========================================================================
+     MODAL 2: CREAR / EDITAR USUARIO
+     ========================================================================= -->
+<app-modal [abierto]="modalUsuarioAbierto()" variante="dialogo" claseAncho="max-w-md" (cerrado)="cerrarModalUsuario()">
+  <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-borderDark">
+    <div>
+      <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">
+        {{ usuarioEditando() ? 'Editar Usuario' : 'Nuevo Usuario' }}
+      </h3>
+      <p class="text-xs text-zinc-400">Asignale un local o permisos de administrador general.</p>
+    </div>
+    <button type="button" (click)="cerrarModalUsuario()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center cursor-pointer">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form [formGroup]="formUsuario" (ngSubmit)="guardarUsuario()" novalidate class="mt-4 space-y-3 text-xs">
+    <div>
+      <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre completo *</label>
+      <input
+        type="text"
+        formControlName="nombre"
+        placeholder="Ej: Encargado Local"
+        class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-bold text-zinc-900 dark:text-white"
+      />
+    </div>
+
+    <div>
+      <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Email de ingreso *</label>
+      <input
+        type="email"
+        formControlName="email"
+        placeholder="admin@tulocal.com"
+        class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-mono text-zinc-900 dark:text-white"
+      />
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Rol</label>
+        <select
+          formControlName="rol"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 font-bold text-zinc-900 dark:text-white"
+        >
+          <option value="administrador">Admin de Local</option>
+          <option value="superadmin">Root (Superadmin)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Local asignado</label>
+        <select
+          formControlName="localId"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-2 font-bold text-zinc-900 dark:text-white"
+        >
+          @for (l of root.locales(); track l.id) {
+            <option [ngValue]="l.id">{{ l.nombre }} (/{{ l.slug }})</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+        {{ usuarioEditando() ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña inicial *' }}
+      </label>
+      <input
+        type="text"
+        formControlName="contrasenia"
+        placeholder="Mínimo 4 caracteres"
+        class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-mono font-bold text-zinc-900 dark:text-white"
+      />
+    </div>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-surface-borderDark">
+      <button type="button" (click)="cerrarModalUsuario()" class="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer">
+        Cancelar
+      </button>
+      <button type="submit" [disabled]="guardandoUsuario()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral cursor-pointer">
+        {{ guardandoUsuario() ? 'Guardando…' : 'Guardar Usuario' }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- =========================================================================
+     MODAL 3: BLANQUEO RÁPIDO DE CONTRASEÑA
+     ========================================================================= -->
+<app-modal [abierto]="modalClaveAbierto()" variante="dialogo" claseAncho="max-w-sm" (cerrado)="cerrarModalClave()">
+  @if (usuarioClave(); as u) {
+    <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-borderDark">
+      <div>
+        <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">Blanquear Contraseña</h3>
+        <p class="text-xs text-zinc-400">{{ u.nombre }} · {{ u.email }}</p>
+      </div>
+      <button type="button" (click)="cerrarModalClave()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center cursor-pointer">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="mt-4 space-y-3 text-xs">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nueva contraseña de acceso</label>
+        <input
+          type="text"
+          [ngModel]="nuevaClave()"
+          (ngModelChange)="nuevaClave.set($event)"
+          placeholder="Ej: local2026"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2.5 font-mono font-extrabold text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+        />
+        <p class="text-[11px] text-zinc-400 mt-1">Escribí la clave nueva y compartísela al encargado del local.</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-surface-borderDark">
+        <button type="button" (click)="cerrarModalClave()" class="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="confirmarCambioClave()"
+          [disabled]="guardandoClave()"
+          class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral cursor-pointer"
+        >
+          {{ guardandoClave() ? 'Guardando…' : 'Actualizar Clave' }}
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>
+
+<!-- =========================================================================
+     MODAL 4: CREAR / EDITAR PLAN COMERCIAL
+     ========================================================================= -->
+<app-modal [abierto]="modalPlanAbierto()" variante="dialogo" claseAncho="max-w-lg" (cerrado)="cerrarModalPlan()">
+  <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-borderDark">
+    <div>
+      <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">
+        {{ planEditando() ? 'Editar Plan Comercial' : 'Nuevo Plan Comercial' }}
+      </h3>
+      <p class="text-xs text-zinc-400">Se actualiza en la Landing Pública y en el selector de planes de locales.</p>
+    </div>
+    <button type="button" (click)="cerrarModalPlan()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center cursor-pointer">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form [formGroup]="formPlan" (ngSubmit)="guardarPlan()" novalidate class="mt-4 space-y-3 text-xs">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nombre del Plan *</label>
+        <input
+          type="text"
+          formControlName="nombre"
+          placeholder="Ej: Control de Pedidos & Stock"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-bold text-zinc-900 dark:text-white"
+        />
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Etiqueta de Nivel *</label>
+        <input
+          type="text"
+          formControlName="nivel"
+          placeholder="Ej: Gestión Activa"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 text-zinc-900 dark:text-white"
+        />
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Precio Mensual ($) *</label>
+        <input
+          type="number"
+          min="0"
+          formControlName="mensual"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-extrabold text-zinc-900 dark:text-white"
+        />
+      </div>
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Precio Anual por mes ($) *</label>
+        <input
+          type="number"
+          min="0"
+          formControlName="anual"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-extrabold text-zinc-900 dark:text-white"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Descripción breve</label>
+      <input
+        type="text"
+        formControlName="descripcion"
+        class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 text-zinc-900 dark:text-white"
+      />
+    </div>
+
+    <div>
+      <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Características incluidas (una por línea) *</label>
+      <textarea
+        rows="4"
+        formControlName="caracteristicasTexto"
+        class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 text-zinc-900 dark:text-white leading-relaxed resize-none"
+      ></textarea>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+      <div>
+        <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Texto del botón (CTA)</label>
+        <input
+          type="text"
+          formControlName="cta"
+          class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-bold text-zinc-900 dark:text-white"
+        />
+      </div>
+      <label class="flex items-center gap-2.5 pt-4 cursor-pointer select-none">
+        <input type="checkbox" formControlName="destacado" class="w-4 h-4 accent-brand-600 rounded" />
+        <span class="font-bold text-zinc-800 dark:text-zinc-200">Marcar como Plan Destacado</span>
+      </label>
+    </div>
+
+    <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-surface-borderDark">
+      <button type="button" (click)="cerrarModalPlan()" class="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer">
+        Cancelar
+      </button>
+      <button type="submit" [disabled]="guardandoPlan()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral cursor-pointer">
+        {{ guardandoPlan() ? 'Guardando…' : 'Guardar Plan' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

@@ -26,7 +26,7 @@ export class ModalFormularioProductoComponente {
   readonly cerrado = output<void>();
   readonly guardado = output<ValorFormularioProducto>();
 
-  readonly esEdicion = computed(() => this.producto() !== null);
+  readonly esEdicion = computed(() => (this.producto()?.id ?? 0) > 0);
   readonly gruposOpciones = signal<GrupoOpciones[]>([]);
   readonly intentoEnvio = signal(false);
 
