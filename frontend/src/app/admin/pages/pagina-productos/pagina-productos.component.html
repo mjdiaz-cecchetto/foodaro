@@ -154,10 +154,10 @@
       </div>
 
       <!-- Grilla Adaptativa de Productos -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1920px]:grid-cols-6 gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 min-[1920px]:grid-cols-5 gap-5">
         @for (p of filtrados(); track p.id; let primeroProd = $first; let ultimoProd = $last) {
           <div
-            class="bg-white dark:bg-zinc-900 rounded-3xl border p-4 shadow-sm flex flex-col justify-between space-y-3 transition-all hover:shadow-md"
+            class="group bg-white dark:bg-zinc-900 rounded-3xl border p-4 shadow-sm flex flex-col justify-between space-y-3 transition-all hover:shadow-md"
             [class]="p.disponible
               ? 'border-zinc-200/80 dark:border-zinc-800'
               : 'border-dashed border-zinc-300 dark:border-zinc-700 opacity-70'"
@@ -170,7 +170,7 @@
                     [src]="p.imagen"
                     [alt]="p.nombre"
                     (error)="marcarImagenRota(p.id)"
-                    class="w-full h-full object-cover"
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 } @else {
                   <div class="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-400 text-xs flex-col gap-1">
@@ -181,15 +181,43 @@
 
                 <!-- Badge Disponibilidad -->
                 <span
-                  class="absolute top-2.5 left-2.5 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full backdrop-blur-md shadow-sm"
+                  class="absolute top-2.5 left-2.5 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full backdrop-blur-md shadow-sm z-10"
                   [class]="p.disponible ? 'bg-emerald-500 text-white' : 'bg-zinc-900/90 text-zinc-300'"
                 >
                   {{ p.disponible ? 'EN CARTA' : 'PAUSADO' }}
                 </span>
 
+                <!-- Acciones Rápidas Flotantes (Opción 1) -->
+                <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
+                  <button
+                    type="button"
+                    (click)="abrirEdicionProducto(p)"
+                    class="w-7 h-7 rounded-xl flex items-center justify-center bg-zinc-900/60 hover:bg-brand-500 text-white backdrop-blur-md border border-white/20 shadow-sm transition-all active:scale-95 cursor-pointer"
+                    title="Editar producto"
+                  >
+                    <i class="fa-solid fa-pen text-[11px]"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="duplicarProducto(p)"
+                    class="w-7 h-7 rounded-xl flex items-center justify-center bg-zinc-900/60 hover:bg-sky-500 text-white backdrop-blur-md border border-white/20 shadow-sm transition-all active:scale-95 cursor-pointer"
+                    title="Duplicar producto"
+                  >
+                    <i class="fa-regular fa-copy text-[11px]"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="eliminarProducto(p)"
+                    class="w-7 h-7 rounded-xl flex items-center justify-center bg-zinc-900/60 hover:bg-rose-500 text-white backdrop-blur-md border border-white/20 shadow-sm transition-all active:scale-95 cursor-pointer"
+                    title="Eliminar de la carta"
+                  >
+                    <i class="fa-solid fa-trash-can text-[11px]"></i>
+                  </button>
+                </div>
+
                 <!-- Badge Modificadores -->
                 @if (p.gruposOpciones.length > 0) {
-                  <span class="absolute bottom-2.5 left-2.5 text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-zinc-950/80 text-amber-400 border border-zinc-800/80 backdrop-blur-sm flex items-center gap-1">
+                  <span class="absolute bottom-2.5 left-2.5 text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-zinc-950/80 text-amber-400 border border-zinc-800/80 backdrop-blur-sm flex items-center gap-1 z-10">
                     <i class="fa-solid fa-sliders text-[9px]"></i>
                     {{ p.gruposOpciones.length }} {{ p.gruposOpciones.length === 1 ? 'grupo' : 'grupos' }}
                   </span>
@@ -215,8 +243,8 @@
               </div>
             </div>
 
-            <!-- Footer Card -->
-            <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+            <!-- Footer Card Limpio y Espacioso -->
+            <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 text-xs">
               <label class="inline-flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -230,48 +258,26 @@
                 </span>
               </label>
 
-              <div class="flex items-center gap-0.5">
+              <!-- Control de Reordenamiento Agrupado -->
+              <div class="flex items-center bg-zinc-100 dark:bg-zinc-800/80 rounded-xl p-0.5 border border-zinc-200/60 dark:border-zinc-700/60">
                 <button
                   type="button"
                   (click)="moverProducto(p, -1)"
                   [disabled]="primeroProd"
-                  class="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  class="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-25 disabled:hover:bg-transparent transition-all cursor-pointer"
                   title="Mover antes"
                 >
-                  <i class="fa-solid fa-arrow-up text-xs"></i>
+                  <i class="fa-solid fa-arrow-up text-[10px]"></i>
                 </button>
+                <div class="w-[1px] h-3 bg-zinc-300 dark:bg-zinc-700 my-auto"></div>
                 <button
                   type="button"
                   (click)="moverProducto(p, 1)"
                   [disabled]="ultimoProd"
-                  class="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  class="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-25 disabled:hover:bg-transparent transition-all cursor-pointer"
                   title="Mover después"
                 >
-                  <i class="fa-solid fa-arrow-down text-xs"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="duplicarProducto(p)"
-                  class="text-zinc-400 hover:text-sky-500 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  title="Duplicar Producto con sus opciones"
-                >
-                  <i class="fa-regular fa-copy text-xs"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="abrirEdicionProducto(p)"
-                  class="text-zinc-400 hover:text-brand-500 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  title="Editar Producto"
-                >
-                  <i class="fa-solid fa-pen-to-square text-sm"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="eliminarProducto(p)"
-                  class="text-zinc-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer"
-                  title="Eliminar Producto"
-                >
-                  <i class="fa-solid fa-trash-can text-xs"></i>
+                  <i class="fa-solid fa-arrow-down text-[10px]"></i>
                 </button>
               </div>
             </div>
