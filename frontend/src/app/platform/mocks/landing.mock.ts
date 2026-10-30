@@ -87,7 +87,7 @@ export const PLANES: Plan[] = [
       'Banners promocionales y cupones de descuento',
       'Kit imprimible de mostrador en PDF',
     ],
-    cta: 'Probar 14 Días Gratis',
+    cta: 'Probar 30 Días Gratis',
     destacado: true,
   },
   {
@@ -127,9 +127,9 @@ export const PREGUNTAS_FRECUENTES: PreguntaFrecuente[] = [
   },
 ];
 
-/** WhatsApp comercial de Foodaro (de la maqueta). */
-export const WHATSAPP_VENTAS_FOODARO = '3853115268';
-export const WHATSAPP_REGISTRO_FOODARO = '5491140508800';
+/** WhatsApp comercial de Foodaro (con código de país 549 para Argentina). */
+export const WHATSAPP_VENTAS_FOODARO = '5493853115268';
+export const WHATSAPP_REGISTRO_FOODARO = '5493853115268';
 
 /** Comisión promedio que retienen las apps de delivery (para la calculadora). */
 export const TASA_COMISION_MARKETPLACE = 0.25;

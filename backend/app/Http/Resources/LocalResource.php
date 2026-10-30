@@ -17,6 +17,7 @@ class LocalResource extends JsonResource
         return [
             'id' => $this->id,
             'slug' => $this->slug,
+            'suscripcion' => $this->resource->resumenSuscripcion(),
             'perfil' => new PerfilLocalResource($this->resource),
             'configuracion' => [
                 'moneda' => $this->moneda,
@@ -26,6 +27,8 @@ class LocalResource extends JsonResource
                 'montoMinimoEnvio' => (float) ($this->monto_minimo_envio ?? 0),
                 'aliasTransferencia' => $this->alias_transferencia ?? '',
                 'titularTransferencia' => $this->titular_transferencia ?? '',
+                'cerradoTemporalmente' => (bool) ($this->cerrado_temporalmente ?? false),
+                'enviosPausados' => (bool) ($this->envios_pausados ?? false),
             ],
             'categorias' => CategoriaResource::collection($this->whenLoaded('categorias')),
             'productos' => ProductoResource::collection($this->whenLoaded('productos')),

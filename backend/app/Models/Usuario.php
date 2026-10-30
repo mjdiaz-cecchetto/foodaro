@@ -8,7 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-/** Usuario del panel admin de un local. */
+/** Usuario del panel admin de un local o Root de Foodaro. */
 class Usuario extends Authenticatable
 {
     use HasApiTokens, Notifiable;
@@ -20,7 +20,7 @@ class Usuario extends Authenticatable
         'activo' => true,
     ];
 
-    protected $fillable = ['local_id', 'nombre', 'email', 'password', 'rol', 'activo'];
+    protected $fillable = ['local_id', 'nombre', 'email', 'password', 'rol', 'activo', 'ultimo_acceso_en'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -30,6 +30,7 @@ class Usuario extends Authenticatable
             'password' => 'hashed',
             'rol' => RolUsuario::class,
             'activo' => 'boolean',
+            'ultimo_acceso_en' => 'datetime',
         ];
     }
 

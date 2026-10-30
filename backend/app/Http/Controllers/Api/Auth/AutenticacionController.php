@@ -33,6 +33,7 @@ class AutenticacionController extends Controller
             throw ValidationException::withMessages(['email' => 'Las credenciales no son válidas.']);
         }
 
+        $usuario->forceFill(['ultimo_acceso_en' => now()])->saveQuietly();
         $token = $usuario->createToken('panel-local', [self::HABILIDAD_ADMIN])->plainTextToken;
 
         return response()->json([
@@ -52,6 +53,7 @@ class AutenticacionController extends Controller
             throw ValidationException::withMessages(['email' => 'Las credenciales no son válidas.']);
         }
 
+        $usuario->forceFill(['ultimo_acceso_en' => now()])->saveQuietly();
         $token = $usuario->createToken('panel-root', [self::HABILIDAD_ROOT])->plainTextToken;
 
         return response()->json([

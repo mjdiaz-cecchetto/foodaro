@@ -112,6 +112,10 @@ class HorariosServicio
     /** @return array{abierto: bool, texto: string} */
     public function estadoActual(Local $local): array
     {
+        if ($local->cerrado_temporalmente) {
+            return ['abierto' => false, 'texto' => 'Cerrado por hoy'];
+        }
+
         $ahora = $this->ahora();
 
         // Franja vigente: la de hoy, o la de ayer que cruza la medianoche

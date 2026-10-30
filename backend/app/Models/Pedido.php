@@ -15,12 +15,13 @@ class Pedido extends Model
 
     protected $attributes = [
         'estado' => EstadoPedido::Pendiente,
+        'pagado' => false,
     ];
 
     protected $fillable = [
         'local_id', 'numero', 'estado', 'modo_entrega',
         'nombre_cliente', 'telefono_cliente', 'calle', 'piso_depto', 'referencia',
-        'medio_pago', 'monto_efectivo', 'comentarios',
+        'medio_pago', 'pagado', 'pagado_en', 'monto_efectivo', 'comentarios',
         'promocion_id', 'codigo_promo', 'subtotal', 'descuento', 'cargo_servicio', 'costo_envio', 'total',
     ];
 
@@ -30,6 +31,8 @@ class Pedido extends Model
             'estado' => EstadoPedido::class,
             'modo_entrega' => ModoEntrega::class,
             'medio_pago' => MedioPago::class,
+            'pagado' => 'boolean',
+            'pagado_en' => 'datetime',
             'monto_efectivo' => 'decimal:2',
             'subtotal' => 'decimal:2',
             'descuento' => 'decimal:2',

@@ -6,16 +6,21 @@ use App\Enums\RolUsuario;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UsuarioResource;
 use App\Models\Local;
+use App\Models\PagoSuscripcion;
 use App\Models\Pedido;
 use App\Models\Plan;
 use App\Models\Producto;
+use App\Models\SolicitudAlta;
 use App\Models\Usuario;
 use App\Services\HorariosServicio;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Controlador maestro del usuario Root (Superadmin) de Foodaro:
@@ -51,6 +56,38 @@ class RootController extends Controller
         return response()->json(['data' => $planes]);
     }
 
+    /** POST /api/solicitudes — Registra una solicitud de prueba gratuita (30 días) desde la Landing. */
+    public function crearSolicitudPublica(Request $request): JsonResponse
+    {
+        $datos = $request->validate([
+            'nombreComercio' => ['required', 'string', 'max:160'],
+            'ciudad' => ['nullable', 'string', 'max:120'],
+            'whatsapp' => ['required', 'string', 'max:60'],
+            'plan' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $planTexto = ! empty($datos['plan']) ? trim($datos['plan']) : null;
+        $planModel = $planTexto
+            ? Plan::query()
+                ->where('nombre', $planTexto)
+                ->orWhere('codigo', Str::slug($planTexto))
+                ->first()
+            : null;
+
+        $solicitud = SolicitudAlta::create([
+            'nombre_comercio' => trim($datos['nombreComercio']),
+            'ciudad' => ! empty($datos['ciudad']) ? trim($datos['ciudad']) : null,
+            'whatsapp' => trim($datos['whatsapp']),
+            'plan_nombre' => $planModel?->nombre ?? $planTexto ?? 'Control de Pedidos & Stock',
+            'plan_id' => $planModel?->id,
+            'estado' => 'nuevo',
+        ]);
+
+        return response()->json([
+            'data' => $this->formatearSolicitud($solicitud->load(['plan:id,nombre', 'local:id,slug,nombre'])),
+        ], 201);
+    }
+
     /** GET /api/root/resumen — Métricas globales, locales, usuarios y planes. */
     public function resumen(Request $request): JsonResponse
     {
@@ -59,8 +96,14 @@ class RootController extends Controller
         $locales = Local::query()
             ->with(['plan', 'usuarios'])
             ->withCount(['productos', 'categorias', 'usuarios', 'pedidos'])
+            ->withMax('pedidos', 'created_at')
+            ->withMax('productos', 'updated_at')
+            ->withMax('usuarios', 'ultimo_acceso_en')
             ->orderByDesc('id')
             ->get();
+
+        // Sincronizar automáticamente el estado de suscripción según fecha de vencimiento
+        $locales->each(fn (Local $l) => $l->sincronizarEstadoSuscripcion());
 
         $planes = Plan::query()
             ->withCount('locales')
@@ -72,6 +115,25 @@ class RootController extends Controller
             ->with('local:id,slug,nombre')
             ->orderByDesc('id')
             ->get();
+
+        $pagos = PagoSuscripcion::query()
+            ->with(['local:id,slug,nombre', 'plan:id,nombre'])
+            ->orderByDesc('fecha_pago')
+            ->orderByDesc('id')
+            ->limit(100)
+            ->get();
+
+        $solicitudes = SolicitudAlta::query()
+            ->with(['plan:id,nombre', 'local:id,slug,nombre'])
+            ->orderByRaw("CASE WHEN estado = 'nuevo' THEN 0 WHEN estado = 'contactado' THEN 1 WHEN estado = 'alta' THEN 2 ELSE 3 END")
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get();
+
+        $inicioMes = Carbon::now()->startOfMonth()->toDateString();
+        $ingresosCobradosMes = (float) PagoSuscripcion::query()->where('fecha_pago', '>=', $inicioMes)->sum('monto');
+        $ingresosCobradosTotal = (float) PagoSuscripcion::query()->sum('monto');
+        $cantidadPagosMes = (int) PagoSuscripcion::query()->where('fecha_pago', '>=', $inicioMes)->count();
 
         $localesActivos = $locales->where('activo', true);
         $mrr = $localesActivos->sum(fn (Local $l) => (float) ($l->plan?->mensual ?? 0));
@@ -86,13 +148,20 @@ class RootController extends Controller
                     'suscripcionesPorVencer' => $locales->whereIn('estado_suscripcion', ['por_vencer', 'prueba'])->count(),
                     'suscripcionesVencidas' => $locales->where('estado_suscripcion', 'vencido')->count(),
                     'ingresosMensualesEstimados' => round($mrr, 2),
+                    'ingresosCobradosMes' => round($ingresosCobradosMes, 2),
+                    'ingresosCobradosTotal' => round($ingresosCobradosTotal, 2),
+                    'cantidadPagosMes' => $cantidadPagosMes,
                     'totalProductos' => Producto::query()->count(),
                     'totalPedidos' => Pedido::query()->count(),
                     'totalUsuarios' => $usuarios->count(),
+                    'solicitudesNuevas' => $solicitudes->where('estado', 'nuevo')->count(),
+                    'totalSolicitudes' => $solicitudes->count(),
                 ],
                 'locales' => $locales->map(fn (Local $l) => $this->formatearLocal($l))->values(),
                 'planes' => $planes->map(fn (Plan $p) => $this->formatearPlan($p))->values(),
                 'usuarios' => $usuarios->map(fn (Usuario $u) => $this->formatearUsuario($u))->values(),
+                'pagos' => $pagos->map(fn (PagoSuscripcion $pg) => $this->formatearPago($pg))->values(),
+                'solicitudes' => $solicitudes->map(fn (SolicitudAlta $s) => $this->formatearSolicitud($s))->values(),
             ],
         ]);
     }
@@ -121,6 +190,7 @@ class RootController extends Controller
             'adminNombre' => ['nullable', 'string', 'max:120'],
             'adminEmail' => ['nullable', 'email', 'max:190', 'unique:usuarios,email'],
             'adminContrasenia' => ['nullable', 'string', 'min:4', 'max:100'],
+            'solicitudId' => ['nullable', 'integer', 'exists:solicitudes_alta,id'],
         ]);
 
         $local = DB::transaction(function () use ($datos, $horarios) {
@@ -138,8 +208,15 @@ class RootController extends Controller
                 'activo' => $datos['activo'] ?? true,
                 'plan_id' => $datos['planId'] ?? null,
                 'estado_suscripcion' => $datos['estadoSuscripcion'],
-                'vencimiento_suscripcion' => $datos['vencimientoSuscripcion'] ?? now()->addMonth()->toDateString(),
+                'vencimiento_suscripcion' => $datos['vencimientoSuscripcion'] ?? now()->addDays(30)->toDateString(),
             ]);
+
+            if (! empty($datos['solicitudId'])) {
+                SolicitudAlta::query()->where('id', $datos['solicitudId'])->update([
+                    'estado' => 'alta',
+                    'local_id' => $local->id,
+                ]);
+            }
 
             $semanaBase = collect(['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'])->map(fn (string $dia) => [
                 'dia' => $dia,
@@ -420,6 +497,17 @@ class RootController extends Controller
         return response()->json(['data' => $this->formatearPlan($plan)]);
     }
 
+    /** PATCH /api/root/planes/{plan}/estado — Pausa o reactiva un plan comercial (lo oculta/muestra en la landing). */
+    public function alternarEstadoPlan(Request $request, Plan $plan): JsonResponse
+    {
+        $this->verificarSuperadmin($request);
+
+        $plan->update(['activo' => ! $plan->activo]);
+        $plan->loadCount('locales');
+
+        return response()->json(['data' => $this->formatearPlan($plan)]);
+    }
+
     /** DELETE /api/root/planes/{plan} */
     public function eliminarPlan(Request $request, Plan $plan): JsonResponse
     {
@@ -430,11 +518,173 @@ class RootController extends Controller
     }
 
     /* =========================================================================
+     | 4. REGISTRO DE COBROS DE SUSCRIPCIONES
+     * ========================================================================= */
+
+    /** POST /api/root/pagos — Registra un cobro y extiende automáticamente la suscripción del local. */
+    public function registrarPago(Request $request): JsonResponse
+    {
+        $this->verificarSuperadmin($request);
+
+        $datos = $request->validate([
+            'localId' => ['required', 'integer', 'exists:locales,id'],
+            'planId' => ['nullable', 'integer', 'exists:planes,id'],
+            'monto' => ['required', 'numeric', 'min:0'],
+            'periodoMeses' => ['required', 'integer', 'min:1', 'max:24'],
+            'medioPago' => ['required', 'string', Rule::in(['transferencia', 'efectivo', 'tarjeta', 'otro'])],
+            'fechaPago' => ['required', 'date'],
+            'referencia' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $pago = DB::transaction(function () use ($datos) {
+            /** @var Local $local */
+            $local = Local::query()->findOrFail($datos['localId']);
+
+            $planId = $datos['planId'] ?? $local->plan_id;
+            $meses = (int) $datos['periodoMeses'];
+            $fechaPago = Carbon::parse($datos['fechaPago'])->startOfDay();
+            $vencimientoAnterior = $local->vencimiento_suscripcion
+                ? Carbon::parse($local->vencimiento_suscripcion)->startOfDay()
+                : null;
+
+            // Si el local todavía tenía días vigentes a favor, sumamos desde su vencimiento; si ya había vencido, desde la fecha de pago.
+            $baseCalculo = ($vencimientoAnterior && $vencimientoAnterior->greaterThan($fechaPago))
+                ? $vencimientoAnterior->copy()
+                : $fechaPago->copy();
+
+            $vencimientoNuevo = $baseCalculo->addMonths($meses);
+
+            $local->update([
+                'plan_id' => $planId,
+                'vencimiento_suscripcion' => $vencimientoNuevo->toDateString(),
+                'estado_suscripcion' => 'al_dia',
+                'activo' => true,
+            ]);
+
+            $pago = PagoSuscripcion::create([
+                'local_id' => $local->id,
+                'plan_id' => $planId,
+                'monto' => (float) $datos['monto'],
+                'periodo_meses' => $meses,
+                'medio_pago' => $datos['medioPago'],
+                'fecha_pago' => $fechaPago->toDateString(),
+                'vencimiento_anterior' => $vencimientoAnterior?->toDateString(),
+                'vencimiento_nuevo' => $vencimientoNuevo->toDateString(),
+                'referencia' => ! empty($datos['referencia']) ? trim($datos['referencia']) : null,
+            ]);
+
+            return $pago->load(['local:id,slug,nombre', 'plan:id,nombre']);
+        });
+
+        return response()->json(['data' => $this->formatearPago($pago)], 201);
+    }
+
+    /** DELETE /api/root/pagos/{pago} — Elimina un registro de cobro cargado por error. */
+    public function eliminarPago(Request $request, PagoSuscripcion $pago): JsonResponse
+    {
+        $this->verificarSuperadmin($request);
+        $pago->delete();
+
+        return response()->json(null, 204);
+    }
+
+    /* =========================================================================
+     | 4B. BANDEJA DE SOLICITUDES DESDE LA LANDING ("LEADS")
+     * ========================================================================= */
+
+    /** PATCH /api/root/solicitudes/{solicitud} — Cambia el estado (nuevo, contactado, alta, descartado) o notas. */
+    public function actualizarSolicitud(Request $request, SolicitudAlta $solicitud): JsonResponse
+    {
+        $this->verificarSuperadmin($request);
+
+        $datos = $request->validate([
+            'estado' => ['sometimes', 'required', 'string', Rule::in(['nuevo', 'contactado', 'alta', 'descartado'])],
+            'notas' => ['nullable', 'string', 'max:500'],
+            'localId' => ['nullable', 'integer', 'exists:locales,id'],
+        ]);
+
+        if (array_key_exists('estado', $datos)) {
+            $solicitud->estado = $datos['estado'];
+        }
+        if (array_key_exists('notas', $datos)) {
+            $solicitud->notas = $datos['notas'] !== null ? trim($datos['notas']) : null;
+        }
+        if (array_key_exists('localId', $datos)) {
+            $solicitud->local_id = $datos['localId'];
+        }
+        $solicitud->save();
+
+        $solicitud->load(['plan:id,nombre', 'local:id,slug,nombre']);
+
+        return response()->json(['data' => $this->formatearSolicitud($solicitud)]);
+    }
+
+    /** DELETE /api/root/solicitudes/{solicitud} — Elimina una solicitud de la bandeja. */
+    public function eliminarSolicitud(Request $request, SolicitudAlta $solicitud): JsonResponse
+    {
+        $this->verificarSuperadmin($request);
+        $solicitud->delete();
+
+        return response()->json(null, 204);
+    }
+
+    /* =========================================================================
+     | 5. MI CUENTA ROOT (PERFIL Y CAMBIO DE CONTRASEÑA PROPIA)
+     * ========================================================================= */
+
+    /** PUT /api/root/mi-cuenta — Actualiza nombre, email y/o contraseña del propio usuario Root. */
+    public function actualizarMiCuenta(Request $request): JsonResponse
+    {
+        $this->verificarSuperadmin($request);
+
+        /** @var Usuario $usuario */
+        $usuario = $request->user();
+
+        $datos = $request->validate([
+            'nombre' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190', Rule::unique('usuarios', 'email')->ignore($usuario->id)],
+            'contraseniaActual' => ['nullable', 'string'],
+            'nuevaContrasenia' => ['nullable', 'string', 'min:4', 'max:100'],
+        ]);
+
+        if (! empty($datos['nuevaContrasenia'])) {
+            if (empty($datos['contraseniaActual']) || ! Hash::check($datos['contraseniaActual'], $usuario->password)) {
+                throw ValidationException::withMessages([
+                    'contraseniaActual' => 'La contraseña actual ingresada no es correcta.',
+                ]);
+            }
+            $usuario->password = $datos['nuevaContrasenia'];
+        }
+
+        $usuario->nombre = trim($datos['nombre']);
+        $usuario->email = strtolower(trim($datos['email']));
+        $usuario->save();
+
+        return response()->json([
+            'data' => new UsuarioResource($usuario),
+        ]);
+    }
+
+    /* =========================================================================
      | FORMATEADORES JSON
      * ========================================================================= */
 
     private function formatearLocal(Local $l): array
     {
+        $resumen = $l->resumenSuscripcion();
+
+        $fechasActividad = array_filter([
+            $l->usuarios_max_ultimo_acceso_en ? Carbon::parse($l->usuarios_max_ultimo_acceso_en) : null,
+            $l->pedidos_max_created_at ? Carbon::parse($l->pedidos_max_created_at) : null,
+            $l->productos_max_updated_at ? Carbon::parse($l->productos_max_updated_at) : null,
+            $l->updated_at,
+        ]);
+
+        $ultimaActividad = ! empty($fechasActividad) ? max($fechasActividad) : null;
+        $diasSinActividad = $ultimaActividad
+            ? (int) max(0, Carbon::now()->startOfDay()->diffInDays($ultimaActividad->copy()->startOfDay(), false) * -1)
+            : 0;
+
         return [
             'id' => $l->id,
             'slug' => $l->slug,
@@ -445,16 +695,44 @@ class RootController extends Controller
             'whatsapp' => $l->whatsapp ?? '',
             'direccion' => $l->direccion ?? '',
             'activo' => (bool) $l->activo,
+            'cerradoTemporalmente' => (bool) ($l->cerrado_temporalmente ?? false),
+            'enviosPausados' => (bool) ($l->envios_pausados ?? false),
             'planId' => $l->plan_id,
             'planNombre' => $l->plan?->nombre ?? 'Sin plan',
             'planMensual' => (float) ($l->plan?->mensual ?? 0),
-            'estadoSuscripcion' => $l->estado_suscripcion ?? 'al_dia',
-            'vencimientoSuscripcion' => $l->vencimiento_suscripcion ? $l->vencimiento_suscripcion->format('Y-m-d') : null,
+            'estadoSuscripcion' => $resumen['estado'],
+            'vencimientoSuscripcion' => $resumen['vencimiento'],
+            'diasRestantes' => $resumen['diasRestantes'],
+            'enPeriodoGracia' => $resumen['enPeriodoGracia'],
+            'cartaSuspendida' => $resumen['cartaSuspendida'],
             'productosCount' => (int) ($l->productos_count ?? 0),
             'categoriasCount' => (int) ($l->categorias_count ?? 0),
             'usuariosCount' => (int) ($l->usuarios_count ?? 0),
             'pedidosCount' => (int) ($l->pedidos_count ?? 0),
             'creadoEn' => $l->created_at?->format('Y-m-d'),
+            'ultimoAccesoEn' => $l->usuarios_max_ultimo_acceso_en ? Carbon::parse($l->usuarios_max_ultimo_acceso_en)->format('Y-m-d H:i') : null,
+            'ultimoPedidoEn' => $l->pedidos_max_created_at ? Carbon::parse($l->pedidos_max_created_at)->format('Y-m-d H:i') : null,
+            'ultimaActividadEn' => $ultimaActividad?->format('Y-m-d H:i'),
+            'diasSinActividad' => $diasSinActividad,
+        ];
+    }
+
+    private function formatearPago(PagoSuscripcion $pg): array
+    {
+        return [
+            'id' => $pg->id,
+            'localId' => $pg->local_id,
+            'localNombre' => $pg->local?->nombre ?? 'Local eliminado',
+            'localSlug' => $pg->local?->slug ?? '',
+            'planId' => $pg->plan_id,
+            'planNombre' => $pg->plan?->nombre ?? 'Sin plan',
+            'monto' => (float) $pg->monto,
+            'periodoMeses' => (int) $pg->periodo_meses,
+            'medioPago' => $pg->medio_pago,
+            'fechaPago' => $pg->fecha_pago?->format('Y-m-d'),
+            'vencimientoAnterior' => $pg->vencimiento_anterior?->format('Y-m-d'),
+            'vencimientoNuevo' => $pg->vencimiento_nuevo?->format('Y-m-d'),
+            'referencia' => $pg->referencia ?? '',
         ];
     }
 
@@ -469,6 +747,7 @@ class RootController extends Controller
             'localId' => $u->local_id,
             'localNombre' => $u->local?->nombre ?? null,
             'localSlug' => $u->local?->slug ?? null,
+            'ultimoAccesoEn' => $u->ultimo_acceso_en?->format('Y-m-d H:i'),
         ];
     }
 
@@ -488,6 +767,24 @@ class RootController extends Controller
             'activo' => (bool) $p->activo,
             'orden' => (int) $p->orden,
             'localesCount' => (int) ($p->locales_count ?? 0),
+        ];
+    }
+
+    private function formatearSolicitud(SolicitudAlta $s): array
+    {
+        return [
+            'id' => $s->id,
+            'nombreComercio' => $s->nombre_comercio,
+            'ciudad' => $s->ciudad ?? '',
+            'whatsapp' => $s->whatsapp,
+            'planNombre' => $s->plan?->nombre ?? $s->plan_nombre ?? 'Control de Pedidos & Stock',
+            'planId' => $s->plan_id,
+            'estado' => $s->estado,
+            'localId' => $s->local_id,
+            'localNombre' => $s->local?->nombre ?? null,
+            'localSlug' => $s->local?->slug ?? null,
+            'notas' => $s->notas ?? '',
+            'creadoEn' => $s->created_at?->format('Y-m-d H:i'),
         ];
     }
 }

@@ -17,6 +17,9 @@ class PedidoPublicoController extends Controller
     public function store(CrearPedidoRequest $request, string $slug): JsonResponse
     {
         $local = Local::query()->where('slug', strtolower($slug))->where('activo', true)->firstOrFail();
+        if ($local->resumenSuscripcion()['cartaSuspendida']) {
+            abort(423, 'La carta digital de este comercio no se encuentra disponible temporalmente.');
+        }
 
         $pedido = $this->pedidos->crear($local, $request->validated());
 

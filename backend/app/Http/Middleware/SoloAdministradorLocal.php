@@ -29,6 +29,10 @@ class SoloAdministradorLocal
             abort(403, 'Acceso exclusivo para el administrador del local.');
         }
 
+        if (! $usuario->ultimo_acceso_en || $usuario->ultimo_acceso_en->lt(now()->subMinutes(5))) {
+            $usuario->forceFill(['ultimo_acceso_en' => now()])->saveQuietly();
+        }
+
         return $next($request);
     }
 }

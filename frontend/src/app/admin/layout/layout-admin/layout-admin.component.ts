@@ -22,6 +22,7 @@ export class LayoutAdminComponente implements OnInit {
   private readonly router = inject(Router);
 
   readonly barraLateralAbierta = signal(false);
+  readonly suscripcion = this.local.suscripcion;
 
   ngOnInit(): void {
     this.notificaciones.definirPosicion('abajo-derecha');

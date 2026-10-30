@@ -72,6 +72,25 @@ export interface ConfiguracionLocal {
   aliasTransferencia?: string;
   /** Nombre del titular o banco de la cuenta de transferencia. */
   titularTransferencia?: string;
+  /** Pausa rápida: cierra el local por hoy sin modificar los horarios semanales. */
+  cerradoTemporalmente?: boolean;
+  /** Pausa rápida: deshabilita temporalmente los envíos a domicilio (solo retiro). */
+  enviosPausados?: boolean;
+}
+
+export interface SuscripcionLocal {
+  planId: number | null;
+  planNombre: string;
+  planNivel?: string;
+  planMensual: number;
+  planAnual?: number;
+  planCaracteristicas?: string[];
+  estado: 'al_dia' | 'prueba' | 'por_vencer' | 'vencido';
+  vencimiento: string | null;
+  diasRestantes: number | null;
+  enPeriodoGracia: boolean;
+  diasGraciaRestantes: number;
+  cartaSuspendida: boolean;
 }
 
 /**
@@ -81,6 +100,7 @@ export interface ConfiguracionLocal {
 export interface Local {
   id?: number;
   slug: string;
+  suscripcion?: SuscripcionLocal;
   perfil: PerfilLocal;
   configuracion: ConfiguracionLocal;
   categorias: Categoria[];

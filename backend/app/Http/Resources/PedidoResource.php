@@ -24,6 +24,8 @@ class PedidoResource extends JsonResource
                 'referencia' => $this->referencia ?? '',
             ] : null,
             'medioPago' => $this->medio_pago->value,
+            'pagado' => (bool) ($this->pagado ?? false),
+            'pagadoEn' => $this->pagado_en?->toIso8601String(),
             'montoEfectivo' => $this->monto_efectivo !== null ? (float) $this->monto_efectivo : null,
             'comentarios' => $this->comentarios ?? '',
             'codigoPromo' => $this->codigo_promo,

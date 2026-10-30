@@ -71,7 +71,7 @@ return new class extends Migration
                     'Banners promocionales y cupones de descuento',
                     'Kit imprimible de mostrador en PDF',
                 ], JSON_UNESCAPED_UNICODE),
-                'cta' => 'Probar 14 Días Gratis',
+                'cta' => 'Probar 30 Días Gratis',
                 'destacado' => true,
                 'activo' => true,
                 'orden' => 2,

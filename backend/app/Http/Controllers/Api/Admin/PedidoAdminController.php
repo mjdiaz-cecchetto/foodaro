@@ -97,6 +97,10 @@ class PedidoAdminController extends Controller
         $cantidadValidos = $validos->count();
         $ticketPromedio = $cantidadValidos > 0 ? round($totalVendido / $cantidadValidos, 2) : 0.0;
 
+        // Control de pedidos Pagados vs Sin Pagar (sobre pedidos válidos, excluyendo cancelados)
+        $pagadosValidos = $validos->filter(fn (Pedido $p) => (bool) $p->pagado);
+        $sinPagarValidos = $validos->filter(fn (Pedido $p) => ! $p->pagado);
+
         // Arqueo por medio de pago
         $porMedioPago = [];
         foreach (['efectivo', 'transferencia', 'debito'] as $medio) {
@@ -140,6 +144,14 @@ class PedidoAdminController extends Controller
                     'pedidosCancelados' => $cancelados->count(),
                     'pedidosEnCurso' => $enCurso->count(),
                     'ticketPromedio' => $ticketPromedio,
+                    'cobrado' => [
+                        'monto' => (float) $pagadosValidos->sum('total'),
+                        'cantidad' => $pagadosValidos->count(),
+                    ],
+                    'pendienteCobro' => [
+                        'monto' => (float) $sinPagarValidos->sum('total'),
+                        'cantidad' => $sinPagarValidos->count(),
+                    ],
                     'porMedioPago' => $porMedioPago,
                     'porModoEntrega' => [
                         'envio' => [
@@ -170,6 +182,23 @@ class PedidoAdminController extends Controller
     {
         $this->authorize('update', $pedido);
         $pedido->update(['estado' => $request->validated('estado')]);
+
+        return new PedidoResource($pedido->load('items.opciones'));
+    }
+
+    /** PATCH /api/admin/pedidos/{pedido}/pago — Marca un pedido como Pagado o Sin Pagar en 1 clic. */
+    public function alternarPago(Request $request, Pedido $pedido): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+
+        $nuevoEstadoPago = $request->has('pagado')
+            ? (bool) $request->boolean('pagado')
+            : ! $pedido->pagado;
+
+        $pedido->update([
+            'pagado' => $nuevoEstadoPago,
+            'pagado_en' => $nuevoEstadoPago ? now() : null,
+        ]);
 
         return new PedidoResource($pedido->load('items.opciones'));
     }

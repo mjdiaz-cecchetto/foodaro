@@ -103,18 +103,53 @@
               </button>
             </div>
           }
+          <!-- Acciones de Exportación e Impresión del Cierre de Caja -->
+          <div class="flex items-center gap-2 text-xs shrink-0">
+            <button type="button" (click)="exportarCierreCsv()" class="h-8 px-3 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-extrabold flex items-center gap-1.5 transition cursor-pointer" title="Descargar cierre de caja y detalle de pedidos en Excel (.CSV)">
+              <i class="fa-solid fa-file-csv"></i><span>Exportar Excel</span>
+            </button>
+            <button type="button" (click)="imprimirCierreCaja()" class="h-8 px-3 rounded-xl border border-zinc-300 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark hover:border-zinc-900 dark:hover:border-white text-zinc-800 dark:text-zinc-100 font-extrabold flex items-center gap-1.5 transition cursor-pointer" title="Imprimir o guardar en PDF el cierre de caja del período">
+              <i class="fa-solid fa-print"></i><span>Imprimir cierre</span>
+            </button>
+          </div>
         </div>
 
         <!-- Totales del período -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+        @let cp = conteoPagos();
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
           <div class="rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 p-3">
             <p class="text-[10px] font-bold uppercase tracking-wider opacity-70">Vendido · {{ etiquetaPeriodoActivo() }}</p>
             <p class="text-lg font-black leading-tight mt-0.5">{{ a.totalVendido | precio }}</p>
+            <p class="text-[10px] opacity-75 mt-0.5">{{ a.pedidosValidos }} pedidos válidos</p>
           </div>
-          <div class="rounded-xl bg-zinc-50 dark:bg-surface-cardDark p-3">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Pedidos válidos</p>
-            <p class="text-lg font-black text-zinc-900 dark:text-white leading-tight mt-0.5">{{ a.pedidosValidos }}</p>
-          </div>
+          <button
+            type="button"
+            (click)="filtroPago.set(filtroPago() === 'pagados' ? 'todos' : 'pagados')"
+            class="text-left rounded-xl bg-emerald-50/80 dark:bg-emerald-500/10 border p-3 transition cursor-pointer"
+            [class]="filtroPago() === 'pagados' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-emerald-200 dark:border-emerald-500/30'"
+            title="Filtrar solo pedidos pagados"
+          >
+            <p class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+              <i class="fa-solid fa-circle-check mr-1"></i>Pagados ({{ a.cobrado?.cantidad ?? cp.pagados }})
+            </p>
+            <p class="text-lg font-black text-emerald-800 dark:text-emerald-200 leading-tight mt-0.5">
+              {{ (a.cobrado?.monto ?? cp.montoPagados) | precio }}
+            </p>
+          </button>
+          <button
+            type="button"
+            (click)="filtroPago.set(filtroPago() === 'sin_pagar' ? 'todos' : 'sin_pagar')"
+            class="text-left rounded-xl bg-amber-50/80 dark:bg-amber-500/10 border p-3 transition cursor-pointer"
+            [class]="filtroPago() === 'sin_pagar' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-amber-200 dark:border-amber-500/30'"
+            title="Filtrar solo pedidos pendientes de pago"
+          >
+            <p class="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+              <i class="fa-solid fa-clock mr-1"></i>Sin pagar ({{ a.pendienteCobro?.cantidad ?? cp.sinPagar }})
+            </p>
+            <p class="text-lg font-black text-amber-800 dark:text-amber-200 leading-tight mt-0.5">
+              {{ (a.pendienteCobro?.monto ?? cp.montoSinPagar) | precio }}
+            </p>
+          </button>
           <div class="rounded-xl bg-zinc-50 dark:bg-surface-cardDark p-3">
             <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Ticket promedio</p>
             <p class="text-lg font-black text-zinc-900 dark:text-white leading-tight mt-0.5">{{ a.ticketPromedio | precio }}</p>
@@ -227,99 +262,386 @@
         </p>
       </div>
 
-      <!-- Filtros simples y listado -->
-      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3">
-        <div class="flex items-center justify-between gap-2 flex-wrap">
-          <div class="flex items-center gap-1.5 flex-wrap text-xs font-bold">
+      <!-- Consola en Vivo: Controles de mostrador, Vista Lista / Tablero y Comanda -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <!-- Barra de estado en vivo, alerta sonora y selector de vista -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pb-3 border-b border-zinc-100 dark:border-surface-borderDark">
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Interruptor En Vivo -->
             <button
               type="button"
-              (click)="filtroEstado.set('todos')"
-              class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
-              [class]="filtroEstado() === 'todos' ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+              (click)="alternarEnVivo()"
+              class="h-8 px-3 rounded-xl border text-xs font-extrabold flex items-center gap-2 transition cursor-pointer"
+              [class]="enVivo()
+                ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                : 'border-zinc-200 dark:border-surface-borderDark bg-zinc-100 dark:bg-surface-cardDark text-zinc-500'"
             >
-              Todos
+              <span class="relative flex h-2 w-2">
+                @if (enVivo()) {
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                }
+                <span class="relative inline-flex rounded-full h-2 w-2" [class]="enVivo() ? 'bg-emerald-500' : 'bg-zinc-400'"></span>
+              </span>
+              <span>{{ enVivo() ? 'En vivo (15s)' : 'En vivo pausado' }}</span>
             </button>
-            @for (est of estadosDisponibles; track est.valor) {
-              <button
-                type="button"
-                (click)="filtroEstado.set(est.valor)"
-                class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
-                [class]="filtroEstado() === est.valor ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
-              >
-                {{ est.etiqueta }}
-              </button>
+
+            <!-- Interruptor Alerta Sonora -->
+            <button
+              type="button"
+              (click)="alternarSonido()"
+              class="h-8 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+              [class]="sonidoActivo()
+                ? 'border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                : 'border-zinc-200 dark:border-surface-borderDark text-zinc-500'"
+              title="Activar o silenciar timbre cuando entra un pedido nuevo"
+            >
+              <i class="fa-solid" [class]="sonidoActivo() ? 'fa-volume-high' : 'fa-volume-xmark'"></i>
+              <span>{{ sonidoActivo() ? 'Alerta sonora' : 'Silenciado' }}</span>
+            </button>
+
+            <!-- Botón probar timbre -->
+            <button
+              type="button"
+              (click)="probarSonido()"
+              class="h-8 px-2.5 rounded-xl border border-zinc-200 dark:border-surface-borderDark hover:border-brand-400 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5 transition cursor-pointer"
+              title="Escuchar timbre de mostrador"
+            >
+              <i class="fa-regular fa-bell text-brand-600"></i>
+              <span>Probar timbre</span>
+            </button>
+
+            @if (ultimaActualizacion()) {
+              <span class="text-[11px] text-zinc-400">
+                Actualizado {{ ultimaActualizacion() }}
+              </span>
             }
+          </div>
+
+          <!-- Selector Vista Lista vs Vista Tablero (Cocina/Mostrador) -->
+          <div class="flex items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-xs font-bold self-start lg:self-auto">
+            <button
+              type="button"
+              (click)="modoVista.set('lista')"
+              class="px-3 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+              [class]="modoVista() === 'lista' ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'"
+            >
+              <i class="fa-solid fa-list"></i>
+              <span>Lista</span>
+            </button>
+            <button
+              type="button"
+              (click)="modoVista.set('tablero')"
+              class="px-3 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+              [class]="modoVista() === 'tablero' ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'"
+            >
+              <i class="fa-solid fa-table-columns"></i>
+              <span>Tablero Mostrador</span>
+            </button>
           </div>
         </div>
 
-        <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
-          @for (p of pedidosFiltrados(); track p.id) {
-            <div class="py-3 first:pt-1 last:pb-1 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-              <!-- Info principal del pedido -->
-              <div class="space-y-1 min-w-0 flex-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
-                    #{{ formatearNumero(p.numero) }}
-                  </span>
-                  <span class="text-xs font-extrabold text-zinc-900 dark:text-white">{{ p.cliente.nombre }}</span>
-                  <a
-                    [href]="enlaceWhatsAppCliente(p.cliente.telefono)"
-                    target="_blank"
-                    rel="noopener"
-                    class="text-[11px] font-bold text-emerald-600 hover:underline inline-flex items-center gap-1"
-                  >
-                    <i class="fa-brands fa-whatsapp"></i>{{ p.cliente.telefono }}
-                  </a>
-                  <span class="text-[11px] text-zinc-400">· {{ formatearFecha(p.creadoEn) }}</span>
-                  <span
-                    class="text-[10px] font-bold px-2 py-0.5 rounded-md"
-                    [class]="p.modoEntrega === 'envio' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300'"
-                  >
-                    <i class="fa-solid mr-1" [class]="p.modoEntrega === 'envio' ? 'fa-motorcycle' : 'fa-store'"></i>
-                    {{ p.modoEntrega === 'envio' ? 'Envío' : 'Retiro' }}
-                  </span>
-                </div>
-
-                <!-- Platos del pedido -->
-                <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-snug">
-                  @for (item of p.items; track item.id; let ultimo = $last) {
-                    <span class="font-bold text-zinc-800 dark:text-zinc-100">{{ item.cantidad }}x</span> {{ item.nombre }}@if (!ultimo) {<span>, </span>}
-                  }
-                </p>
-
-                @if (p.modoEntrega === 'envio' && p.direccion) {
-                  <p class="text-[11px] text-zinc-400">
-                    <i class="fa-solid fa-location-dot mr-1"></i>{{ p.direccion.calle }} {{ p.direccion.pisoDepto }} {{ p.direccion.referencia ? '(' + p.direccion.referencia + ')' : '' }}
-                  </p>
-                }
-              </div>
-
-              <!-- Importe y Estado -->
-              <div class="flex items-center justify-between lg:justify-end gap-3 shrink-0">
-                <div class="text-left lg:text-right">
-                  <p class="text-sm font-black text-zinc-900 dark:text-white leading-none">{{ p.totales.total | precio }}</p>
-                  <p class="text-[10px] text-zinc-400 uppercase font-bold mt-1">{{ p.medioPago }}</p>
-                </div>
-
-                <select
-                  [ngModel]="p.estado"
-                  (ngModelChange)="cambiarEstadoPedido(p, $event)"
-                  class="text-xs font-bold px-3 py-1.5 rounded-xl border focus:outline-none cursor-pointer"
-                  [class]="claseEstado(p.estado)"
+        <!-- ===============================================================
+             MODO 1: VISTA LISTA
+             =============================================================== -->
+        @if (modoVista() === 'lista') {
+          @let cpFiltro = conteoPagos();
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 flex-wrap text-xs font-bold">
+              <button
+                type="button"
+                (click)="filtroEstado.set('todos')"
+                class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+                [class]="filtroEstado() === 'todos' ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+              >
+                Todos
+              </button>
+              @for (est of estadosDisponibles; track est.valor) {
+                <button
+                  type="button"
+                  (click)="filtroEstado.set(est.valor)"
+                  class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+                  [class]="filtroEstado() === est.valor ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
                 >
-                  @for (est of estadosDisponibles; track est.valor) {
-                    <option [value]="est.valor" class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">{{ est.etiqueta }}</option>
+                  {{ est.etiqueta }}
+                </button>
+              }
+            </div>
+
+            <!-- Filtro rápido: Sin Pagar vs Pagados -->
+            <div class="flex items-center gap-1.5 flex-wrap text-xs font-extrabold">
+              <button
+                type="button"
+                (click)="filtroPago.set('todos')"
+                class="px-2.5 py-1.5 rounded-xl border transition cursor-pointer"
+                [class]="filtroPago() === 'todos' ? 'border-zinc-800 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-500'"
+              >
+                Todos cobros
+              </button>
+              <button
+                type="button"
+                (click)="filtroPago.set('sin_pagar')"
+                class="px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1.5"
+                [class]="filtroPago() === 'sin_pagar'
+                  ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
+                  : 'border-amber-300 dark:border-amber-500/40 bg-amber-50/70 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300'"
+              >
+                <i class="fa-solid fa-clock text-[11px]"></i>
+                <span>Sin pagar ({{ cpFiltro.sinPagar }})</span>
+              </button>
+              <button
+                type="button"
+                (click)="filtroPago.set('pagados')"
+                class="px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1.5"
+                [class]="filtroPago() === 'pagados'
+                  ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                  : 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'"
+              >
+                <i class="fa-solid fa-circle-check text-[11px]"></i>
+                <span>Pagados ({{ cpFiltro.pagados }})</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+            @for (p of pedidosFiltrados(); track p.id) {
+              <div
+                class="py-3 first:pt-1 last:pb-1 flex flex-col lg:flex-row lg:items-center justify-between gap-3 rounded-xl transition"
+                [class]="esPedidoNuevo(p.id) ? 'bg-amber-50/70 dark:bg-amber-500/10 px-3 ring-2 ring-amber-400/70' : ''"
+              >
+                <!-- Info principal del pedido -->
+                <div class="space-y-1 min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
+                      #{{ formatearNumero(p.numero) }}
+                    </span>
+                    @if (esPedidoNuevo(p.id)) {
+                      <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500 text-white animate-pulse">
+                        ¡NUEVO!
+                      </span>
+                    }
+                    <span class="text-xs font-extrabold text-zinc-900 dark:text-white">{{ p.cliente.nombre }}</span>
+                    <a
+                      [href]="enlaceWhatsAppCliente(p.cliente.telefono)"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-[11px] font-bold text-emerald-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <i class="fa-brands fa-whatsapp"></i>{{ p.cliente.telefono }}
+                    </a>
+                    <span class="text-[11px] text-zinc-400">· {{ formatearFecha(p.creadoEn) }}</span>
+                    <span
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                      [class]="p.modoEntrega === 'envio' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300'"
+                    >
+                      <i class="fa-solid mr-1" [class]="p.modoEntrega === 'envio' ? 'fa-motorcycle' : 'fa-store'"></i>
+                      {{ p.modoEntrega === 'envio' ? 'Envío' : 'Retiro' }}
+                    </span>
+                  </div>
+
+                  <!-- Platos del pedido con adicionales y notas -->
+                  <div class="text-xs text-zinc-600 dark:text-zinc-300 leading-snug space-y-0.5">
+                    @for (item of p.items; track item.id) {
+                      <div>
+                        <span class="font-bold text-zinc-900 dark:text-white">{{ item.cantidad }}x {{ item.nombre }}</span>
+                        @if (item.opciones.length > 0) {
+                          <span class="text-[11px] text-zinc-500">
+                            (@for (op of item.opciones; track op.etiqueta; let uOp = $last) {{{ op.etiqueta }}@if (!uOp) {, }})
+                          </span>
+                        }
+                        @if (item.notas) {
+                          <span class="ml-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                            · Nota: "{{ item.notas }}"
+                          </span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  @if (p.comentarios) {
+                    <p class="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                      <i class="fa-regular fa-comment-dots mr-1"></i>Obs: {{ p.comentarios }}
+                    </p>
                   }
-                </select>
+
+                  @if (p.modoEntrega === 'envio' && p.direccion) {
+                    <p class="text-[11px] text-zinc-400">
+                      <i class="fa-solid fa-location-dot mr-1"></i>{{ p.direccion.calle }} {{ p.direccion.pisoDepto }} {{ p.direccion.referencia ? '(' + p.direccion.referencia + ')' : '' }}
+                    </p>
+                  }
+                </div>
+
+                <!-- Importe, Control Pagado / Sin Pagar, Comanda y Estado -->
+                <div class="flex items-center justify-between lg:justify-end gap-2 shrink-0 flex-wrap">
+                  <div class="text-left lg:text-right mr-1">
+                    <p class="text-sm font-black text-zinc-900 dark:text-white leading-none">{{ p.totales.total | precio }}</p>
+                    <p class="text-[10px] text-zinc-400 uppercase font-bold mt-1">{{ p.medioPago }}</p>
+                  </div>
+
+                  <!-- Botón 1 clic: Sin Pagar vs Pagado -->
+                  @if (p.estado !== 'cancelado') {
+                    <button
+                      type="button"
+                      (click)="alternarPagoPedido(p)"
+                      class="h-8 px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer tap-scale"
+                      [class]="p.pagado
+                        ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100'
+                        : 'border-amber-400 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white'"
+                      [title]="p.pagado ? 'Pedido ya cobrado (clic para volver a Sin pagar)' : 'Pedido pendiente de cobro (clic para marcar como Pagado)'"
+                    >
+                      <i class="fa-solid text-xs" [class]="p.pagado ? 'fa-circle-check' : 'fa-hand-holding-dollar'"></i>
+                      <span>{{ p.pagado ? 'Pagado' : 'Sin pagar' }}</span>
+                    </button>
+                  }
+
+                  <!-- Botón Imprimir Comanda 58/80mm -->
+                  <button
+                    type="button"
+                    (click)="imprimirComanda(p)"
+                    class="h-8 px-3 rounded-xl border border-zinc-300 dark:border-surface-borderDark hover:border-zinc-900 dark:hover:border-white bg-zinc-50 dark:bg-surface-cardDark text-zinc-800 dark:text-zinc-100 text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+                    title="Imprimir comanda / ticket de cocina (58/80 mm)"
+                  >
+                    <i class="fa-solid fa-print"></i>
+                    <span>Comanda</span>
+                  </button>
+
+                  <select
+                    [ngModel]="p.estado"
+                    (ngModelChange)="cambiarEstadoPedido(p, $event)"
+                    class="text-xs font-bold px-3 py-1.5 rounded-xl border focus:outline-none cursor-pointer"
+                    [class]="claseEstado(p.estado)"
+                  >
+                    @for (est of estadosDisponibles; track est.valor) {
+                      <option [value]="est.valor" class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">{{ est.etiqueta }}</option>
+                    }
+                  </select>
+                </div>
               </div>
-            </div>
-          } @empty {
-            <div class="py-10 text-center text-xs text-zinc-400">
-              <i class="fa-solid fa-receipt text-2xl mb-2 block opacity-40"></i>
-              Todavía no hay pedidos registrados con este filtro. Cuando un cliente confirme desde la carta, aparecerá acá automáticamente.
-            </div>
-          }
-        </div>
+            } @empty {
+              <div class="py-10 text-center text-xs text-zinc-400">
+                <i class="fa-solid fa-receipt text-2xl mb-2 block opacity-40"></i>
+                Todavía no hay pedidos registrados con este filtro. Cuando un cliente confirme desde la carta, sonará la alerta y aparecerá acá automáticamente.
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ===============================================================
+             MODO 2: VISTA TABLERO EN COLUMNAS (MOSTRADOR / COCINA)
+             =============================================================== -->
+        @if (modoVista() === 'tablero') {
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            @for (col of columnasTablero(); track col.id) {
+              <div class="rounded-2xl bg-zinc-50/80 dark:bg-surface-cardDark border border-zinc-200/70 dark:border-surface-borderDark p-3 flex flex-col gap-2.5 min-h-[280px]">
+                <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs font-extrabold" [class]="col.colorCabecera">
+                  <span class="flex items-center gap-1.5">
+                    <i class="fa-solid" [class]="col.icono"></i>
+                    <span>{{ col.titulo }}</span>
+                  </span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/80 dark:bg-zinc-900/60 font-black">{{ col.pedidos.length }}</span>
+                </div>
+
+                <div class="space-y-2.5 flex-1">
+                  @for (p of col.pedidos; track p.id) {
+                    <div
+                      class="rounded-xl bg-white dark:bg-surface-dark p-3 shadow-sm border transition space-y-2"
+                      [class]="esPedidoNuevo(p.id) ? 'border-amber-400 ring-2 ring-amber-400/40' : 'border-zinc-200/80 dark:border-surface-borderDark'"
+                    >
+                      <div class="flex items-center justify-between gap-1">
+                        <div class="flex items-center gap-1.5">
+                          <span class="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
+                            #{{ formatearNumero(p.numero) }}
+                          </span>
+                          @if (esPedidoNuevo(p.id)) {
+                            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white">NUEVO</span>
+                          }
+                        </div>
+                        <span
+                          class="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                          [class]="p.modoEntrega === 'envio' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300'"
+                        >
+                          <i class="fa-solid mr-1" [class]="p.modoEntrega === 'envio' ? 'fa-motorcycle' : 'fa-store'"></i>
+                          {{ p.modoEntrega === 'envio' ? 'Envío' : 'Retiro' }}
+                        </span>
+                      </div>
+
+                      <div>
+                        <p class="text-xs font-extrabold text-zinc-900 dark:text-white leading-tight">{{ p.cliente.nombre }}</p>
+                        <div class="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
+                          <a [href]="enlaceWhatsAppCliente(p.cliente.telefono)" target="_blank" rel="noopener" class="text-emerald-600 font-bold hover:underline">
+                            <i class="fa-brands fa-whatsapp mr-0.5"></i>{{ p.cliente.telefono }}
+                          </a>
+                          <span>· {{ formatearFecha(p.creadoEn) }}</span>
+                        </div>
+                      </div>
+
+                      <div class="text-xs text-zinc-700 dark:text-zinc-200 border-t border-b border-zinc-100 dark:border-surface-borderDark py-1.5 space-y-1">
+                        @for (item of p.items; track item.id) {
+                          <div class="leading-tight">
+                            <span class="font-extrabold">{{ item.cantidad }}x</span> {{ item.nombre }}
+                            @if (item.opciones.length > 0) {
+                              <div class="text-[10px] text-zinc-500 pl-3">
+                                + @for (op of item.opciones; track op.etiqueta; let uOp = $last) {{{ op.etiqueta }}@if (!uOp) {, }}
+                              </div>
+                            }
+                            @if (item.notas) {
+                              <div class="text-[10px] font-bold text-amber-600 pl-3">Nota: {{ item.notas }}</div>
+                            }
+                          </div>
+                        }
+                      </div>
+
+                      <div class="flex items-center justify-between text-xs gap-1.5">
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-[10px] font-bold uppercase text-zinc-400">{{ p.medioPago }}</span>
+                          <button
+                            type="button"
+                            (click)="alternarPagoPedido(p)"
+                            class="px-2 py-0.5 rounded-md border text-[10px] font-extrabold flex items-center gap-1 transition cursor-pointer"
+                            [class]="p.pagado
+                              ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                              : 'border-amber-400 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white'"
+                            [title]="p.pagado ? 'Pedido pagado (clic para desmarcar)' : 'Clic para marcar como Pagado'"
+                          >
+                            <i class="fa-solid text-[9px]" [class]="p.pagado ? 'fa-circle-check' : 'fa-clock'"></i>
+                            <span>{{ p.pagado ? 'Pagado' : 'Sin pagar' }}</span>
+                          </button>
+                        </div>
+                        <span class="font-black text-zinc-900 dark:text-white">{{ p.totales.total | precio }}</span>
+                      </div>
+
+                      <div class="flex items-center gap-1.5 pt-1">
+                        <button
+                          type="button"
+                          (click)="imprimirComanda(p)"
+                          class="h-7 px-2.5 rounded-lg border border-zinc-300 dark:border-surface-borderDark text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-surface-cardDark flex items-center gap-1 cursor-pointer"
+                          title="Imprimir comanda"
+                        >
+                          <i class="fa-solid fa-print"></i>
+                          <span>Ticket</span>
+                        </button>
+
+                        @if (col.siguienteEstado) {
+                          <button
+                            type="button"
+                            (click)="cambiarEstadoPedido(p, col.siguienteEstado)"
+                            class="flex-1 h-7 px-2.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-[11px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <span>{{ col.etiquetaSiguiente }}</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  } @empty {
+                    <div class="py-8 text-center text-[11px] text-zinc-400">
+                      Sin pedidos en esta etapa
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
     </div>
   }

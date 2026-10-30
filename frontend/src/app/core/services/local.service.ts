@@ -12,6 +12,7 @@ import {
   PerfilLocal,
   Producto,
   Promocion,
+  SuscripcionLocal,
 } from '../../shared/models';
 import { RespuestaApi } from '../../shared/utils/api';
 
@@ -36,6 +37,7 @@ export class LocalServicio {
 
   readonly id = signal<number | null>(null);
   readonly slug = signal<string | null>(null);
+  readonly suscripcion = signal<SuscripcionLocal | null>(null);
   readonly perfil = signal<PerfilLocal | null>(null);
   readonly configuracion = signal<ConfiguracionLocal>(CONFIGURACION_POR_DEFECTO);
   readonly categorias = signal<Categoria[]>([]);
@@ -72,6 +74,7 @@ export class LocalServicio {
   aplicar(local: Local, completo: boolean): void {
     this.id.set(local.id ?? null);
     this.slug.set(local.slug);
+    this.suscripcion.set(local.suscripcion ?? null);
     this.perfil.set(local.perfil);
     this.configuracion.set(local.configuracion);
     this.categorias.set(local.categorias ?? []);

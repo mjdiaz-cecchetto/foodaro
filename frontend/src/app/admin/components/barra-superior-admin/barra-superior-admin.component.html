@@ -1,4 +1,5 @@
 @let p = perfil();
+@let s = suscripcion();
 <header class="shrink-0 h-16 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 bg-white dark:bg-surface-dark border-b border-zinc-200 dark:border-surface-borderDark z-30">
 
   <!-- Izquierda: menú (móvil) + identidad del local -->
@@ -11,12 +12,49 @@
     }
     <div class="min-w-0 leading-tight">
       <h1 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white truncate">{{ p.nombre || 'Mi local' }}</h1>
-      <p class="hidden sm:block text-[11px] text-zinc-400 truncate">Panel de administración · <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Carta activa</span></p>
+      <p class="hidden sm:block text-[11px] text-zinc-400 truncate">
+        Panel de administración ·
+        @if (cerradoTemporalmente()) {
+          <span class="text-red-500 font-bold">Cerrado por hoy (pausa rápida)</span>
+        } @else {
+          <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ p.estado || 'Carta activa' }}</span>
+        }
+      </p>
     </div>
   </div>
 
-  <!-- Derecha: tema, carta, usuario y salir -->
-  <div class="flex items-center gap-2 shrink-0">
+  <!-- Derecha: Pausa rápida (Cerrar por hoy / Pausar envíos), tema, carta, Mi Cuenta y salir -->
+  <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+    <!-- Botón Pausa Rápida 1: Cerrar por hoy / Reabrir -->
+    <button
+      type="button"
+      (click)="alternarCierreTemporal()"
+      [disabled]="actualizandoPausa()"
+      class="h-9 px-2.5 sm:px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer tap-scale"
+      [class]="cerradoTemporalmente()
+        ? 'border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400'
+        : 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:border-emerald-400'"
+      [title]="cerradoTemporalmente() ? 'El local figura cerrado hoy. Clic para reabrir según tus horarios.' : 'Pausa rápida: cerrar el local por hoy sin modificar tus horarios semanales.'"
+    >
+      <i class="fa-solid" [class]="cerradoTemporalmente() ? 'fa-door-closed' : 'fa-door-open'"></i>
+      <span class="hidden xl:inline">{{ cerradoTemporalmente() ? 'Cerrado hoy · Reabrir' : 'Cerrar por hoy' }}</span>
+    </button>
+
+    <!-- Botón Pausa Rápida 2: Pausar envíos / Reactivar envíos -->
+    <button
+      type="button"
+      (click)="alternarPausaEnvios()"
+      [disabled]="actualizandoPausa()"
+      class="h-9 px-2.5 sm:px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer tap-scale"
+      [class]="enviosPausados()
+        ? 'border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300'
+        : 'border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 hover:border-brand-400'"
+      [title]="enviosPausados() ? 'Los envíos a domicilio están pausados (solo retiro). Clic para reactivarlos.' : 'Pausa rápida: pausar temporalmente los envíos a domicilio.'"
+    >
+      <i class="fa-solid fa-motorcycle"></i>
+      <span class="hidden xl:inline">{{ enviosPausados() ? 'Envíos pausados' : 'Pausar envíos' }}</span>
+    </button>
+
     <app-alternar-tema
       claseBoton="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-surface-cardDark border border-zinc-200/60 dark:border-surface-borderDark text-zinc-600 dark:text-amber-400 flex items-center justify-center tap-scale"
       claseIcono="text-sm"
@@ -26,16 +64,252 @@
       <i class="fa-solid fa-arrow-up-right-from-square"></i><span class="hidden lg:inline">Ver carta</span>
     </a>
 
-    <div class="hidden md:flex items-center gap-2 pl-3 ml-1 border-l border-zinc-200 dark:border-surface-borderDark">
-      <span class="w-8 h-8 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-black flex items-center justify-center uppercase">{{ (usuario()?.nombre || 'A').charAt(0) }}</span>
-      <div class="leading-tight hidden lg:block">
+    <!-- Botón Mi Cuenta y Suscripción -->
+    <button
+      type="button"
+      (click)="abrirMiCuenta()"
+      class="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-xl border-l border-zinc-200 dark:border-surface-borderDark hover:bg-zinc-100 dark:hover:bg-surface-cardDark transition cursor-pointer"
+      title="Ver mi plan, vencimiento, pagos y cambiar contraseña"
+    >
+      <span class="w-8 h-8 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-black flex items-center justify-center uppercase shrink-0">
+        {{ (usuario()?.nombre || 'A').charAt(0) }}
+      </span>
+      <div class="leading-tight hidden lg:block text-left">
         <p class="text-xs font-bold text-zinc-900 dark:text-white truncate max-w-[140px]">{{ usuario()?.nombre }}</p>
-        <p class="text-[10px] text-zinc-400 truncate max-w-[140px]">{{ usuario()?.email }}</p>
+        <p class="text-[10px] text-zinc-400 truncate max-w-[155px]">
+          <span class="text-brand-600 font-extrabold">Mi cuenta y Plan</span>
+          @if (s?.diasRestantes !== null && s?.diasRestantes !== undefined) {
+            <span> · {{ s!.diasRestantes! >= 0 ? s!.diasRestantes + 'd' : 'Vencido' }}</span>
+          }
+        </p>
       </div>
-    </div>
+    </button>
 
-    <button type="button" (click)="cerrarSesion.emit()" class="h-9 px-3 rounded-xl text-zinc-500 hover:text-brand-600 hover:bg-zinc-100 dark:hover:bg-surface-cardDark text-xs font-bold flex items-center gap-2 transition" title="Cerrar sesión">
+    <button type="button" (click)="cerrarSesion.emit()" class="h-9 px-3 rounded-xl text-zinc-500 hover:text-brand-600 hover:bg-zinc-100 dark:hover:bg-surface-cardDark text-xs font-bold flex items-center gap-2 transition cursor-pointer" title="Cerrar sesión">
       <i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline">Salir</span>
     </button>
   </div>
 </header>
+
+<!-- =========================================================================
+     MODAL: MI CUENTA Y SUSCRIPCIÓN DEL LOCAL (PUNTO 7)
+     ========================================================================= -->
+<app-modal [abierto]="modalMiCuentaAbierto()" variante="dialogo" claseAncho="max-w-xl" (cerrado)="cerrarMiCuenta()">
+  <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-surface-borderDark">
+    <div>
+      <h3 class="font-extrabold text-base text-zinc-900 dark:text-white flex items-center gap-2">
+        <i class="fa-solid fa-user-shield text-brand-600"></i>
+        <span>Mi Cuenta y Suscripción Foodaro</span>
+      </h3>
+      <p class="text-xs text-zinc-400">
+        Consultá el estado de tu plan, tus pagos registrados y actualizá tu contraseña de acceso.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="cerrarMiCuenta()"
+      class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-surface-cardDark text-zinc-500 flex items-center justify-center cursor-pointer"
+    >
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="mt-4 space-y-4 text-xs">
+    <!-- 1. Estado del Plan y Suscripción -->
+    @if (s) {
+      <div class="rounded-2xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50/80 dark:bg-surface-cardDark p-4 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-brand-600">
+              Plan contratado {{ s.planNivel ? '· ' + s.planNivel : '' }}
+            </span>
+            <h4 class="text-base font-black text-zinc-900 dark:text-white leading-tight mt-0.5">
+              {{ s.planNombre }}
+            </h4>
+          </div>
+          <span
+            class="self-start sm:self-auto px-3 py-1 rounded-full border text-[11px] font-extrabold"
+            [class]="claseEstadoSuscripcion(s.estado)"
+          >
+            {{ etiquetaEstadoSuscripcion(s.estado) }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-zinc-200/70 dark:border-surface-borderDark">
+          <div class="rounded-xl bg-white dark:bg-surface-dark p-2.5 border border-zinc-200/60 dark:border-surface-borderDark">
+            <p class="text-[10px] font-bold uppercase text-zinc-400">Valor mensual</p>
+            <p class="text-sm font-black text-zinc-900 dark:text-white mt-0.5">{{ s.planMensual | precio }}/mes</p>
+          </div>
+          <div class="rounded-xl bg-white dark:bg-surface-dark p-2.5 border border-zinc-200/60 dark:border-surface-borderDark">
+            <p class="text-[10px] font-bold uppercase text-zinc-400">Próximo vencimiento</p>
+            <p class="text-sm font-black text-zinc-900 dark:text-white font-mono mt-0.5">{{ s.vencimiento || 'Sin fecha' }}</p>
+          </div>
+          <div class="rounded-xl bg-white dark:bg-surface-dark p-2.5 border border-zinc-200/60 dark:border-surface-borderDark">
+            <p class="text-[10px] font-bold uppercase text-zinc-400">Días disponibles</p>
+            <p
+              class="text-sm font-black mt-0.5"
+              [class]="(s.diasRestantes ?? 0) < 0 ? 'text-red-500' : ((s.diasRestantes ?? 0) <= 5 ? 'text-amber-600' : 'text-emerald-600')"
+            >
+              @if (s.diasRestantes === null || s.diasRestantes === undefined) {
+                —
+              } @else if (s.diasRestantes > 0) {
+                {{ s.diasRestantes }} {{ s.diasRestantes === 1 ? 'día' : 'días' }}
+              } @else if (s.diasRestantes === 0) {
+                Vence hoy
+              } @else {
+                Vencido hace {{ s.diasRestantes * -1 }}d
+              }
+            </p>
+          </div>
+        </div>
+
+        @if (s.planCaracteristicas?.length) {
+          <details class="text-[11px] text-zinc-600 dark:text-zinc-300 pt-1">
+            <summary class="cursor-pointer font-bold text-zinc-700 dark:text-zinc-200 hover:text-brand-600">
+              Ver beneficios incluidos en tu plan ({{ s.planCaracteristicas!.length }})
+            </summary>
+            <ul class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
+              @for (c of s.planCaracteristicas; track c) {
+                <li class="flex items-start gap-1.5">
+                  <i class="fa-solid fa-check text-emerald-500 mt-0.5 text-[10px]"></i>
+                  <span>{{ c }}</span>
+                </li>
+              }
+            </ul>
+          </details>
+        }
+
+        <div class="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
+            ¿Querés renovar tu abono, enviar comprobante o cambiar de plan?
+          </p>
+          <a
+            [href]="enlaceRenovarWhatsapp()"
+            target="_blank"
+            rel="noopener"
+            class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs inline-flex items-center justify-center gap-1.5 shadow-sm tap-scale shrink-0"
+          >
+            <i class="fa-brands fa-whatsapp text-sm"></i>
+            <span>Hablar con Foodaro</span>
+          </a>
+        </div>
+      </div>
+    }
+
+    <!-- 2. Historial de Pagos realizados a Foodaro -->
+    <div class="space-y-2">
+      <p class="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500">
+        <i class="fa-solid fa-receipt mr-1"></i>Historial de pagos de suscripción ({{ pagosSuscripcion().length }})
+      </p>
+
+      @if (pagosSuscripcion().length > 0) {
+        <div class="max-h-36 overflow-y-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark">
+          <table class="w-full text-[11px]">
+            <thead class="bg-zinc-50 dark:bg-surface-cardDark text-[10px] uppercase text-zinc-500">
+              <tr>
+                <th class="text-left px-3 py-1.5">Fecha</th>
+                <th class="text-left px-3 py-1.5">Período</th>
+                <th class="text-left px-3 py-1.5">Medio</th>
+                <th class="text-right px-3 py-1.5">Monto</th>
+                <th class="text-right px-3 py-1.5">Vencimiento</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+              @for (pg of pagosSuscripcion(); track pg.id) {
+                <tr class="text-zinc-700 dark:text-zinc-200">
+                  <td class="px-3 py-1.5 font-mono">{{ pg.fechaPago }}</td>
+                  <td class="px-3 py-1.5 font-bold">{{ pg.periodoMeses }} {{ pg.periodoMeses === 1 ? 'mes' : 'meses' }}</td>
+                  <td class="px-3 py-1.5 uppercase text-[10px]">{{ pg.medioPago }}</td>
+                  <td class="px-3 py-1.5 text-right font-black text-emerald-600">{{ pg.monto | precio }}</td>
+                  <td class="px-3 py-1.5 text-right font-mono">{{ pg.vencimientoNuevo }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="text-[11px] text-zinc-400 bg-zinc-50 dark:bg-surface-cardDark rounded-xl px-3 py-2 border border-zinc-200/60 dark:border-surface-borderDark">
+          Todavía no registrás pagos abonados (estás dentro de tu período inicial o prueba gratuita).
+        </p>
+      }
+    </div>
+
+    <!-- 3. Mis datos de acceso y cambio de contraseña -->
+    <form [formGroup]="formMiCuenta" (ngSubmit)="guardarMiCuenta()" novalidate class="space-y-3 pt-2 border-t border-zinc-200 dark:border-surface-borderDark">
+      <p class="text-[11px] font-extrabold uppercase tracking-wider text-brand-600">
+        <i class="fa-solid fa-key mr-1"></i>Mis datos de acceso y contraseña
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Tu nombre *</label>
+          <input
+            type="text"
+            formControlName="nombre"
+            class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+          />
+        </div>
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Email de inicio de sesión *</label>
+          <input
+            type="email"
+            formControlName="email"
+            class="w-full bg-zinc-50 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+          />
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-zinc-50 dark:bg-surface-cardDark/70 border border-zinc-200/80 dark:border-surface-borderDark space-y-2.5">
+        <p class="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">
+          Cambiar contraseña <span class="text-zinc-400 font-normal">(dejá en blanco si no querés modificarla)</span>
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Contraseña actual</label>
+            <input
+              type="password"
+              formControlName="contraseniaActual"
+              placeholder="••••••"
+              class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-1.5 text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nueva contraseña</label>
+            <input
+              type="password"
+              formControlName="nuevaContrasenia"
+              placeholder="Mín. 4 caracteres"
+              class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-1.5 text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Repetir nueva</label>
+            <input
+              type="password"
+              formControlName="confirmarContrasenia"
+              placeholder="Repetir clave"
+              class="w-full bg-white dark:bg-surface-dark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3 py-1.5 text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button
+          type="button"
+          (click)="cerrarMiCuenta()"
+          class="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-surface-cardDark font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
+        >
+          Cerrar
+        </button>
+        <button
+          type="submit"
+          [disabled]="guardandoMiCuenta()"
+          class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-coral cursor-pointer"
+        >
+          {{ guardandoMiCuenta() ? 'Guardando…' : 'Guardar mis datos' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</app-modal>

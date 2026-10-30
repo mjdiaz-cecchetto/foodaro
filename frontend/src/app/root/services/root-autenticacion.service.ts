@@ -23,6 +23,15 @@ export class RootAutenticacionServicio {
 
   readonly estaAutenticado = computed(() => !!this.token() && this.usuario()?.rol === 'superadmin');
 
+  actualizarUsuario(usuario: UsuarioAutenticado): void {
+    this.usuario.set(usuario);
+    try {
+      localStorage.setItem(CLAVE_USUARIO_ROOT, JSON.stringify(usuario));
+    } catch {
+      /* ignorar */
+    }
+  }
+
   /** POST /root/auth/ingreso */
   ingresar(credenciales: CredencialesIngreso): Observable<RespuestaIngreso> {
     return this.http.post<RespuestaApi<RespuestaIngreso>>(`${this.base}/ingreso`, credenciales).pipe(

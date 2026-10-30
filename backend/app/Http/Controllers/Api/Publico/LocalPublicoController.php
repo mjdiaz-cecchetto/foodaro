@@ -15,6 +15,7 @@ class LocalPublicoController extends Controller
             ->where('slug', strtolower($slug))
             ->where('activo', true)
             ->with([
+                'plan',
                 'horarios',
                 'excepcionesHorario',
                 'categorias' => fn ($q) => $q->where('activa', true),
@@ -23,6 +24,11 @@ class LocalPublicoController extends Controller
                 'cupones' => fn ($q) => $q->where('activo', true),
             ])
             ->firstOrFail();
+
+        $suscripcion = $local->resumenSuscripcion();
+        if ($suscripcion['cartaSuspendida']) {
+            abort(423, 'La carta digital de este comercio no se encuentra disponible temporalmente.');
+        }
 
         return new LocalResource($local);
     }

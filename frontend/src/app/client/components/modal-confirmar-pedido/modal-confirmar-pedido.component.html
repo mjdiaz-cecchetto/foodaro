@@ -53,13 +53,15 @@
                   type="button"
                   (click)="elegirEntrega('envio')"
                   class="p-4 rounded-2xl border-2 text-left transition tap-scale"
-                  [class]="faltaParaEnvio() > 0
+                  [class]="(faltaParaEnvio() > 0 || enviosPausados())
                     ? 'border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-card/50 opacity-65'
                     : (modoEntrega() === 'envio' ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card')"
                 >
                   <div class="flex items-center justify-between mb-3">
                     <span class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" [class]="modoEntrega() === 'envio' ? 'bg-brand-600 text-white' : 'bg-gray-100 dark:bg-dark-surface text-gray-500'"><i class="fa-solid fa-motorcycle"></i></span>
-                    @if (costoEnvio() > 0) {
+                    @if (enviosPausados()) {
+                      <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">Pausado hoy</span>
+                    } @else if (costoEnvio() > 0) {
                       <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400">+{{ costoEnvio() | precio }}</span>
                     } @else {
                       <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-gray-100 dark:bg-dark-surface text-gray-600 dark:text-dark-muted">Envío</span>

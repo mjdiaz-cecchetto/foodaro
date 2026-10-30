@@ -55,6 +55,7 @@ export class ModalConfirmarPedidoComponente {
   readonly faltaParaEnvio = this.carrito.faltaParaEnvio;
   readonly aliasTransferencia = computed(() => this.local.configuracion().aliasTransferencia || '');
   readonly titularTransferencia = computed(() => this.local.configuracion().titularTransferencia || '');
+  readonly enviosPausados = computed(() => !!this.local.configuracion().enviosPausados);
 
   readonly mediosPago = computed<{ id: MedioPago; icono: string; detalle: string }[]>(() => [
     {
@@ -119,6 +120,9 @@ export class ModalConfirmarPedidoComponente {
         this.errorEnvio.set(null);
         this.numeroPedido.set(null);
         this.cargarClienteGuardado();
+        if (this.enviosPausados()) {
+          this.formulario.controls.modoEntrega.setValue('retiro');
+        }
         this.carrito.modoEntrega.set(this.formulario.controls.modoEntrega.value);
       } else {
         this.carrito.modoEntrega.set('retiro');
@@ -134,6 +138,10 @@ export class ModalConfirmarPedidoComponente {
   }
 
   elegirEntrega(modo: ModoEntrega): void {
+    if (modo === 'envio' && this.enviosPausados()) {
+      this.notificaciones.mostrar('Los envíos a domicilio están pausados en este momento (solo retiro en el local)');
+      return;
+    }
     if (modo === 'envio' && this.faltaParaEnvio() > 0) {
       this.notificaciones.mostrar('El pedido aún no alcanza el monto mínimo para envío a domicilio');
       return;

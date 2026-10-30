@@ -11,6 +11,38 @@
   <div class="flex-1 min-w-0 h-full flex flex-col">
     <app-barra-superior-admin (alternarMenu)="alternarBarraLateral()" (cerrarSesion)="cerrarSesion()" />
 
+    <!-- Aviso automático de suscripción (Por vencer / Período de gracia / Carta suspendida) -->
+    @if (suscripcion(); as s) {
+      @if (s.cartaSuspendida) {
+        <div class="bg-red-600 text-white px-4 py-2 text-xs font-bold flex items-center justify-between gap-3 flex-wrap shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>
+              Tu suscripción ({{ s.planNombre }}) se encuentra vencida ({{ s.vencimiento }}) y la carta pública está pausada. Contactá a soporte de Foodaro para renovarla y reactivarla al instante.
+            </span>
+          </div>
+        </div>
+      } @else if (s.enPeriodoGracia) {
+        <div class="bg-amber-600 text-white px-4 py-2 text-xs font-bold flex items-center justify-between gap-3 flex-wrap shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-clock"></i>
+            <span>
+              Tu suscripción ({{ s.planNombre }}) venció el {{ s.vencimiento }}. Tu carta sigue activa en período de gracia ({{ s.diasGraciaRestantes }} {{ s.diasGraciaRestantes === 1 ? 'día restante' : 'días restantes' }}).
+            </span>
+          </div>
+        </div>
+      } @else if (s.estado === 'por_vencer' && s.diasRestantes !== null) {
+        <div class="bg-amber-50 dark:bg-amber-500/15 border-b border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 px-4 py-1.5 text-xs font-bold flex items-center justify-between gap-3 flex-wrap shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="fa-regular fa-bell"></i>
+            <span>
+              Tu plan <span class="underline">{{ s.planNombre }}</span> vence {{ s.diasRestantes === 0 ? 'hoy' : 'en ' + s.diasRestantes + (s.diasRestantes === 1 ? ' día' : ' días') }} ({{ s.vencimiento }}).
+            </span>
+          </div>
+        </div>
+      }
+    }
+
     <main class="flex-1 min-h-0 overflow-y-auto custom-scroll">
       <div class="p-4 sm:p-5 lg:px-7 lg:py-4 w-full">
         <router-outlet />

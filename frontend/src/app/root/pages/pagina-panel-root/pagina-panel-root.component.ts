@@ -10,14 +10,18 @@ import { ModalComponente } from '../../../shared/components/modal/modal.componen
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { mensajeDeError } from '../../../shared/utils/api';
 import {
+  EstadoSolicitudAlta,
   EstadoSuscripcion,
   LocalRoot,
+  MedioPagoSuscripcion,
+  PagoSuscripcionRoot,
   PlanRoot,
   RootServicio,
+  SolicitudAltaRoot,
   UsuarioRoot,
 } from '../../services/root.service';
 
-type PestaniaRoot = 'locales' | 'usuarios' | 'planes';
+type PestaniaRoot = 'locales' | 'solicitudes' | 'cobros' | 'usuarios' | 'planes' | 'actividad';
 type FiltroLocales = 'todos' | 'activos' | 'pausados' | 'alerta';
 
 @Component({
@@ -88,6 +92,7 @@ export class PaginaPanelRootComponente {
   readonly modalLocalAbierto = signal(false);
   readonly localEditando = signal<LocalRoot | null>(null);
   readonly guardandoLocal = signal(false);
+  readonly solicitudOrigenId = signal<number | null>(null);
 
   readonly formLocal = this.fb.nonNullable.group({
     nombre: ['', [Validators.required]],
@@ -96,8 +101,8 @@ export class PaginaPanelRootComponente {
     whatsapp: ['+54 9 ', [Validators.required]],
     direccion: [''],
     planId: [null as number | null],
-    estadoSuscripcion: ['al_dia' as EstadoSuscripcion, [Validators.required]],
-    vencimientoSuscripcion: [this.fechaMasUnMes()],
+    estadoSuscripcion: ['prueba' as EstadoSuscripcion, [Validators.required]],
+    vencimientoSuscripcion: [this.fechaMasTreintaDias()],
     activo: [true],
     // Solo para alta de local nuevo:
     adminNombre: [''],
@@ -108,6 +113,7 @@ export class PaginaPanelRootComponente {
   abrirNuevoLocal(): void {
     const planPorDefecto = this.root.planes().find((p) => p.destacado)?.id ?? this.root.planes()[0]?.id ?? null;
     this.localEditando.set(null);
+    this.solicitudOrigenId.set(null);
     this.formLocal.reset({
       nombre: '',
       slug: '',
@@ -115,8 +121,8 @@ export class PaginaPanelRootComponente {
       whatsapp: '+54 9 ',
       direccion: '',
       planId: planPorDefecto,
-      estadoSuscripcion: 'al_dia',
-      vencimientoSuscripcion: this.fechaMasUnMes(),
+      estadoSuscripcion: 'prueba',
+      vencimientoSuscripcion: this.fechaMasTreintaDias(),
       activo: true,
       adminNombre: '',
       adminEmail: '',
@@ -125,8 +131,44 @@ export class PaginaPanelRootComponente {
     this.modalLocalAbierto.set(true);
   }
 
+  /** Abre el modal de Alta de Local con todos los datos pre-cargados desde una Solicitud de la Landing y 30 días de prueba gratis. */
+  abrirAltaDesdeSolicitud(sol: SolicitudAltaRoot): void {
+    const slugBase = sol.nombreComercio
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '')
+      .slice(0, 40);
+
+    const planCoincidente =
+      sol.planId ??
+      this.root.planes().find((p) => p.nombre.toLowerCase() === sol.planNombre.toLowerCase())?.id ??
+      this.root.planes().find((p) => p.destacado)?.id ??
+      this.root.planes()[0]?.id ??
+      null;
+
+    this.localEditando.set(null);
+    this.solicitudOrigenId.set(sol.id);
+    this.formLocal.reset({
+      nombre: sol.nombreComercio,
+      slug: slugBase,
+      rubro: 'Gastronomía & Comercio',
+      whatsapp: sol.whatsapp,
+      direccion: sol.ciudad || '',
+      planId: planCoincidente,
+      estadoSuscripcion: 'prueba',
+      vencimientoSuscripcion: this.fechaMasTreintaDias(),
+      activo: true,
+      adminNombre: `Admin ${sol.nombreComercio}`,
+      adminEmail: slugBase ? `admin@${slugBase}.com` : '',
+      adminContrasenia: '123456',
+    });
+    this.modalLocalAbierto.set(true);
+  }
+
   abrirEditarLocal(local: LocalRoot): void {
     this.localEditando.set(local);
+    this.solicitudOrigenId.set(null);
     this.formLocal.reset({
       nombre: local.nombre,
       slug: local.slug,
@@ -135,7 +177,7 @@ export class PaginaPanelRootComponente {
       direccion: local.direccion,
       planId: local.planId,
       estadoSuscripcion: local.estadoSuscripcion,
-      vencimientoSuscripcion: local.vencimientoSuscripcion ?? this.fechaMasUnMes(),
+      vencimientoSuscripcion: local.vencimientoSuscripcion ?? this.fechaMasTreintaDias(),
       activo: local.activo,
       adminNombre: '',
       adminEmail: '',
@@ -146,6 +188,7 @@ export class PaginaPanelRootComponente {
 
   cerrarModalLocal(): void {
     this.modalLocalAbierto.set(false);
+    this.solicitudOrigenId.set(null);
   }
 
   sugerirSlugDesdeNombre(): void {
@@ -212,12 +255,14 @@ export class PaginaPanelRootComponente {
           adminNombre: v.adminNombre || undefined,
           adminEmail: v.adminEmail || undefined,
           adminContrasenia: v.adminContrasenia || undefined,
+          solicitudId: this.solicitudOrigenId(),
         })
         .subscribe({
           next: () => {
             this.guardandoLocal.set(false);
             this.modalLocalAbierto.set(false);
-            this.notificaciones.mostrar('¡Nuevo local creado con éxito!');
+            this.solicitudOrigenId.set(null);
+            this.notificaciones.mostrar('¡Nuevo local creado con éxito (30 días de prueba activados)!');
           },
           error: (err: unknown) => {
             this.guardandoLocal.set(false);
@@ -493,12 +538,316 @@ export class PaginaPanelRootComponente {
     });
   }
 
+  alternarEstadoPlan(plan: PlanRoot): void {
+    this.root.alternarEstadoPlan(plan.id).subscribe({
+      next: (actualizado) =>
+        this.notificaciones.mostrar(
+          actualizado.activo
+            ? `Plan "${actualizado.nombre}" reactivado y visible en la landing`
+            : `Plan "${actualizado.nombre}" pausado (oculto en la landing)`,
+        ),
+      error: (err: unknown) =>
+        this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo cambiar el estado del plan')),
+    });
+  }
+
   eliminarPlan(plan: PlanRoot): void {
     if (!confirm(`¿Eliminar el plan "${plan.nombre}"?`)) return;
     this.root.eliminarPlan(plan.id).subscribe({
       next: () => this.notificaciones.mostrar('Plan eliminado'),
       error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar el plan')),
     });
+  }
+
+  /* ------------------------------ Cobros de Suscripciones (Modal y Listado) ------------------------------ */
+  readonly filtroLocalCobro = signal<number | 'todos'>('todos');
+  readonly modalPagoAbierto = signal(false);
+  readonly guardandoPago = signal(false);
+
+  readonly pagosFiltrados = computed(() => {
+    const localId = this.filtroLocalCobro();
+    return this.root.pagos().filter((pg) => (localId === 'todos' ? true : pg.localId === localId));
+  });
+
+  readonly formPago = this.fb.nonNullable.group({
+    localId: [0, [Validators.required, Validators.min(1)]],
+    planId: [null as number | null],
+    periodoMeses: [1, [Validators.required, Validators.min(1), Validators.max(24)]],
+    monto: [0, [Validators.required, Validators.min(0)]],
+    medioPago: ['transferencia' as MedioPagoSuscripcion, [Validators.required]],
+    fechaPago: [new Date().toISOString().slice(0, 10), [Validators.required]],
+    referencia: [''],
+  });
+
+  abrirRegistrarPago(local?: LocalRoot): void {
+    const localObjetivo = local ?? this.root.locales()[0] ?? null;
+    const planId = localObjetivo?.planId ?? this.root.planes()[0]?.id ?? null;
+    const plan = this.root.planes().find((p) => p.id === planId);
+    const montoSugerido = plan ? plan.mensual : localObjetivo?.planMensual ?? 0;
+
+    this.formPago.reset({
+      localId: localObjetivo?.id ?? 0,
+      planId,
+      periodoMeses: 1,
+      monto: montoSugerido,
+      medioPago: 'transferencia',
+      fechaPago: new Date().toISOString().slice(0, 10),
+      referencia: '',
+    });
+    this.modalPagoAbierto.set(true);
+  }
+
+   cerrarModalPago(): void {
+    this.modalPagoAbierto.set(false);
+  }
+
+  alCambiarLocalEnPago(localId: number): void {
+    const loc = this.root.locales().find((l) => l.id === Number(localId));
+    if (loc) {
+      this.formPago.patchValue({ planId: loc.planId });
+      this.recalcularMontoSugeridoPago();
+    }
+  }
+
+  recalcularMontoSugeridoPago(): void {
+    const v = this.formPago.getRawValue();
+    const plan = this.root.planes().find((p) => p.id === Number(v.planId));
+    if (!plan) return;
+    const meses = Math.max(1, Number(v.periodoMeses) || 1);
+    const tarifaMensual = meses >= 12 && plan.anual > 0 ? plan.anual : plan.mensual;
+    this.formPago.patchValue({ monto: Math.round(tarifaMensual * meses) });
+  }
+
+  guardarPago(): void {
+    if (this.formPago.invalid || this.guardandoPago()) {
+      this.formPago.markAllAsTouched();
+      return;
+    }
+
+    const v = this.formPago.getRawValue();
+    this.guardandoPago.set(true);
+
+    this.root
+      .registrarPago({
+        localId: Number(v.localId),
+        planId: v.planId ? Number(v.planId) : null,
+        periodoMeses: Number(v.periodoMeses) || 1,
+        monto: Number(v.monto) || 0,
+        medioPago: v.medioPago,
+        fechaPago: v.fechaPago,
+        referencia: v.referencia,
+      })
+      .subscribe({
+        next: (pago) => {
+          this.guardandoPago.set(false);
+          this.modalPagoAbierto.set(false);
+          this.notificaciones.mostrar(
+            `Cobro registrado · Nuevo vencimiento de ${pago.localNombre}: ${pago.vencimientoNuevo}`,
+          );
+        },
+        error: (err: unknown) => {
+          this.guardandoPago.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo registrar el cobro'));
+        },
+      });
+  }
+
+  eliminarPago(pago: PagoSuscripcionRoot): void {
+    if (!confirm(`¿Eliminar el registro de cobro de "${pago.localNombre}" por $${pago.monto}?`)) return;
+    this.root.eliminarPago(pago.id).subscribe({
+      next: () => this.notificaciones.mostrar('Registro de cobro eliminado'),
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar el cobro')),
+    });
+  }
+
+  verCobrosDeLocal(local: LocalRoot): void {
+    this.filtroLocalCobro.set(local.id);
+    this.pestania.set('cobros');
+  }
+
+  /* ------------------------------ E. Registro de Actividad ------------------------------ */
+  readonly filtroActividad = signal<'todos' | 'recientes' | 'inactivos'>('todos');
+
+  readonly resumenActividad = computed(() => {
+    const locales = this.root.locales();
+    const inactivos = locales.filter((l) => (l.diasSinActividad ?? 0) >= 7).length;
+    const recientes = locales.length - inactivos;
+    const usuariosConAcceso = this.root.usuarios().filter((u) => !!u.ultimoAccesoEn).length;
+    return { recientes, inactivos, usuariosConAcceso };
+  });
+
+  readonly localesActividadFiltrados = computed(() => {
+    const f = this.filtroActividad();
+    return this.root
+      .locales()
+      .filter((l) => {
+        const dias = l.diasSinActividad ?? 0;
+        if (f === 'inactivos') return dias >= 7;
+        if (f === 'recientes') return dias < 7;
+        return true;
+      })
+      .slice()
+      .sort((a, b) => (b.diasSinActividad ?? 0) - (a.diasSinActividad ?? 0));
+  });
+
+  readonly usuariosRecientes = computed(() =>
+    this.root
+      .usuarios()
+      .slice()
+      .sort((a, b) => (b.ultimoAccesoEn ?? '').localeCompare(a.ultimoAccesoEn ?? '')),
+  );
+
+  /* ------------------------------ F. Mi Cuenta Root ------------------------------ */
+  readonly modalMiCuentaAbierto = signal(false);
+  readonly guardandoMiCuenta = signal(false);
+
+  readonly usuariosSuperadmin = computed(() =>
+    this.root.usuarios().filter((u) => u.rol === 'superadmin'),
+  );
+
+  readonly formMiCuenta = this.fb.nonNullable.group({
+    nombre: ['', [Validators.required]],
+    email: ['', [Validators.required, Validators.email]],
+    contraseniaActual: [''],
+    nuevaContrasenia: [''],
+  });
+
+  abrirMiCuenta(): void {
+    const u = this.autenticacion.usuario();
+    this.formMiCuenta.reset({
+      nombre: u?.nombre ?? 'Root Foodaro',
+      email: u?.email ?? 'root@foodaro.com',
+      contraseniaActual: '',
+      nuevaContrasenia: '',
+    });
+    this.modalMiCuentaAbierto.set(true);
+  }
+
+  cerrarMiCuenta(): void {
+    this.modalMiCuentaAbierto.set(false);
+  }
+
+  guardarMiCuenta(): void {
+    if (this.formMiCuenta.invalid || this.guardandoMiCuenta()) {
+      this.formMiCuenta.markAllAsTouched();
+      return;
+    }
+
+    const v = this.formMiCuenta.getRawValue();
+    if (v.nuevaContrasenia && !v.contraseniaActual) {
+      this.notificaciones.mostrar('Ingresá tu contraseña actual para poder cambiarla');
+      return;
+    }
+
+    this.guardandoMiCuenta.set(true);
+    this.root
+      .actualizarMiCuenta({
+        nombre: v.nombre,
+        email: v.email,
+        contraseniaActual: v.contraseniaActual || undefined,
+        nuevaContrasenia: v.nuevaContrasenia || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.guardandoMiCuenta.set(false);
+          this.modalMiCuentaAbierto.set(false);
+          this.notificaciones.mostrar('Tu cuenta Root fue actualizada correctamente');
+        },
+        error: (err: unknown) => {
+          this.guardandoMiCuenta.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo actualizar tu cuenta Root'));
+        },
+      });
+  }
+
+  abrirNuevoSuperadmin(): void {
+    this.modalMiCuentaAbierto.set(false);
+    this.usuarioEditando.set(null);
+    this.formUsuario.reset({
+      nombre: '',
+      email: '',
+      contrasenia: '',
+      rol: 'superadmin',
+      localId: null,
+      activo: true,
+    });
+    this.modalUsuarioAbierto.set(true);
+  }
+
+  /* ------------------------------ Bandeja de Solicitudes desde la Landing (D) ------------------------------ */
+  readonly filtroEstadoSolicitud = signal<'todas' | EstadoSolicitudAlta>('todas');
+
+  readonly solicitudesFiltradas = computed(() => {
+    const f = this.filtroEstadoSolicitud();
+    return this.root.solicitudes().filter((s) => (f === 'todas' ? true : s.estado === f));
+  });
+
+  readonly conteoSolicitudes = computed(() => {
+    const lista = this.root.solicitudes();
+    return {
+      todas: lista.length,
+      nuevas: lista.filter((s) => s.estado === 'nuevo').length,
+      contactadas: lista.filter((s) => s.estado === 'contactado').length,
+      altas: lista.filter((s) => s.estado === 'alta').length,
+      descartadas: lista.filter((s) => s.estado === 'descartado').length,
+    };
+  });
+
+  cambiarEstadoSolicitud(sol: SolicitudAltaRoot, estado: EstadoSolicitudAlta): void {
+    this.root.actualizarSolicitud(sol.id, { estado }).subscribe({
+      next: () => this.notificaciones.mostrar(`Solicitud de "${sol.nombreComercio}" marcada como ${this.etiquetaEstadoSolicitud(estado)}`),
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo actualizar la solicitud')),
+    });
+  }
+
+  guardarNotaSolicitud(sol: SolicitudAltaRoot, notas: string): void {
+    if (notas.trim() === (sol.notas ?? '').trim()) return;
+    this.root.actualizarSolicitud(sol.id, { notas: notas.trim() }).subscribe({
+      next: () => this.notificaciones.mostrar('Nota de seguimiento guardada'),
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar la nota')),
+    });
+  }
+
+  eliminarSolicitud(sol: SolicitudAltaRoot): void {
+    if (!confirm(`¿Eliminar la solicitud de "${sol.nombreComercio}"?`)) return;
+    this.root.eliminarSolicitud(sol.id).subscribe({
+      next: () => this.notificaciones.mostrar('Solicitud eliminada'),
+      error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar la solicitud')),
+    });
+  }
+
+  urlWhatsappSolicitud(sol: SolicitudAltaRoot): string {
+    const digitos = (sol.whatsapp || '').replace(/\D+/g, '');
+    const msg = encodeURIComponent(
+      `Hola! Te escribimos de Foodaro por tu solicitud para "${sol.nombreComercio}" (${sol.planNombre}). ¡Ya estamos listos para activarte tus 30 días de prueba gratis!`,
+    );
+    return `https://wa.me/${digitos}?text=${msg}`;
+  }
+
+  etiquetaEstadoSolicitud(estado: EstadoSolicitudAlta): string {
+    switch (estado) {
+      case 'nuevo':
+        return 'Nuevo';
+      case 'contactado':
+        return 'Contactado';
+      case 'alta':
+        return 'Dado de alta';
+      case 'descartado':
+        return 'Descartado';
+    }
+  }
+
+  claseEstadoSolicitud(estado: EstadoSolicitudAlta): string {
+    switch (estado) {
+      case 'nuevo':
+        return 'bg-brand-50 dark:bg-brand-500/15 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-500/30';
+      case 'contactado':
+        return 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30';
+      case 'alta':
+        return 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30';
+      case 'descartado':
+        return 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700';
+    }
   }
 
   /* ------------------------------ Utilidades UI ------------------------------ */
@@ -536,9 +885,9 @@ export class PaginaPanelRootComponente {
     });
   }
 
-  private fechaMasUnMes(): string {
+  private fechaMasTreintaDias(): string {
     const d = new Date();
-    d.setMonth(d.getMonth() + 1);
+    d.setDate(d.getDate() + 30);
     return d.toISOString().slice(0, 10);
   }
 }

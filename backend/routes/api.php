@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('planes', [RootController::class, 'planesPublicos']);
+Route::post('solicitudes', [RootController::class, 'crearSolicitudPublica'])->middleware('throttle:15,1');
 
 Route::prefix('locales/{slug}')->group(function () {
     Route::get('/', [LocalPublicoController::class, 'show']);
@@ -46,6 +47,9 @@ Route::prefix('auth')->group(function () {
 Route::prefix('admin')->middleware(['auth:sanctum', 'solo.admin'])->group(function () {
     Route::get('local', [LocalAdminController::class, 'show']);
     Route::put('local', [LocalAdminController::class, 'update']);
+    Route::patch('local/pausa-rapida', [LocalAdminController::class, 'alternarPausaRapida']);
+    Route::get('mi-cuenta', [LocalAdminController::class, 'miCuenta']);
+    Route::put('mi-cuenta', [LocalAdminController::class, 'actualizarMiCuenta']);
 
     Route::patch('categorias/reordenar', [CategoriaController::class, 'reordenar']);
     Route::apiResource('categorias', CategoriaController::class)->except('show')->parameters(['categorias' => 'categoria']);
@@ -68,6 +72,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'solo.admin'])->group(functi
     Route::get('pedidos', [PedidoAdminController::class, 'index']);
     Route::get('pedidos/{pedido}', [PedidoAdminController::class, 'show']);
     Route::patch('pedidos/{pedido}/estado', [PedidoAdminController::class, 'cambiarEstado']);
+    Route::patch('pedidos/{pedido}/pago', [PedidoAdminController::class, 'alternarPago']);
 });
 
 /*
@@ -96,5 +101,14 @@ Route::prefix('root')->middleware(['auth:sanctum', 'solo.root'])->group(function
 
     Route::post('planes', [RootController::class, 'crearPlan']);
     Route::put('planes/{plan}', [RootController::class, 'actualizarPlan']);
+    Route::patch('planes/{plan}/estado', [RootController::class, 'alternarEstadoPlan']);
     Route::delete('planes/{plan}', [RootController::class, 'eliminarPlan']);
+
+    Route::post('pagos', [RootController::class, 'registrarPago']);
+    Route::delete('pagos/{pago}', [RootController::class, 'eliminarPago']);
+
+    Route::patch('solicitudes/{solicitud}', [RootController::class, 'actualizarSolicitud']);
+    Route::delete('solicitudes/{solicitud}', [RootController::class, 'eliminarSolicitud']);
+
+    Route::put('mi-cuenta', [RootController::class, 'actualizarMiCuenta']);
 });

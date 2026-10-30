@@ -77,7 +77,7 @@ export class LandingPlataformaComponente implements OnInit {
     this.slugFaltante.set(this.ruta.snapshot.queryParamMap.get('local'));
     this.http.get<RespuestaApi<Plan[]>>(`${environment.apiUrl}/planes`).subscribe({
       next: ({ data }) => {
-        if (data?.length) {
+        if (Array.isArray(data)) {
           this.planesLista.set(data.map((p) => ({ ...p, id: String(p.nombre) })));
         }
       },
@@ -137,11 +137,24 @@ export class LandingPlataformaComponente implements OnInit {
       return;
     }
     const v = this.formularioRegistro.getRawValue();
+    this.http
+      .post(`${environment.apiUrl}/solicitudes`, {
+        nombreComercio: v.nombreComercio,
+        ciudad: v.ciudad,
+        whatsapp: v.whatsapp,
+        plan: v.plan,
+      })
+      .subscribe({
+        error: () => {
+          /* incluso si el backend no está disponible, abrimos WhatsApp igual */
+        },
+      });
+
     const mensaje = encodeURIComponent(
-      `Hola! Acabo de registrar "${v.nombreComercio}" (${v.ciudad}) para probar Foodaro (${v.plan}). Mi número es ${v.whatsapp}.`,
+      `Hola! Acabo de registrar "${v.nombreComercio}" (${v.ciudad}) para los 30 días de prueba gratis de Foodaro (${v.plan}). Mi número es ${v.whatsapp}.`,
     );
     this.cerrarRegistro();
     window.open(`https://wa.me/${WHATSAPP_REGISTRO_FOODARO}?text=${mensaje}`, '_blank', 'noopener');
-    this.notificaciones.mostrar('¡Listo! Te contactamos por WhatsApp para activar tu catálogo.');
+    this.notificaciones.mostrar('¡Solicitud registrada! Te contactamos por WhatsApp para activar tus 30 días gratis.');
   }
 }
