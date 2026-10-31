@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CambiarEstadoPedidoRequest;
 use App\Http\Resources\PedidoResource;
 use App\Models\Pedido;
+use App\Models\PedidoItem;
+use App\Models\Producto;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -79,7 +81,9 @@ class PedidoAdminController extends Controller
         };
 
         // 2. Desglose prolijo del período seleccionado
-        $queryPeriodo = Pedido::query()->where('local_id', $localId);
+        $queryPeriodo = Pedido::query()
+            ->where('local_id', $localId)
+            ->with('items.producto.categoria');
         $this->aplicarFiltroPeriodo($queryPeriodo, $request);
 
         $pedidosPeriodo = $queryPeriodo->orderByDesc('created_at')->get();
@@ -131,6 +135,33 @@ class PedidoAdminController extends Controller
             ->values()
             ->take(31);
 
+        // Ranking de productos vendidos en el período (sobre pedidos válidos)
+        $todosLosItems = $validos->flatMap(fn (Pedido $p) => $p->items);
+        $totalUnidadesPeriodo = (int) $todosLosItems->sum('cantidad');
+
+        $productosVendidos = $todosLosItems
+            ->groupBy(fn ($item) => $item->producto_id ? 'id_'.$item->producto_id : 'nom_'.mb_strtolower(trim($item->nombre)))
+            ->map(function ($grupo) use ($totalUnidadesPeriodo) {
+                $primero = $grupo->first();
+                $unidades = (int) $grupo->sum('cantidad');
+                $recaudado = (float) $grupo->sum('total');
+                $pedidosUnicos = $grupo->pluck('pedido_id')->unique()->count();
+
+                return [
+                    'productoId' => $primero->producto_id,
+                    'nombre' => $primero->nombre,
+                    'categoria' => $primero->producto?->categoria?->nombre ?? 'General',
+                    'imagen' => $primero->producto?->imagen ?? null,
+                    'unidades' => $unidades,
+                    'pedidos' => $pedidosUnicos,
+                    'precioUnitario' => (float) $primero->precio_unitario,
+                    'totalRecaudado' => $recaudado,
+                    'porcentajeUnidades' => $totalUnidadesPeriodo > 0 ? round(($unidades / $totalUnidadesPeriodo) * 100, 1) : 0.0,
+                ];
+            })
+            ->sortByDesc('unidades')
+            ->values();
+
         return response()->json([
             'data' => [
                 'comparativa' => [
@@ -165,6 +196,8 @@ class PedidoAdminController extends Controller
                         ],
                     ],
                     'ventasPorDia' => $ventasPorDia,
+                    'productosVendidos' => $productosVendidos,
+                    'totalUnidadesVendidas' => $totalUnidadesPeriodo,
                 ],
             ],
         ]);
@@ -201,6 +234,134 @@ class PedidoAdminController extends Controller
         ]);
 
         return new PedidoResource($pedido->load('items.opciones'));
+    }
+
+    /** PATCH /api/admin/pedidos/{pedido}/prioridad — Marca o desmarca un pedido como Prioritario para cocina. */
+    public function alternarPrioridad(Request $request, Pedido $pedido): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+
+        $nuevoPrioritario = $request->has('prioritario')
+            ? (bool) $request->boolean('prioritario')
+            : ! $pedido->prioritario;
+
+        $pedido->update([
+            'prioritario' => $nuevoPrioritario,
+        ]);
+
+        return new PedidoResource($pedido->load('items.opciones'));
+    }
+
+    /** POST /api/admin/pedidos/{pedido}/items — Agrega un producto del catálogo (o ítem manual) a un pedido existente. */
+    public function agregarItem(Request $request, Pedido $pedido): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+
+        $datos = $request->validate([
+            'productoId' => ['nullable', 'integer'],
+            'nombre' => ['nullable', 'string', 'max:150'],
+            'precioUnitario' => ['nullable', 'numeric', 'min:0'],
+            'cantidad' => ['required', 'integer', 'min:1'],
+            'notas' => ['nullable', 'string', 'max:255'],
+            'opciones' => ['nullable', 'array'],
+            'opciones.*.grupoNombre' => ['required_with:opciones', 'string', 'max:100'],
+            'opciones.*.etiqueta' => ['required_with:opciones', 'string', 'max:120'],
+            'opciones.*.precioAdicional' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $local = $request->user()->local;
+        $producto = null;
+
+        if (! empty($datos['productoId'])) {
+            $producto = Producto::where('local_id', $local->id)->findOrFail($datos['productoId']);
+        }
+
+        $nombre = $producto ? $producto->nombre : trim($datos['nombre'] ?? 'Producto');
+        $precioBase = isset($datos['precioUnitario'])
+            ? (float) $datos['precioUnitario']
+            : (float) ($producto?->precio ?? 0);
+
+        $opciones = $datos['opciones'] ?? [];
+        $extraOpciones = collect($opciones)->sum(fn ($op) => (float) ($op['precioAdicional'] ?? 0));
+        $precioUnitarioFinal = $precioBase + $extraOpciones;
+        $cantidad = (int) $datos['cantidad'];
+        $totalLinea = round($precioUnitarioFinal * $cantidad, 2);
+
+        $item = $pedido->items()->create([
+            'producto_id' => $producto?->id,
+            'nombre' => $nombre,
+            'precio_unitario' => $precioUnitarioFinal,
+            'cantidad' => $cantidad,
+            'total' => $totalLinea,
+            'notas' => ! empty($datos['notas']) ? trim($datos['notas']) : null,
+        ]);
+
+        if (! empty($opciones)) {
+            $item->opciones()->createMany(
+                collect($opciones)->map(fn ($op) => [
+                    'grupo_nombre' => $op['grupoNombre'],
+                    'etiqueta' => $op['etiqueta'],
+                    'precio_adicional' => (float) ($op['precioAdicional'] ?? 0),
+                ])->all()
+            );
+        }
+
+        $this->recalcularTotalesPedido($pedido);
+
+        return new PedidoResource($pedido->fresh()->load('items.opciones'));
+    }
+
+    /** PATCH /api/admin/pedidos/{pedido}/items/{item} — Modifica la cantidad o notas de un ítem del pedido. */
+    public function actualizarItem(Request $request, Pedido $pedido, PedidoItem $item): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+        abort_if($item->pedido_id !== $pedido->id, 404);
+
+        $datos = $request->validate([
+            'cantidad' => ['sometimes', 'integer', 'min:0'],
+            'notas' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if (isset($datos['cantidad']) && (int) $datos['cantidad'] <= 0) {
+            $item->delete();
+        } else {
+            $nuevaCant = isset($datos['cantidad']) ? (int) $datos['cantidad'] : (int) $item->cantidad;
+            $item->update([
+                'cantidad' => $nuevaCant,
+                'total' => round(((float) $item->precio_unitario) * $nuevaCant, 2),
+                'notas' => array_key_exists('notas', $datos) ? ($datos['notas'] ? trim($datos['notas']) : null) : $item->notas,
+            ]);
+        }
+
+        $this->recalcularTotalesPedido($pedido);
+
+        return new PedidoResource($pedido->fresh()->load('items.opciones'));
+    }
+
+    /** DELETE /api/admin/pedidos/{pedido}/items/{item} — Quita un ítem del pedido y recalcula el total. */
+    public function eliminarItem(Pedido $pedido, PedidoItem $item): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+        abort_if($item->pedido_id !== $pedido->id, 404);
+
+        $item->delete();
+        $this->recalcularTotalesPedido($pedido);
+
+        return new PedidoResource($pedido->fresh()->load('items.opciones'));
+    }
+
+    private function recalcularTotalesPedido(Pedido $pedido): void
+    {
+        $subtotal = (float) $pedido->items()->sum('total');
+        $descuento = (float) ($pedido->descuento ?? 0);
+        $cargoServicio = (float) ($pedido->cargo_servicio ?? 0);
+        $costoEnvio = (float) ($pedido->costo_envio ?? 0);
+        $total = max(0, $subtotal - $descuento + $cargoServicio + $costoEnvio);
+
+        $pedido->update([
+            'subtotal' => $subtotal,
+            'total' => $total,
+        ]);
     }
 
     private function aplicarFiltroPeriodo(Builder|\Illuminate\Database\Eloquent\Relations\HasMany $query, Request $request): void

@@ -24,7 +24,42 @@ export const RUTAS_ADMIN: Routes = [
         path: 'pedidos',
         loadComponent: () =>
           import('./pages/pagina-pedidos/pagina-pedidos.component').then((m) => m.PaginaPedidosComponente),
-        title: 'Foodaro Admin • Pedidos y Envíos',
+        data: { seccion: 'recibidos' },
+        title: 'Foodaro Admin • Gestión de Ventas (Hoy)',
+      },
+      {
+        path: 'pedidos/reportes',
+        loadComponent: () =>
+          import('./pages/pagina-pedidos/pagina-pedidos.component').then((m) => m.PaginaPedidosComponente),
+        data: { seccion: 'reportes' },
+        title: 'Foodaro Admin • Reportes y Arqueo de Caja',
+      },
+      {
+        path: 'pedidos/cocina',
+        loadComponent: () =>
+          import('./pages/pagina-pedidos/pagina-pedidos.component').then((m) => m.PaginaPedidosComponente),
+        data: { seccion: 'cocina' },
+        title: 'Foodaro Admin • Monitor de Cocina y Prioridades',
+      },
+      {
+        path: 'pedidos/ranking',
+        loadComponent: () =>
+          import('./pages/pagina-pedidos/pagina-pedidos.component').then((m) => m.PaginaPedidosComponente),
+        data: { seccion: 'ranking' },
+        title: 'Foodaro Admin • Productos Vendidos y Ranking',
+      },
+      {
+        path: 'pedidos/configuracion',
+        loadComponent: () =>
+          import('./pages/pagina-pedidos/pagina-pedidos.component').then((m) => m.PaginaPedidosComponente),
+        data: { seccion: 'configuracion' },
+        title: 'Foodaro Admin • Config. WhatsApp, Envíos y Pagos',
+      },
+      {
+        path: 'empleados',
+        loadComponent: () =>
+          import('./pages/pagina-empleados/pagina-empleados.component').then((m) => m.PaginaEmpleadosComponente),
+        title: 'Foodaro Admin • Personal y Asistencia',
       },
       {
         path: 'categorias',

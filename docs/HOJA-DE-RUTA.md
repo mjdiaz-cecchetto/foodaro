@@ -1,80 +1,71 @@
-# Foodaro — Hoja de ruta (Root y Admin del local)
+# Foodaro — Cuadro General de Estado (Cliente, Admin del Local y Root)
 
-> Última actualización: 27/10/2026
-> Para retomar en una conversación nueva, ver la sección **"Cómo continuar"** al final.
-
----
-
-## ✅ Estado actual (ya implementado)
-
-### Separación de paneles (estricta)
-- **Login del local:** `/{slug}/auth/login` → `POST /api/auth/ingreso` (solo rol `administrador` con `local_id`). Token con habilidad `admin`.
-- **Login Root:** `/root/login` → `POST /api/root/auth/ingreso` (solo rol `superadmin`). Token con habilidad `root`.
-- Middlewares `solo.admin` (`SoloAdministradorLocal`) y `solo.root` (`SoloRoot`) en `backend/routes/api.php`.
-- Sesiones independientes en el front: `AutenticacionServicio` (`foodaro_token`) y `RootAutenticacionServicio` (`foodaro_root_token`). El interceptor elige el token según la URL (`/api/root/...`).
-- El Root **no** pertenece a ningún local y **no** puede entrar al panel de un local. Un admin solo entra al panel de **su** local.
-
-### Admin del local
-- Inicio compacto + **Cartel QR** imprimible.
-- Datos del Local (identidad, ubicación, horarios, contacto).
-- **Pedidos y Envíos**:
-  - Pestaña *Pedidos Recibidos*: listado con cambio de estado y filtro por estado.
-  - **Ventas**: tarjetas Hoy / Esta semana / Este mes; selector de período (Hoy, Ayer, Semana, Mes, rango de fechas, Todo); arqueo por medio de pago (efectivo / transferencia / débito) y por modalidad (envío / retiro); ticket promedio; desglose día por día. Endpoint `GET /api/admin/pedidos/metricas`. Cancelados no suman.
-  - Pestaña *Configuración*: WhatsApp de pedidos, costo/mínimo de envío, alias de transferencia, cargo por servicio.
-- Gestión de Productos (con **Duplicar producto** en 1 clic), Promociones, Cupones.
-
-### Root de Foodaro
-- Métricas globales, CRUD de Locales + suscripción (plan, estado, vencimiento), CRUD de Usuarios + blanqueo de contraseña, CRUD de Planes (3 planes por defecto, sincronizados con la landing, con opción de **Pausar / Activar** cada plan en 1 clic para ocultarlo o mostrarlo en la landing).
-
-### Cuentas por defecto
-- Root: `root@foodaro.com` / `root1234`
-- Admin demo: `admin@demolocal.com` / `demo1234`
+> Última actualización: 31/10/2026
 
 ---
 
-## 🏪 Pendiente — Admin del local
+## 📱 1. Cliente (Carta / Menú Digital `/:slug` y Landing `/`)
 
-| # | Funcionalidad | Detalle |
-|---|---|---|
-| ✅ 1 ⭐ | **Pedidos en vivo con alerta sonora (HECHO)** | Auto-refresco cada 15 s, timbre gastronómico nativo (`Web Audio API`) con botón de prueba, resalte `¡NUEVO!` y selector **Vista Lista / Vista Tablero Mostrador** (4 columnas con avance en 1 clic). |
-| ✅ 2 ⭐ | **Imprimir comanda / ticket de cocina (HECHO)** | Botón **Comanda / Ticket** por pedido con formato térmico 58/80 mm (productos, adicionales, notas, dirección, referencias, total, medio de pago y vuelto). |
-| ✅ 3 | **Exportar cierre de caja (HECHO)** | Descargar Excel/CSV (con BOM UTF-8, resumen + desglose diario + detalle de pedidos) o imprimir el arqueo del período elegido en 1 clic. |
-| 4 | **Productos más vendidos y horarios pico** | Ranking por cantidad y monto; horas y días de mayor venta. |
-| 5 | **Clientes frecuentes** | Agenda armada desde los pedidos: teléfono, cantidad de pedidos, total gastado, último pedido. Base para promos por WhatsApp. |
-| ✅ 6 | **Pausa rápida (HECHO)** | Botones rápidos en la barra superior del admin: **"Cerrar por hoy / Reabrir"** y **"Pausar envíos / Reactivar"** sin tocar los horarios semanales. |
-| ✅ 7 | **Mi cuenta y Suscripción (HECHO)** | Modal **Mi Cuenta y Suscripción Foodaro** desde la barra superior del admin: plan contratado, estado, fecha de vencimiento, días disponibles, historial de pagos a Foodaro, botón directo a WhatsApp y cambio de nombre/email/contraseña propia. |
-| 8 | **Zonas de envío** | Costos de envío distintos por barrio/zona. |
-| 9 | **Subida de fotos desde celular/PC** | Permitir subir imágenes reales desde archivo (además de pegar URL) para logo, portada y productos. |
-
-## 👑 Pendiente — Root de Foodaro
-
-| # | Funcionalidad | Detalle |
-|---|---|---|
-| ✅ A ⭐ | **Suscripciones que se aplican solas (HECHO)** | Cálculo automático por fecha de vencimiento (`por_vencer` ≤ 5 días, `vencido` < 0 días, 3 días de gracia y suspensión automática de la carta pública vencida). Banner de aviso en el panel del local. |
-| ✅ B ⭐ | **Registro de cobros de suscripciones (HECHO)** | Tabla `pagos_suscripcion`, pestaña **Cobros de Suscripciones** en Root y botón **Cobrar** en cada local que acredita 1, 3, 6 o 12 meses y extiende el vencimiento automáticamente. Métrica de ingresos reales cobrados en el mes + MRR. |
-| C | **Límites por plan** | Cada plan limita cantidad de productos / promociones / cupones y módulos visibles, aplicado en el backend y frontend. *(Ver análisis detallado en `docs/ANALISIS-DE-PLANES.md`)*. |
-| ✅ D | **Solicitudes desde la landing (HECHO)** | Formulario de **30 días de prueba gratis** en la landing → guarda en `solicitudes_alta`, abre WhatsApp y muestra la bandeja **Solicitudes Landing** en el Root con estados (`nuevo`, `contactado`, `alta`, `descartado`), notas y botón **Dar de alta (30d)** que pre-carga el modal de nuevo local en 1 clic. |
-| ✅ E | **Registro de actividad (HECHO)** | Pestaña **Actividad y Uso** en Root: último acceso de cada admin, último pedido recibido por local, estado operativo en vivo y filtro de locales sin actividad (+7 días). |
-| ✅ F | **Mi cuenta Root (HECHO)** | Modal **Mi Cuenta Root** desde la barra superior para cambiar nombre, email y contraseña propia (validando la actual) y gestionar administradores Root de Foodaro. |
-
-## 🎯 Orden recomendado (próximos pasos pendientes)
-1. **Local 7 (Mi cuenta y Suscripción del local)** — Permite que el dueño del local vea qué plan tiene, cuándo vence su suscripción, su historial de pagos y pueda cambiar su propia contraseña.
-2. **Root C (Límites y permisos por Plan)** — Que cada plan (Inicial, Control, Terminal POS) defina límites o módulos habilitados en el panel del local.
-3. **Root D (Bandeja de Solicitudes desde la Landing)** — Cuando un comercio completa "Quiero probar 15 días gratis" en la landing, además de abrir WhatsApp, se guarda en el Root para hacerle seguimiento y darlo de alta en 1 clic.
-4. **Local 4 + 5 (Productos más vendidos + Clientes frecuentes)** — Ranking de platos estrella, horarios pico y agenda automática de clientes (con monto histórico y botón directo a WhatsApp).
-5. **Local 8 (Zonas de envío con costo diferenciado)** — Configurar barrios/zonas con distintos precios de envío para que el cliente elija su zona al pedir.
+| # | Funcionalidad | Estado | Detalle |
+|---|---|---|---|
+| 1 | **Catálogo digital interactivo** | ✅ **LISTO** | Filtro por categorías, buscador en vivo, fotos, precios tachados de oferta y modo Claro / Oscuro. |
+| 2 | **Personalización de platos** | ✅ **LISTO** | Selección de variantes (tamaños), adicionales con precio extra y nota libre para la cocina. |
+| 3 | **Carrito inteligente y Modalidades** | ✅ **LISTO** | Envío a domicilio (con cálculo de costo y envío gratis desde `$X`), Retiro en local y Consumo en salón/mesa. |
+| 4 | **Medios de pago y Transferencias** | ✅ **LISTO** | Efectivo (con `%` de descuento automático), Transferencia (muestra CBU/Alias con botón **Copiar** en 1 clic) y Tarjeta/QR. |
+| 5 | **Banners y Cupones de descuento** | ✅ **LISTO** | Carrusel promocional en la cabecera y validación de códigos de cupón (`%` o monto fijo) en el carrito. |
+| 6 | **Envío formateado a WhatsApp + Tracking** | ✅ **LISTO** | Guarda el pedido en el sistema, abre WhatsApp con el ticket armado y muestra el estado en vivo (`Recibido` → `En cocina` → `En camino`). |
+| 7 | **Horarios automáticos y Pausa de cocina** | ✅ **LISTO** | Abre/cierra solo según los horarios del comercio y muestra cartel si el local pausó pedidos por lluvia o demora. |
+| 8 | **Landing comercial (Prueba 30 días)** | ✅ **LISTO** | Planes sincronizados con el Backend, calculadora de ahorro y formulario de **30 días gratis** conectado a WhatsApp (`3853115268`) y al Root. |
+| 9 | **Selector de Zona/Barrio de envío** | ⏳ **FALTA** | Que el cliente elija su barrio en un desplegable para calcular distinto costo de envío según la distancia. |
 
 ---
 
-## ▶️ Cómo continuar
+## 🏪 2. Admin del Local (`/:slug/admin` y Terminal POS `/:slug/pos`)
 
-Pegá en el chat alguna de estas frases:
+| # | Funcionalidad | Estado | Detalle |
+|---|---|---|---|
+| 1 | **Consola de Pedidos en vivo + Sonido** | ✅ **LISTO** | Auto-refresco cada 15 s, timbre sonoro nativo, Vista Lista y Vista Tablero Kanban (4 columnas) con aviso a WhatsApp del cliente en 1 clic. |
+| 2 | **Control Sin Pagar vs. Pagados** | ✅ **LISTO** | Botón `Sin pagar` / `Pagado` en 1 clic en cada pedido, filtro rápido (`Todos`, `Sin pagar`, `Pagados`) y alerta en comanda. |
+| 3 | **Ticket para el Cliente / Repartidor** | ✅ **LISTO** | Formato 58/80 mm con precios, dirección, medio de pago, vuelto y recuadro grande `✓ PEDIDO PAGADO` o `*** FALTA COBRAR ***`. |
+| 4 | **Cierre de Caja y Exportación Excel** | ✅ **LISTO** | Resumen por período (Hoy, Semana, Mes, Fechas), desglose `Cobrado` vs. `Pendiente`, medios de pago y descarga en `.CSV` / Excel. |
+| 5 | **Pausa Rápida de Cocina y de Stock** | ✅ **LISTO** | Botón superior para pausar pedidos temporalmente y cajón **`⚡ Stock`** para agotar/activar productos en 1 toque sin salir de pedidos. |
+| 6 | **Terminal POS Mostrador y Login por PIN** | ✅ **LISTO** | Pantalla táctil rápida para tomar pedidos en mostrador/teléfono e ingreso rápido con PIN de 4 dígitos (Encargado vs. Vendedor). |
+| 7 | **Gestión de Menú, Promos y QR PDF** | ✅ **LISTO** | ABM de Categorías, Productos (con **Duplicar** en 1 clic), Banners, Cupones, Horarios y generador de **Kit Imprimible QR en PDF**. |
+| 8 | **Mi Cuenta y Suscripción Foodaro** | ✅ **LISTO** | Modal en la barra superior con plan actual, vencimiento, historial de recibos pagados, botón a soporte y cambio de contraseña/PIN. |
+| 9 ⭐ | **Comanda exclusiva de Cocina + Prioridad** | ✅ **LISTO** | Apartado **Cocina y Prioridades** (`/pedidos/cocina`) + botón **Ticket Cliente** (con precios) separado de **Comanda Cocina** (sin precios, platos grandes y notas) y marca de **Pedido Prioritario (`🔥 PRIORIDAD`)** en 1 clic. |
+| 10 ⭐ | **Ranking y Contador de Productos Vendidos** | ✅ **LISTO** | Apartado **Productos Vendidos** (`/pedidos/ranking`) por Día, Ayer, Semana, Mes o fechas, con buscador instantáneo (ej. *"Muzzarella"*), filtro por categoría, ranking por cantidad/monto y exportación a Excel. |
+| 11 ⭐ | **Gestión de Empleados, Asistencia y Paga Diaria** | ✅ **LISTO** | Apartado **Personal y Asistencia** (`/empleados`): alta de empleados con rol y sueldo por hora (`$/h`), fichaje de entrada/salida con fecha y cálculo automático de horas trabajadas y paga proporcional del día + control de jornal Pagado / Sin pagar. |
+| 12 | **Subida de fotos desde celular/PC** | ⏳ **FALTA** | Subir archivos de imagen reales desde el dispositivo (hoy se cargan pegando el link/URL de la foto). |
+| 13 | **Aumento masivo de precios (`+%`)** | ⏳ **FALTA** | Subir un porcentaje (ej. `+10%`) a toda una categoría o a todo el menú en 2 clics para actualizar por inflación. |
+| 14 | **Agenda de Clientes frecuentes (CRM)** | ⏳ **FALTA** | Listado automático de clientes armado desde los pedidos (teléfono, cantidad de compras, total gastado). |
+| 15 | **Configuración de Zonas de envío** | ⏳ **FALTA** | Cargar lista de barrios/zonas con precios de delivery diferenciados. |
 
-- **Seguir el orden recomendado:**
-  > Leé `docs/HOJA-DE-RUTA.md` y continuemos con el orden recomendado (paso 1: Local 1 + 2).
+---
 
-- **Elegir puntos concretos:**
-  > Leé `docs/HOJA-DE-RUTA.md` y hagamos los puntos **1, 2 y A**.
+## 👑 3. Root de Foodaro (`/root` — Superadmin SaaS)
 
-- **Al terminar cada bloque:**
-  > Actualizá `docs/HOJA-DE-RUTA.md` marcando lo que ya hicimos.
+| # | Funcionalidad | Estado | Detalle |
+|---|---|---|---|
+| A | **Métricas SaaS, MRR y Cobros del mes** | ✅ **LISTO** | Panel financiero con Ingreso Mensual Recurrente (MRR), recaudación real del mes, locales activos, en prueba y por vencer. |
+| B | **Vencimientos automáticos y Suspensión** | ✅ **LISTO** | Cálculo automático de días disponibles, aviso de "Por vencer", días de gracia y bloqueo automático del local vencido/suspendido. |
+| C | **Registro de Cobros de Suscripciones** | ✅ **LISTO** | Botón **Cobrar** (mensual o anual) que genera el recibo en el historial y extiende la fecha de vencimiento automáticamente. |
+| D | **Bandeja de Solicitudes Landing ("Leads")** | ✅ **LISTO** | Recibe los comercios que piden los **30 días gratis** en la web, permite cambiar estado (`Nuevo`, `Contactado`, `Alta`) y crearles el local en 1 clic con **`✨ Dar de alta (30d)`**. |
+| E | **Gestión de Planes + Pausar Plan** | ✅ **LISTO** | Editar precios, descuentos anuales, características y botón **`⏸️ Pausar` / `▶️ Activar`** para ocultar o mostrar planes en la landing. |
+| F | **Impersonación (`🔑 Entrar como Admin`)** | ✅ **LISTO** | Botón para entrar en 1 clic al panel administrador de cualquier comercio para darle soporte o cargarle el menú sin pedirle su clave. |
+| G | **Registro de Actividad y Uso** | ✅ **LISTO** | Monitoreo de cuándo fue el último login de cada dueño y cuándo recibió su último pedido (detecta locales inactivos). |
+| H | **Mi Cuenta Root y Administradores** | ✅ **LISTO** | Cambio de email y contraseña propia del Root y gestión de usuarios del sistema. |
+| I | **Límites y Bloqueos por Plan (Gating)** | ⏳ **FALTA** | Restringir módulos o cantidad de productos según el plan contratado *(Documentado en `docs/ANALISIS-DE-PLANES.md`)*. |
+| J | **Despliegue en Servidor Cloud (VPS)** | ⏳ **FALTA** | Subir el sistema a un servidor en producción con dominio propio e HTTPS permanente. |
+
+---
+
+## 🎯 Orden recomendado para el próximo bloque (Feedback real de Cliente)
+
+1. **Punto 9 ⭐ — Doble Comanda (Ticket Cliente vs. Comanda Cocina) + Prioridad (`🔥 URGENTE`)**:
+   - En cada pedido tener los 2 botones claros: **`🧾 Ticket Cliente`** (con precios y cobro) y **`👨‍🍳 Comanda Cocina`** (sin precios, solo ítems en grande, notas y modalidad) + botón de 1 clic para marcar **`🔥 Prioridad`** y que resalte arriba o con alerta visual para la cocina.
+2. **Punto 10 ⭐ — Ranking y Contador de Productos Vendidos (Día / Semana / Mes)**:
+   - En la pestaña de **Ventas / Caja**, sumar el cuadro de **Productos Vendidos en el período** (ej. *"Hoy: 24x Pizza Muzzarella, 15x Milanesa Napolitana..."*) con buscador rápido y totales.
+3. **Punto 11 ⭐ — Gestión de Empleados, Asistencia (Entrada/Salida) y Cálculo de Paga Diaria**:
+   - Nueva sección **Personal / Asistencia**: alta de empleados con rol y valor hora (`$/hora`), fichaje de entrada/salida con fecha y cálculo automático de horas trabajadas y monto a pagar en el día/semana.
+4. **Punto 12 — Subida de fotos desde celular/PC**.
+5. **Punto I — Definición y bloqueo por Planes (`docs/ANALISIS-DE-PLANES.md`)**.

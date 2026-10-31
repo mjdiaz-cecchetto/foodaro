@@ -1,14 +1,16 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { environment } from '../../../../environments/environment';
-import { ConfiguracionLocal, PerfilLocal } from '../../../shared/models';
+import { ConfiguracionLocal, PerfilLocal, Producto } from '../../../shared/models';
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { mensajeDeError, RespuestaApi } from '../../../shared/utils/api';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { LocalAdminServicio } from '../../services/local-admin.service';
+import { CatalogoAdminServicio } from '../../services/catalogo-admin.service';
 import { EncabezadoPaginaComponente } from '../../components/encabezado-pagina/encabezado-pagina.component';
 
 export type EstadoPedidoAdmin =
@@ -37,6 +39,7 @@ export interface PedidoAdmin {
   id: number;
   numero: number;
   estado: EstadoPedidoAdmin;
+  prioritario?: boolean;
   modoEntrega: 'retiro' | 'envio';
   cliente: { nombre: string; telefono: string };
   direccion: { calle: string; pisoDepto: string; referencia: string } | null;
@@ -56,6 +59,18 @@ export interface PedidoAdmin {
   };
   items: ItemPedidoAdmin[];
   creadoEn: string;
+}
+
+export interface ProductoVendidoRanking {
+  productoId: number | null;
+  nombre: string;
+  categoria: string;
+  imagen: string | null;
+  unidades: number;
+  pedidos: number;
+  precioUnitario: number;
+  totalRecaudado: number;
+  porcentajeUnidades: number;
 }
 
 export interface ResumenCortoPeriodo {
@@ -97,10 +112,12 @@ export interface MetricasPedidosAdmin {
       retiro: { monto: number; cantidad: number };
     };
     ventasPorDia: VentaDiaria[];
+    productosVendidos?: ProductoVendidoRanking[];
+    totalUnidadesVendidas?: number;
   };
 }
 
-type PestaniaPedidos = 'recibidos' | 'configuracion';
+type PestaniaPedidos = 'recibidos' | 'reportes' | 'cocina' | 'ranking' | 'configuracion';
 
 /** Vista de Pedidos del local: consola en vivo con alerta sonora, comanda térmica 58/80mm, arqueo de caja y configuración. */
 @Component({
@@ -112,13 +129,36 @@ type PestaniaPedidos = 'recibidos' | 'configuracion';
 export class PaginaPedidosComponente implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
   private readonly localAdmin = inject(LocalAdminServicio);
   private readonly notificaciones = inject(NotificacionesServicio);
+  readonly catalogo = inject(CatalogoAdminServicio);
 
   private readonly inicial = this.localAdmin.perfil();
   private readonly configInicial = this.localAdmin.configuracion();
 
   readonly pestania = signal<PestaniaPedidos>('recibidos');
+
+  /* ------------------------ Modales: Detalle (+ Productos) y Selector de Comanda ------------------------ */
+  readonly pedidoDetalleId = signal<number | null>(null);
+  readonly pedidoDetalle = computed(() => {
+    const id = this.pedidoDetalleId();
+    return id ? (this.pedidos().find((p) => p.id === id) ?? null) : null;
+  });
+  readonly busquedaProductoAgregar = signal('');
+  readonly productoAgregarId = signal<number | null>(null);
+  readonly cantidadAgregar = signal<number>(1);
+  readonly notasAgregar = signal<string>('');
+  readonly guardandoItemPedido = signal(false);
+
+  readonly productosCatalogoFiltrados = computed(() => {
+    const q = this.busquedaProductoAgregar().trim().toLowerCase();
+    const prods = this.catalogo.productos();
+    if (!q) return prods;
+    return prods.filter((p) => p.nombre.toLowerCase().includes(q));
+  });
+
+  readonly pedidoComandaSelector = signal<PedidoAdmin | null>(null);
 
   /* ------------------------ Pedidos en Vivo y Alerta Sonora ------------------------ */
   readonly enVivo = signal(true);
@@ -168,6 +208,75 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   readonly filtroPago = signal<'todos' | 'sin_pagar' | 'pagados'>('todos');
   readonly mostrarDesgloseDiario = signal(false);
 
+  /* ------------------------ Cocina y Ranking de Productos ------------------------ */
+  readonly filtroCocina = signal<'en_cocina' | 'prioritarios' | 'listos'>('en_cocina');
+  readonly busquedaRanking = signal('');
+  readonly categoriaRanking = signal('todas');
+  readonly ordenRanking = signal<'unidades' | 'monto'>('unidades');
+
+  readonly categoriasRankingDisponibles = computed(() => {
+    const lista = this.metricas().arqueo.productosVendidos ?? [];
+    const cats = new Set<string>();
+    for (const p of lista) {
+      if (p.categoria) cats.add(p.categoria);
+    }
+    return Array.from(cats);
+  });
+
+  readonly productosRankingFiltrados = computed(() => {
+    const lista = [...(this.metricas().arqueo.productosVendidos ?? [])];
+    const busq = this.busquedaRanking().trim().toLowerCase();
+    const cat = this.categoriaRanking();
+    const orden = this.ordenRanking();
+
+    const filtrados = lista.filter((p) => {
+      if (cat !== 'todas' && p.categoria !== cat) return false;
+      if (busq && !p.nombre.toLowerCase().includes(busq) && !p.categoria.toLowerCase().includes(busq)) return false;
+      return true;
+    });
+
+    filtrados.sort((a, b) => (orden === 'monto' ? b.totalRecaudado - a.totalRecaudado : b.unidades - a.unidades));
+    return filtrados;
+  });
+
+  readonly resumenRanking = computed(() => {
+    const lista = this.metricas().arqueo.productosVendidos ?? [];
+    const totalUnidades = this.metricas().arqueo.totalUnidadesVendidas ?? lista.reduce((acc, x) => acc + x.unidades, 0);
+    const totalMonto = lista.reduce((acc, x) => acc + x.totalRecaudado, 0);
+    const top1 = lista.length > 0 ? lista[0] : null;
+    return {
+      totalUnidades,
+      productosDistintos: lista.length,
+      totalMonto,
+      top1,
+    };
+  });
+
+  /** Pedidos activos para el Monitor de Cocina (ordenados con Prioritarios arriba). */
+  readonly pedidosCocina = computed(() => {
+    const filtro = this.filtroCocina();
+    const base = this.pedidos().filter((p) => p.estado !== 'cancelado' && p.estado !== 'entregado');
+    const filtrados = base.filter((p) => {
+      if (filtro === 'prioritarios') return !!p.prioritario;
+      if (filtro === 'listos') return p.estado === 'listo';
+      return p.estado === 'pendiente' || p.estado === 'confirmado' || p.estado === 'en_preparacion';
+    });
+
+    return [...filtrados].sort((a, b) => {
+      if (!!a.prioritario !== !!b.prioritario) return a.prioritario ? -1 : 1;
+      return b.id - a.id;
+    });
+  });
+
+  readonly conteoCocina = computed(() => {
+    const activos = this.pedidos().filter((p) => p.estado !== 'cancelado' && p.estado !== 'entregado');
+    return {
+      enCocina: activos.filter((p) => p.estado === 'pendiente' || p.estado === 'confirmado' || p.estado === 'en_preparacion').length,
+      prioritarios: activos.filter((p) => !!p.prioritario).length,
+      listos: activos.filter((p) => p.estado === 'listo').length,
+    };
+  });
+
   readonly periodosDisponibles: { valor: PeriodoVentas; etiqueta: string }[] = [
     { valor: 'hoy', etiqueta: 'Hoy' },
     { valor: 'ayer', etiqueta: 'Ayer' },
@@ -192,16 +301,35 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   readonly pedidosFiltrados = computed(() => {
     const f = this.filtroEstado();
     const fp = this.filtroPago();
-    return this.pedidos().filter((p) => {
+    const busq = this.busquedaPedido().trim().toLowerCase();
+    const filtrados = this.pedidos().filter((p) => {
       if (f !== 'todos' && p.estado !== f) return false;
       if (fp === 'pagados' && !p.pagado) return false;
       if (fp === 'sin_pagar' && (p.pagado || p.estado === 'cancelado')) return false;
+      if (busq) {
+        const num = this.formatearNumero(p.numero);
+        const coincideCliente = p.cliente.nombre.toLowerCase().includes(busq) || (p.cliente.telefono || '').includes(busq);
+        const coincideNum = num.includes(busq) || `#${num}`.includes(busq);
+        const coincidePlato = p.items.some((i) => i.nombre.toLowerCase().includes(busq));
+        if (!coincideCliente && !coincideNum && !coincidePlato) return false;
+      }
       return true;
+    });
+    return [...filtrados].sort((a, b) => {
+      if (!!a.prioritario !== !!b.prioritario) return a.prioritario ? -1 : 1;
+      return b.id - a.id;
     });
   });
 
+  readonly busquedaPedido = signal('');
+
   /** Columnas para la vista Tablero (mostrador / cocina). */
   readonly columnasTablero = computed(() => {
+    const ordenarPrioridad = (arr: PedidoAdmin[]) =>
+      [...arr].sort((a, b) => {
+        if (!!a.prioritario !== !!b.prioritario) return a.prioritario ? -1 : 1;
+        return b.id - a.id;
+      });
     const lista = this.pedidos();
     return [
       {
@@ -209,7 +337,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         titulo: 'Nuevos / Pendientes',
         icono: 'fa-bell',
         colorCabecera: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300/60',
-        pedidos: lista.filter((p) => p.estado === 'pendiente' || p.estado === 'confirmado'),
+        pedidos: ordenarPrioridad(lista.filter((p) => p.estado === 'pendiente' || p.estado === 'confirmado')),
         siguienteEstado: 'en_preparacion' as EstadoPedidoAdmin,
         etiquetaSiguiente: 'Pasar a Cocina',
       },
@@ -218,7 +346,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         titulo: 'En preparación',
         icono: 'fa-fire-burner',
         colorCabecera: 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-300/60',
-        pedidos: lista.filter((p) => p.estado === 'en_preparacion'),
+        pedidos: ordenarPrioridad(lista.filter((p) => p.estado === 'en_preparacion')),
         siguienteEstado: 'listo' as EstadoPedidoAdmin,
         etiquetaSiguiente: 'Marcar Listo',
       },
@@ -227,7 +355,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         titulo: 'Listos para entregar',
         icono: 'fa-check-double',
         colorCabecera: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300/60',
-        pedidos: lista.filter((p) => p.estado === 'listo'),
+        pedidos: ordenarPrioridad(lista.filter((p) => p.estado === 'listo')),
         siguienteEstado: 'entregado' as EstadoPedidoAdmin,
         etiquetaSiguiente: 'Entregado',
       },
@@ -278,8 +406,46 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   readonly claseCampo =
     'w-full bg-zinc-50/90 dark:bg-surface-cardDark border border-zinc-300 dark:border-surface-borderDark rounded-xl px-3.5 py-2 text-xs sm:text-[13px] font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:bg-white dark:focus:bg-surface-dark focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition';
 
+  tituloPagina(): string {
+    switch (this.pestania()) {
+      case 'reportes':
+        return 'Reportes de Ventas y Arqueo de Caja';
+      case 'cocina':
+        return 'Monitor de Cocina y Prioridades';
+      case 'ranking':
+        return 'Productos Vendidos y Ranking';
+      case 'configuracion':
+        return 'Configuración de WhatsApp, Envíos y Pagos';
+      default:
+        return 'Gestión de Ventas · Pedidos de Hoy';
+    }
+  }
+
+  subtituloPagina(): string {
+    switch (this.pestania()) {
+      case 'reportes':
+        return 'Comparativa por día, semana, mes o rango de fechas, arqueo por medio de pago y cierre de caja.';
+      case 'cocina':
+        return 'Pantalla exclusiva para la cocina: sin precios, con pedidos prioritarios arriba y comanda de preparación.';
+      case 'ranking':
+        return 'Consultá cuántas unidades se vendieron de cada plato por día, semana, mes o fecha.';
+      case 'configuracion':
+        return 'Definí el número de WhatsApp que recibe los pedidos, costos de envío y alias de cobro.';
+      default:
+        return 'Consola operativa de pedidos del día en tiempo real.';
+    }
+  }
+
   ngOnInit(): void {
-    this.cargarPedidos(false);
+    this.route.data.subscribe((data) => {
+      const s = data['seccion'] as PestaniaPedidos | undefined;
+      const seccion = s && ['recibidos', 'reportes', 'cocina', 'ranking', 'configuracion'].includes(s) ? s : 'recibidos';
+      this.pestania.set(seccion);
+      if ((seccion === 'recibidos' || seccion === 'cocina') && this.periodoActivo() !== 'hoy') {
+        this.periodoActivo.set('hoy');
+      }
+      this.cargarPedidos(false);
+    });
     this.iniciarAutoRefresco();
   }
 
@@ -290,7 +456,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   iniciarAutoRefresco(): void {
     this.detenerAutoRefresco();
     this.intervaloRefresco = setInterval(() => {
-      if (this.enVivo() && this.pestania() === 'recibidos') {
+      if (this.enVivo() && (this.pestania() === 'recibidos' || this.pestania() === 'cocina')) {
         this.cargarPedidos(true);
       }
     }, 15000);
@@ -482,6 +648,343 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         },
         error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo cambiar el estado de pago')),
       });
+  }
+
+  /** Marca o desmarca un pedido como Prioritario (Urgente para cocina) en 1 clic. */
+  alternarPrioridadPedido(pedido: PedidoAdmin): void {
+    this.marcarPedidoVisto(pedido.id);
+    this.http
+      .patch<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${pedido.id}/prioridad`, {})
+      .subscribe({
+        next: ({ data }) => {
+          this.pedidos.update((lista) => lista.map((p) => (p.id === pedido.id ? data : p)));
+          this.notificaciones.mostrar(
+            data.prioritario
+              ? `🔥 Pedido #${this.formatearNumero(pedido.numero)} marcado como PRIORIDAD en cocina`
+              : `Pedido #${this.formatearNumero(pedido.numero)} vuelto a prioridad normal`,
+          );
+        },
+        error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo cambiar la prioridad')),
+      });
+  }
+
+  /** Resumen en 1 sola línea para mantener altura uniforme en todas las filas de las tablas. */
+  resumenItemsCorto(p: PedidoAdmin): string {
+    if (!p.items || p.items.length === 0) return 'Sin productos';
+    const formatearUno = (it: ItemPedidoAdmin) => {
+      const ops = it.opciones?.length ? ` (${it.opciones.map((o) => o.etiqueta).join(', ')})` : '';
+      return `${it.cantidad}x ${it.nombre}${ops}`;
+    };
+    if (p.items.length === 1) {
+      return formatearUno(p.items[0]);
+    }
+    const primerosDos = p.items
+      .slice(0, 2)
+      .map((it) => `${it.cantidad}x ${it.nombre}`)
+      .join(' · ');
+    const restantes = p.items.length - 2;
+    return restantes > 0 ? `${primerosDos} (+${restantes} más)` : primerosDos;
+  }
+
+  tieneNotasOAdicionales(p: PedidoAdmin): boolean {
+    return Boolean(p.comentarios) || p.items.some((i) => Boolean(i.notas));
+  }
+
+  abrirDetallePedido(p: PedidoAdmin): void {
+    this.marcarPedidoVisto(p.id);
+    this.pedidoDetalleId.set(p.id);
+    this.busquedaProductoAgregar.set('');
+    this.cantidadAgregar.set(1);
+    this.notasAgregar.set('');
+    const primerProd = this.catalogo.productos()[0];
+    this.productoAgregarId.set(primerProd ? primerProd.id : null);
+  }
+
+  cerrarDetallePedido(): void {
+    this.pedidoDetalleId.set(null);
+  }
+
+  abrirSelectorComanda(p: PedidoAdmin): void {
+    this.marcarPedidoVisto(p.id);
+    this.pedidoComandaSelector.set(p);
+  }
+
+  cerrarSelectorComanda(): void {
+    this.pedidoComandaSelector.set(null);
+  }
+
+  elegirEImprimirComanda(tipo: 'cliente' | 'cocina'): void {
+    const p = this.pedidoComandaSelector();
+    if (!p) return;
+    this.pedidoComandaSelector.set(null);
+    if (tipo === 'cliente') {
+      this.imprimirComanda(p);
+    } else {
+      this.imprimirComandaCocina(p);
+    }
+  }
+
+  /** Agrega un producto del catálogo a cualquier pedido existente y recalcula los totales. */
+  agregarProductoAPedido(productoDirecto?: Producto): void {
+    const p = this.pedidoDetalle();
+    if (!p || this.guardandoItemPedido()) return;
+
+    const prodId = productoDirecto ? productoDirecto.id : Number(this.productoAgregarId());
+    if (!prodId) {
+      this.notificaciones.mostrar('Seleccioná un producto para agregar al pedido');
+      return;
+    }
+
+    const cantidad = productoDirecto ? 1 : Math.max(1, Number(this.cantidadAgregar()) || 1);
+    const notas = productoDirecto ? '' : this.notasAgregar().trim();
+
+    this.guardandoItemPedido.set(true);
+    this.http
+      .post<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${p.id}/items`, {
+        productoId: prodId,
+        cantidad,
+        notas: notas || null,
+      })
+      .subscribe({
+        next: ({ data }) => {
+          this.guardandoItemPedido.set(false);
+          this.pedidos.update((lista) => lista.map((item) => (item.id === p.id ? data : item)));
+          this.cantidadAgregar.set(1);
+          this.notasAgregar.set('');
+          this.notificaciones.mostrar(`➕ Producto agregado al pedido #${this.formatearNumero(p.numero)}`);
+          this.cargarPedidos(true);
+        },
+        error: (err: unknown) => {
+          this.guardandoItemPedido.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo agregar el producto al pedido'));
+        },
+      });
+  }
+
+  /** Ajusta la cantidad (+1 / -1) de un ítem del pedido o lo elimina si llega a 0. */
+  cambiarCantidadItemPedido(p: PedidoAdmin, item: ItemPedidoAdmin, delta: number): void {
+    if (this.guardandoItemPedido()) return;
+    const nuevaCantidad = item.cantidad + delta;
+    if (nuevaCantidad <= 0 && p.items.length <= 1) {
+      this.notificaciones.mostrar('El pedido debe tener al menos un producto');
+      return;
+    }
+
+    this.guardandoItemPedido.set(true);
+    this.http
+      .patch<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${p.id}/items/${item.id}`, {
+        cantidad: Math.max(0, nuevaCantidad),
+      })
+      .subscribe({
+        next: ({ data }) => {
+          this.guardandoItemPedido.set(false);
+          this.pedidos.update((lista) => lista.map((x) => (x.id === p.id ? data : x)));
+          this.cargarPedidos(true);
+        },
+        error: (err: unknown) => {
+          this.guardandoItemPedido.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo actualizar el producto'));
+        },
+      });
+  }
+
+  /** Quita un ítem del pedido. */
+  eliminarItemDePedido(p: PedidoAdmin, item: ItemPedidoAdmin): void {
+    if (this.guardandoItemPedido()) return;
+    if (p.items.length <= 1) {
+      this.notificaciones.mostrar('El pedido debe conservar al menos un producto');
+      return;
+    }
+
+    this.guardandoItemPedido.set(true);
+    this.http
+      .delete<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${p.id}/items/${item.id}`)
+      .subscribe({
+        next: ({ data }) => {
+          this.guardandoItemPedido.set(false);
+          this.pedidos.update((lista) => lista.map((x) => (x.id === p.id ? data : x)));
+          this.notificaciones.mostrar(`Producto quitado del pedido #${this.formatearNumero(p.numero)}`);
+          this.cargarPedidos(true);
+        },
+        error: (err: unknown) => {
+          this.guardandoItemPedido.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar el producto'));
+        },
+      });
+  }
+
+  /**
+   * Imprime la COMANDA EXCLUSIVA DE COCINA (58/80mm):
+   * Sin precios, sin datos bancarios ni importes; destaca cantidades grandes, platos, adicionales,
+   * notas de preparación y si es un pedido PRIORITARIO.
+   */
+  imprimirComandaCocina(p: PedidoAdmin): void {
+    this.marcarPedidoVisto(p.id);
+    const ventana = window.open('', '_blank', 'width=420,height=680');
+    if (!ventana) {
+      this.notificaciones.mostrar('Habilitá las ventanas emergentes para imprimir la comanda de cocina');
+      return;
+    }
+
+    const numero = this.formatearNumero(p.numero);
+    const fecha = this.formatearFecha(p.creadoEn);
+    const modalidad = p.modoEntrega === 'envio' ? 'PARA ENVIO (DELIVERY)' : 'RETIRO EN MOSTRADOR';
+
+    const itemsHtml = p.items
+      .map((item) => {
+        const opciones = (item.opciones || [])
+          .map((op) => `<div class="sub">• ${this.escaparHtml(op.grupoNombre)}: <strong>${this.escaparHtml(op.etiqueta)}</strong></div>`)
+          .join('');
+        const nota = item.notas ? `<div class="nota-cocina">⚠️ NOTA: ${this.escaparHtml(item.notas)}</div>` : '';
+        return `
+          <div class="item">
+            <div class="plato">${item.cantidad}x ${this.escaparHtml(item.nombre)}</div>
+            ${opciones}
+            ${nota}
+          </div>
+        `;
+      })
+      .join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Cocina #${numero}</title>
+  <style>
+    @page { margin: 3mm; size: 80mm auto; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      color: #000;
+      background: #fff;
+      margin: 0;
+      padding: 6px;
+      width: 100%;
+      max-width: 300px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .centro { text-align: center; }
+    .etiqueta-cocina {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .pedido-num { font-size: 28px; font-weight: 900; margin: 2px 0; }
+    .prioridad {
+      background: #000;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 5px 8px;
+      margin: 6px 0;
+      text-align: center;
+      border: 2px solid #000;
+    }
+    .badge-modo {
+      display: inline-block;
+      border: 2px solid #000;
+      padding: 3px 10px;
+      font-weight: 900;
+      font-size: 13px;
+      margin: 4px 0;
+    }
+    .bloque {
+      border-top: 2px dashed #000;
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+    .item {
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px dotted #000;
+    }
+    .item:last-child { border-bottom: none; }
+    .plato { font-size: 17px; font-weight: 900; line-height: 1.2; }
+    .sub { padding-left: 10px; font-size: 13px; margin-top: 2px; }
+    .nota-cocina {
+      margin-top: 4px;
+      padding: 4px 6px;
+      border: 2px solid #000;
+      font-weight: 900;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+    .pie { margin-top: 10px; font-size: 11px; text-align: center; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="centro">
+    <div class="etiqueta-cocina">=== COMANDA DE COCINA ===</div>
+    <div class="pedido-num">ORDEN #${numero}</div>
+    <div>Hora: <strong>${fecha}</strong></div>
+    ${p.prioritario ? `<div class="prioridad">*** PRIORIDAD / URGENTE ***</div>` : ''}
+    <div class="badge-modo">${modalidad}</div>
+  </div>
+
+  <div class="bloque">
+    ${itemsHtml}
+  </div>
+
+  ${
+    p.comentarios
+      ? `<div class="bloque">
+           <div class="nota-cocina">OBS. GENERAL: ${this.escaparHtml(p.comentarios)}</div>
+         </div>`
+      : ''
+  }
+
+  <div class="pie">Total unidades: ${p.totales.cantidadTotal} · Cocina Foodaro</div>
+  <script>
+    window.onload = function() {
+      window.focus();
+      window.print();
+    };
+  </script>
+</body>
+</html>`;
+
+    ventana.document.open();
+    ventana.document.write(html);
+    ventana.document.close();
+  }
+
+  /** Exporta el Ranking de Productos Vendidos del período a Excel (.CSV). */
+  exportarRankingCsv(): void {
+    const lista = this.productosRankingFiltrados();
+    const nombreLocal = this.localAdmin.perfil().nombre || 'Local';
+    const periodo = this.etiquetaPeriodoActivo();
+    const escCsv = (val: unknown): string => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
+    const filas: string[] = [];
+    filas.push(['RANKING DE PRODUCTOS VENDIDOS - ' + nombreLocal.toUpperCase(), ''].map(escCsv).join(';'));
+    filas.push(['Período', periodo].map(escCsv).join(';'));
+    filas.push('');
+    filas.push(['PUESTO', 'PRODUCTO', 'CATEGORÍA', 'UNIDADES VENDIDAS', 'PEDIDOS QUE LO INCLUYEN', '% SOBRE UNIDADES', 'TOTAL RECAUDADO ($)'].map(escCsv).join(';'));
+
+    lista.forEach((prod, idx) => {
+      filas.push([
+        `#${idx + 1}`,
+        prod.nombre,
+        prod.categoria,
+        prod.unidades,
+        prod.pedidos,
+        `${prod.porcentajeUnidades}%`,
+        Math.round(prod.totalRecaudado),
+      ].map(escCsv).join(';'));
+    });
+
+    const contenidoCsv = '\uFEFF' + filas.join('\r\n');
+    const blob = new Blob([contenidoCsv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = `ranking-productos-${this.periodoActivo()}-${new Date().toISOString().slice(0, 10)}.csv`;
+    enlace.click();
+    URL.revokeObjectURL(url);
+    this.notificaciones.mostrar('Ranking de productos exportado a Excel (.CSV)');
   }
 
   /**

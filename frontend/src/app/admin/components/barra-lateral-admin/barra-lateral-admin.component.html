@@ -30,30 +30,55 @@
     <!-- Navegación -->
     <nav class="p-4 space-y-1.5">
       @for (item of items; track item.ruta) {
-        <a
-          [routerLink]="item.ruta"
-          routerLinkActive
-          #rla="routerLinkActive"
-          (click)="navegado.emit()"
-          class="w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-[13px] transition-all"
-          [class]="rla.isActive ? claseActiva : claseInactiva"
-        >
-          <div class="flex items-center gap-3">
-            <i class="fa-solid w-4 text-center" [class]="item.icono"></i>
-            <span>{{ item.etiqueta }}</span>
-          </div>
-          @switch (item.indicador) {
-            @case ('contador') {
-              <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">{{ contadorDe(item) }}</span>
+        <div>
+          <a
+            [routerLink]="item.ruta"
+            routerLinkActive
+            [routerLinkActiveOptions]="{ exact: !!item.subitems?.length }"
+            #rla="routerLinkActive"
+            (click)="alClickItem(item)"
+            class="w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-[13px] transition-all"
+            [class]="rla.isActive ? claseActiva : (submenuAbierto() === item.ruta ? 'bg-zinc-100/80 dark:bg-surface-cardDark text-zinc-900 dark:text-white' : claseInactiva)"
+          >
+            <div class="flex items-center gap-3">
+              <i class="fa-solid w-4 text-center" [class]="item.icono"></i>
+              <span>{{ item.etiqueta }}</span>
+            </div>
+            @switch (item.indicador) {
+              @case ('contador') {
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">{{ contadorDe(item) }}</span>
+              }
+              @case ('punto') {
+                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+              }
+              @default {
+                <i
+                  class="fa-solid text-[10px] opacity-70 transition-transform duration-200"
+                  [class]="item.subitems?.length && submenuAbierto() === item.ruta ? 'fa-chevron-down' : 'fa-chevron-right'"
+                ></i>
+              }
             }
-            @case ('punto') {
-              <span class="w-2 h-2 rounded-full bg-brand-500"></span>
-            }
-            @default {
-              <i class="fa-solid fa-chevron-right text-[10px] opacity-70"></i>
-            }
+          </a>
+
+          <!-- Submenú desplegable -->
+          @if (item.subitems?.length && submenuAbierto() === item.ruta) {
+            <div class="mt-1 ml-5 pl-3 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-1">
+              @for (sub of item.subitems; track sub.ruta) {
+                <a
+                  [routerLink]="sub.ruta"
+                  routerLinkActive
+                  #rlaSub="routerLinkActive"
+                  (click)="navegado.emit()"
+                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-bold text-xs transition-all"
+                  [class]="rlaSub.isActive ? claseActiva : claseInactiva"
+                >
+                  <i class="fa-solid w-3.5 text-center text-[11px]" [class]="sub.icono"></i>
+                  <span class="truncate">{{ sub.etiqueta }}</span>
+                </a>
+              }
+            </div>
           }
-        </a>
+        </div>
       }
     </nav>
   </div>

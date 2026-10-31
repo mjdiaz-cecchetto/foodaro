@@ -13,6 +13,7 @@ class PedidoResource extends JsonResource
             'id' => $this->id,
             'numero' => $this->numero,
             'estado' => $this->estado->value,
+            'prioritario' => (bool) ($this->prioritario ?? false),
             'modoEntrega' => $this->modo_entrega->value,
             'cliente' => [
                 'nombre' => $this->nombre_cliente,

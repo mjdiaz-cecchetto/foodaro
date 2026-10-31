@@ -1,0 +1,460 @@
+@let r = resumen();
+
+<section class="space-y-4">
+  <app-encabezado-pagina
+    titulo="Personal, Horarios y Paga Diaria"
+    subtitulo="Registrá tus empleados con su rol y sueldo por hora, controlá entrada/salida por día y calculá su paga proporcional."
+    etiquetaAccion="Nuevo empleado"
+    iconoAccion="fa-user-plus"
+    (accion)="abrirNuevoEmpleado()"
+  />
+
+  <!-- Tarjetas Resumen del Período -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 p-4 shadow-soft">
+      <p class="text-[10px] font-bold uppercase tracking-wider opacity-75">Total Paga Calculada</p>
+      <p class="text-xl sm:text-2xl font-black mt-0.5">{{ r.totalPaga | precio }}</p>
+      <p class="text-[11px] opacity-80 mt-0.5">{{ r.totalHoras }} horas cumplidas</p>
+    </div>
+
+    <div class="rounded-2xl bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 p-4 shadow-soft">
+      <p class="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+        <i class="fa-solid fa-clock mr-1"></i>Pendiente de Pagar
+      </p>
+      <p class="text-xl sm:text-2xl font-black text-amber-800 dark:text-amber-200 mt-0.5">{{ r.totalPendiente | precio }}</p>
+      <p class="text-[11px] text-amber-700/80 dark:text-amber-300/80 mt-0.5">Jornales sin abonar</p>
+    </div>
+
+    <div class="rounded-2xl bg-emerald-50/80 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-4 shadow-soft">
+      <p class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+        <i class="fa-solid fa-circle-check mr-1"></i>Ya Pagado
+      </p>
+      <p class="text-xl sm:text-2xl font-black text-emerald-800 dark:text-emerald-200 mt-0.5">{{ r.totalPagado | precio }}</p>
+      <p class="text-[11px] text-emerald-700/80 dark:text-emerald-300/80 mt-0.5">Jornales abonados</p>
+    </div>
+
+    <div class="rounded-2xl bg-white dark:bg-surface-dark border border-zinc-200/80 dark:border-surface-borderDark p-4 shadow-soft">
+      <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Equipo y Turnos hoy</p>
+      <p class="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white mt-0.5">{{ empleados().length }} empleados</p>
+      <p class="text-[11px] font-bold mt-0.5" [class]="r.turnosActivos > 0 ? 'text-emerald-600' : 'text-zinc-400'">
+        {{ r.turnosActivos > 0 ? r.turnosActivos + ' trabajando ahora' : 'Sin turnos abiertos ahora' }}
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+    <!-- =====================================================================
+         COLUMNA IZQUIERDA (8 cols): REGISTRO RÁPIDO DE ENTRADA/SALIDA Y PLANILLA
+         ===================================================================== -->
+    <div class="xl:col-span-8 space-y-4">
+      <!-- Caja de Fichaje / Carga de Jornada -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-zinc-100 dark:border-surface-borderDark">
+          <div>
+            <h3 class="text-sm font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-stopwatch text-brand-600"></i>
+              <span>Registrar Entrada / Salida del Día</span>
+            </h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">
+              Elegí el empleado y marcá su entrada ahora en 1 clic, o cargá entrada y salida juntas para calcular su paga del día.
+            </p>
+          </div>
+
+          @if (calculoPrevioFichaje(); as prev) {
+            <div class="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/40 text-xs font-extrabold text-emerald-800 dark:text-emerald-200 shrink-0">
+              ⏱️ {{ prev.horas }} hs · Paga del día: <span class="text-sm font-black">{{ prev.paga | precio }}</span>
+            </div>
+          }
+        </div>
+
+        @if (empleados().length === 0) {
+          <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-between gap-3 text-xs">
+            <span class="font-bold text-amber-800 dark:text-amber-200">
+              <i class="fa-solid fa-circle-info mr-1.5"></i>Primero cargá tu primer empleado con su rol y sueldo por hora.
+            </span>
+            <button
+              type="button"
+              (click)="abrirNuevoEmpleado()"
+              class="px-3 py-1.5 rounded-xl bg-brand-600 text-white font-extrabold cursor-pointer shrink-0"
+            >
+              + Cargar Empleado
+            </button>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 items-end">
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-zinc-600 dark:text-zinc-300 mb-1">Empleado</label>
+              <select
+                [ngModel]="fichajeEmpleadoId()"
+                (ngModelChange)="fichajeEmpleadoId.set($event)"
+                [class]="claseCampo + ' font-bold'"
+              >
+                @for (e of empleados(); track e.id) {
+                  <option [ngValue]="e.id">{{ e.nombre }} ({{ e.rol }} · {{ e.sueldoHora | precio }}/h)</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-zinc-600 dark:text-zinc-300 mb-1">Fecha</label>
+              <input type="date" [ngModel]="fichajeFecha()" (ngModelChange)="fichajeFecha.set($event)" [class]="claseCampo" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-zinc-600 dark:text-zinc-300 mb-1">Hora Entrada</label>
+              <input type="time" [ngModel]="fichajeEntrada()" (ngModelChange)="fichajeEntrada.set($event)" [class]="claseCampo + ' font-extrabold'" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-zinc-600 dark:text-zinc-300 mb-1">Hora Salida (opc.)</label>
+              <input type="time" [ngModel]="fichajeSalida()" (ngModelChange)="fichajeSalida.set($event)" [class]="claseCampo + ' font-extrabold'" />
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1">
+            <input
+              type="text"
+              [ngModel]="fichajeNotas()"
+              (ngModelChange)="fichajeNotas.set($event)"
+              placeholder="Observación opcional (ej: Turno noche, horas extra, franco cubierto...)"
+              [class]="claseCampo + ' flex-1'"
+            />
+
+            <div class="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                [disabled]="guardandoFichaje()"
+                (click)="registrarJornada(true)"
+                class="h-9 px-3.5 rounded-xl border border-emerald-400 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:text-emerald-300 text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+                title="Marca la entrada con la hora actual y deja la salida abierta para cuando se retire"
+              >
+                <i class="fa-solid fa-play text-[10px]"></i>
+                <span>Fichar Entrada Ahora</span>
+              </button>
+
+              <button
+                type="button"
+                [disabled]="guardandoFichaje()"
+                (click)="registrarJornada(false)"
+                class="h-9 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+              >
+                <i class="fa-solid fa-check"></i>
+                <span>Guardar Horario</span>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Planilla de Horarios y Pagas del Día / Período -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          <div class="flex items-center gap-1.5 flex-wrap text-xs font-bold">
+            @for (per of periodosDisponibles; track per.valor) {
+              <button
+                type="button"
+                (click)="seleccionarPeriodo(per.valor)"
+                class="px-3 py-1.5 rounded-xl border transition cursor-pointer"
+                [class]="periodoActivo() === per.valor ? 'border-brand-600 bg-brand-600 text-white' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+              >
+                {{ per.etiqueta }}
+              </button>
+            }
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <select
+              [ngModel]="filtroEmpleadoId()"
+              (ngModelChange)="filtroEmpleadoId.set($event); cargarDatos()"
+              [class]="claseCampo + ' !w-auto !py-1.5 font-bold'"
+            >
+              <option value="">Todos los empleados</option>
+              @for (e of empleados(); track e.id) {
+                <option [value]="e.id">{{ e.nombre }} ({{ e.rol }})</option>
+              }
+            </select>
+
+            <button
+              type="button"
+              (click)="exportarAsistenciasCsv()"
+              class="h-8 px-3 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <i class="fa-solid fa-file-csv"></i>
+              <span>Exportar Excel</span>
+            </button>
+          </div>
+        </div>
+
+        @if (periodoActivo() === 'personalizado') {
+          <div class="flex items-center gap-2 text-xs">
+            <input type="date" [ngModel]="fechaDesde()" (ngModelChange)="fechaDesde.set($event)" [class]="claseCampo + ' !w-auto !py-1.5'" />
+            <span class="text-zinc-400">a</span>
+            <input type="date" [ngModel]="fechaHasta()" (ngModelChange)="fechaHasta.set($event)" [class]="claseCampo + ' !w-auto !py-1.5'" />
+            <button
+              type="button"
+              (click)="cargarDatos()"
+              class="h-8 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold cursor-pointer"
+            >
+              Filtrar
+            </button>
+          </div>
+        }
+
+        <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark">
+          <table class="w-full text-xs">
+            <thead class="bg-zinc-50 dark:bg-surface-cardDark text-[10px] uppercase tracking-wider text-zinc-500">
+              <tr>
+                <th class="text-left px-3 py-2.5">Día</th>
+                <th class="text-left px-3 py-2.5">Empleado</th>
+                <th class="text-left px-3 py-2.5">Entrada → Salida</th>
+                <th class="text-right px-3 py-2.5">Horas</th>
+                <th class="text-right px-3 py-2.5">Valor/h</th>
+                <th class="text-right px-3 py-2.5">Paga del Día</th>
+                <th class="text-center px-3 py-2.5">Estado</th>
+                <th class="text-right px-3 py-2.5">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+              @for (a of asistencias(); track a.id) {
+                <tr class="hover:bg-zinc-50/70 dark:hover:bg-surface-cardDark/50 transition">
+                  <td class="px-3 py-2.5 font-bold capitalize whitespace-nowrap">{{ formatearFechaCorta(a.fecha) }}</td>
+                  <td class="px-3 py-2.5">
+                    <p class="font-extrabold text-zinc-900 dark:text-white leading-tight">{{ a.empleadoNombre }}</p>
+                    <p class="text-[10px] font-bold text-zinc-400">{{ a.empleadoRol }}</p>
+                    @if (a.notas) {
+                      <p class="text-[10px] text-amber-600 italic mt-0.5">"{{ a.notas }}"</p>
+                    }
+                  </td>
+                  <td class="px-3 py-2.5 whitespace-nowrap">
+                    @if (editandoAsistenciaId() === a.id) {
+                      <div class="flex items-center gap-1">
+                        <input type="time" [ngModel]="editAsistenciaEntrada()" (ngModelChange)="editAsistenciaEntrada.set($event)" class="px-2 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-bold" />
+                        <span>→</span>
+                        <input type="time" [ngModel]="editAsistenciaSalida()" (ngModelChange)="editAsistenciaSalida.set($event)" class="px-2 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-bold" />
+                        <button type="button" (click)="guardarEdicionAsistencia(a)" class="px-2 py-1 rounded-lg bg-emerald-600 text-white font-bold">OK</button>
+                        <button type="button" (click)="editandoAsistenciaId.set(null)" class="px-1.5 py-1 text-zinc-400">✕</button>
+                      </div>
+                    } @else {
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-mono font-bold px-2 py-0.5 rounded bg-zinc-100 dark:bg-surface-cardDark">{{ a.horaEntrada }}</span>
+                        <span class="text-zinc-400">→</span>
+                        @if (a.horaSalida) {
+                          <span class="font-mono font-bold px-2 py-0.5 rounded bg-zinc-100 dark:bg-surface-cardDark">{{ a.horaSalida }}</span>
+                        } @else {
+                          <button
+                            type="button"
+                            (click)="marcarSalidaAhora(a)"
+                            class="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold flex items-center gap-1 cursor-pointer shadow-sm"
+                            title="Registrar horario de salida ahora y calcular la paga del día"
+                          >
+                            <i class="fa-solid fa-stop text-[9px]"></i>
+                            <span>Marcar Salida Ahora</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </td>
+                  <td class="px-3 py-2.5 text-right font-bold">
+                    @if (a.horaSalida) {
+                      <span>{{ a.horasTrabajadas }} hs</span>
+                    } @else {
+                      <span class="text-[10px] text-emerald-600 font-extrabold">En turno…</span>
+                    }
+                  </td>
+                  <td class="px-3 py-2.5 text-right text-zinc-500">{{ a.valorHora | precio }}/h</td>
+                  <td class="px-3 py-2.5 text-right font-black text-zinc-900 dark:text-white text-[13px]">
+                    @if (a.horaSalida) {
+                      {{ a.totalPaga | precio }}
+                    } @else {
+                      <span class="text-zinc-400">-</span>
+                    }
+                  </td>
+                  <td class="px-3 py-2.5 text-center">
+                    <button
+                      type="button"
+                      (click)="alternarPagoAsistencia(a)"
+                      class="px-2.5 py-1 rounded-lg border text-[11px] font-extrabold inline-flex items-center gap-1 transition cursor-pointer"
+                      [class]="a.pagado
+                        ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                        : 'border-amber-400 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white'"
+                    >
+                      <i class="fa-solid text-[10px]" [class]="a.pagado ? 'fa-circle-check' : 'fa-hand-holding-dollar'"></i>
+                      <span>{{ a.pagado ? 'Pagado' : 'Sin pagar' }}</span>
+                    </button>
+                  </td>
+                  <td class="px-3 py-2.5 text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      (click)="iniciarEdicionAsistencia(a)"
+                      class="w-7 h-7 rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-cardDark text-zinc-500 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
+                      title="Editar horario de entrada/salida"
+                    >
+                      <i class="fa-solid fa-pen text-[11px]"></i>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="eliminarAsistencia(a)"
+                      class="w-7 h-7 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/15 text-zinc-400 hover:text-red-600 cursor-pointer"
+                      title="Eliminar registro"
+                    >
+                      <i class="fa-solid fa-trash text-[11px]"></i>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="py-10 text-center text-xs text-zinc-400">
+                    No hay registros de entrada/salida en este período.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         COLUMNA DERECHA (4 cols): NÓMINA DE EMPLEADOS Y VALOR HORA
+         ===================================================================== -->
+    <div class="xl:col-span-4 space-y-3.5">
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-extrabold text-zinc-900 dark:text-white">Equipo de Trabajo</h3>
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Datos, puesto y sueldo por hora.</p>
+          </div>
+          <button
+            type="button"
+            (click)="abrirNuevoEmpleado()"
+            class="h-8 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+          >
+            <i class="fa-solid fa-plus"></i>
+            <span>Agregar</span>
+          </button>
+        </div>
+
+        <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+          @for (e of empleados(); track e.id) {
+            <div class="py-3 first:pt-1 last:pb-1 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-extrabold text-zinc-900 dark:text-white truncate">{{ e.nombre }}</span>
+                  @if (!e.activo) {
+                    <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-500">Inactivo</span>
+                  }
+                </div>
+                <div class="flex items-center gap-2 mt-0.5 text-[11px] text-zinc-500">
+                  <span class="px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-500/10 text-brand-600 font-bold text-[10px]">{{ e.rol }}</span>
+                  @if (e.telefono) {
+                    <span>· {{ e.telefono }}</span>
+                  }
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="text-right">
+                  <p class="text-xs font-black text-zinc-900 dark:text-white">{{ e.sueldoHora | precio }}</p>
+                  <p class="text-[10px] text-zinc-400 font-semibold">por hora</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="abrirEditarEmpleado(e)"
+                  class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 hover:text-brand-600 flex items-center justify-center cursor-pointer"
+                  title="Editar empleado y sueldo por hora"
+                >
+                  <i class="fa-solid fa-pen text-[11px]"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="eliminarEmpleado(e)"
+                  class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-surface-cardDark text-zinc-400 hover:text-red-600 flex items-center justify-center cursor-pointer"
+                  title="Eliminar empleado"
+                >
+                  <i class="fa-solid fa-trash text-[11px]"></i>
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="py-8 text-center text-xs text-zinc-400">
+              Todavía no cargaste empleados en el local.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Alta / Edición de Empleado -->
+@if (modalEmpleadoAbierto()) {
+  <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-surface-dark rounded-2xl w-full max-w-md p-5 shadow-2xl border border-zinc-200 dark:border-surface-borderDark space-y-4">
+      <div class="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-surface-borderDark">
+        <div>
+          <h3 class="text-base font-extrabold text-zinc-900 dark:text-white">
+            {{ editandoEmpleadoId() ? 'Editar Empleado' : 'Nuevo Empleado' }}
+          </h3>
+          <p class="text-xs text-zinc-500">Datos del trabajador, rol y valor de su hora.</p>
+        </div>
+        <button type="button" (click)="modalEmpleadoAbierto.set(false)" class="text-zinc-400 hover:text-zinc-700 text-lg font-bold cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-zinc-700 dark:text-zinc-200 mb-1">Nombre y Apellido *</label>
+          <input type="text" [ngModel]="empNombre()" (ngModelChange)="empNombre.set($event)" placeholder="Ej: Lucas Gómez" [class]="claseCampo" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-200 mb-1">Rol / Puesto *</label>
+            <select [ngModel]="empRol()" (ngModelChange)="empRol.set($event)" [class]="claseCampo + ' font-bold'">
+              @for (rol of rolesSugeridos; track rol) {
+                <option [value]="rol">{{ rol }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-200 mb-1">Sueldo por Hora ($/h) *</label>
+            <input type="number" min="0" [ngModel]="empSueldoHora()" (ngModelChange)="empSueldoHora.set($event)" placeholder="Ej: 3500" [class]="claseCampo + ' font-extrabold'" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-200 mb-1">Teléfono / WhatsApp</label>
+            <input type="text" [ngModel]="empTelefono()" (ngModelChange)="empTelefono.set($event)" placeholder="Ej: 385..." [class]="claseCampo" />
+          </div>
+          <div>
+            <label class="block font-bold text-zinc-700 dark:text-zinc-200 mb-1">DNI / Legajo (opcional)</label>
+            <input type="text" [ngModel]="empDni()" (ngModelChange)="empDni.set($event)" placeholder="Documento" [class]="claseCampo" />
+          </div>
+        </div>
+
+        <label class="flex items-center gap-2 pt-1 cursor-pointer">
+          <input type="checkbox" [ngModel]="empActivo()" (ngModelChange)="empActivo.set($event)" class="accent-brand-600 w-4 h-4" />
+          <span class="font-bold text-zinc-700 dark:text-zinc-200">Empleado activo actualmente</span>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-surface-borderDark">
+        <button
+          type="button"
+          (click)="modalEmpleadoAbierto.set(false)"
+          class="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-xs font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          [disabled]="guardandoEmpleado()"
+          (click)="guardarEmpleado()"
+          class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold cursor-pointer"
+        >
+          {{ guardandoEmpleado() ? 'Guardando…' : 'Guardar Empleado' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

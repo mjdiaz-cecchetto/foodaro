@@ -18,6 +18,13 @@ export type ValorFormularioCupon = Pick<
   'codigo' | 'descuento' | 'descripcion' | 'montoMinimo' | 'maxUsos' | 'fechaVencimiento' | 'activo'
 >;
 
+/** Sub-ítem desplegable dentro de un ítem de la barra lateral. */
+export interface SubItemNavegacionAdmin {
+  ruta: string;
+  etiqueta: string;
+  icono: string;
+}
+
 /** Ítem de navegación de la barra lateral. */
 export interface ItemNavegacionAdmin {
   ruta: string;
@@ -25,4 +32,5 @@ export interface ItemNavegacionAdmin {
   icono: string;
   /** 'contador' muestra un número; 'punto' un punto coral; 'flecha' un chevron. */
   indicador: 'contador' | 'punto' | 'flecha';
+  subitems?: SubItemNavegacionAdmin[];
 }

@@ -85,6 +85,16 @@ class Local extends Model
         return $this->hasMany(Pedido::class);
     }
 
+    public function empleados(): HasMany
+    {
+        return $this->hasMany(Empleado::class, 'local_id')->orderBy('nombre');
+    }
+
+    public function asistenciasEmpleados(): HasMany
+    {
+        return $this->hasMany(AsistenciaEmpleado::class, 'local_id')->orderByDesc('fecha')->orderByDesc('id');
+    }
+
     /** Franjas semanales ordenadas por día y orden. */
     public function horarios(): HasMany
     {

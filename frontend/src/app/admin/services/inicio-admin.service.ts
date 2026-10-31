@@ -59,7 +59,7 @@ export class InicioAdminServicio {
     const p = this.perfil();
     return [
       { id: 'logo', titulo: 'Logo y portada', descripcion: 'Son lo primero que ve el cliente en el banner.', completo: !!(p?.logoUrl && p?.portadaUrl), ruta: 'perfil' },
-      { id: 'whatsapp', titulo: 'WhatsApp que recibe los pedidos', descripcion: 'A este número llegan los pedidos armados.', completo: !!p?.contacto.whatsappPedidos, ruta: 'pedidos' },
+      { id: 'whatsapp', titulo: 'WhatsApp que recibe los pedidos', descripcion: 'A este número llegan los pedidos armados.', completo: !!p?.contacto.whatsappPedidos, ruta: 'pedidos/configuracion' },
       { id: 'horarios', titulo: 'Horarios y dirección', descripcion: 'Se muestran en la info del local.', completo: !!(p?.horarios.semana.some((d) => d.abierto) && p?.direccion), ruta: 'perfil' },
       { id: 'categorias', titulo: 'Al menos una categoría', descripcion: 'Agrupan los productos en la carta.', completo: this.categoriasActivas() > 0, ruta: 'productos' },
       { id: 'productos', titulo: 'Al menos un producto disponible', descripcion: 'Con foto, precio y descripción.', completo: this.disponibles() > 0, ruta: 'productos' },

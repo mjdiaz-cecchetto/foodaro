@@ -74,6 +74,9 @@ Cuando decidas activarlo, podemos hacer que el sistema aplique estas diferencias
 | **Zonas de envío por barrio (Punto 8)** | ❌ 1 costo fijo | ✅ Hasta 5 zonas | ✅ Ilimitadas |
 | **Ranking de más vendidos + Clientes frecuentes (4 y 5)** | ❌ No | ❌ Básico | ✅ **Completo + CRM WhatsApp** |
 | **Carga rápida de pedido en Mostrador (POS simple)** | ❌ No | ❌ No | ✅ **Incluido** |
+| **Comanda exclusiva de Cocina + Prioridad (`🔥`)** | ❌ No | ✅ **Incluido** | ✅ **Incluido** |
+| **Contador de unidades vendidas por producto (Día/Semana/Mes)** | ❌ No | ✅ **Incluido** | ✅ **Incluido** |
+| **Gestión de Empleados, Fichaje (Entrada/Salida) y Paga diaria** | ❌ No | ❌ No | ✅ **Exclusivo Plan 3 (Fuerte diferencial)** |
 
 ---
 
