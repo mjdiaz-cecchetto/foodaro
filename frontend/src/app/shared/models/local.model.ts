@@ -82,11 +82,15 @@ export interface ConfiguracionLocal {
 
 export interface SuscripcionLocal {
   planId: number | null;
+  planCodigo?: string | null;
   planNombre: string;
   planNivel?: string;
   planMensual: number;
   planAnual?: number;
   planCaracteristicas?: string[];
+  capacidades?: string[];
+  limiteProductos?: number | null;
+  totalProductos?: number;
   estado: 'al_dia' | 'prueba' | 'por_vencer' | 'vencido';
   vencimiento: string | null;
   diasRestantes: number | null;

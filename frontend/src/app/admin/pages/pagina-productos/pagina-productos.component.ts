@@ -1,8 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { Categoria, Producto } from '../../../shared/models';
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
+import { LocalServicio } from '../../../core/services/local.service';
 import { CatalogoAdminServicio } from '../../services/catalogo-admin.service';
 import { ValorFormularioCategoria, ValorFormularioProducto } from '../../interfaces';
 import { ModalFormularioProductoComponente } from '../../components/modal-formulario-producto/modal-formulario-producto.component';
@@ -23,7 +25,11 @@ import { mensajeDeError } from '../../../shared/utils/api';
 })
 export class PaginaProductosComponente {
   private readonly notificaciones = inject(NotificacionesServicio);
+  private readonly router = inject(Router);
   readonly catalogo = inject(CatalogoAdminServicio);
+  readonly local = inject(LocalServicio);
+
+  readonly limiteProductos = computed(() => this.local.limiteProductos());
 
   readonly categorias = this.catalogo.categorias;
   readonly busqueda = signal('');
@@ -124,6 +130,18 @@ export class PaginaProductosComponente {
   /* --------------------------- ABM Productos --------------------------- */
 
   abrirAltaProducto(): void {
+    const limite = this.local.limiteProductos();
+    const total = this.catalogo.cantidadProductos();
+    if (limite !== null && total >= limite) {
+      this.notificaciones.mostrar(
+        `Alcanzaste el límite de ${limite} productos de tu plan. Mejorá al Plan Control para productos ilimitados.`,
+      );
+      this.router.navigate(['/', this.local.slug(), 'admin', 'plan-bloqueado'], {
+        queryParams: { capacidad: 'limite_productos' },
+      });
+      return;
+    }
+
     if (this.categorias().length === 0) {
       this.notificaciones.mostrar('Creá primero una categoría para agregar productos');
       this.abrirAltaCategoria();
@@ -139,6 +157,18 @@ export class PaginaProductosComponente {
   }
 
   duplicarProducto(producto: Producto): void {
+    const limite = this.local.limiteProductos();
+    const total = this.catalogo.cantidadProductos();
+    if (limite !== null && total >= limite) {
+      this.notificaciones.mostrar(
+        `Alcanzaste el límite de ${limite} productos de tu plan. Mejorá al Plan Control para productos ilimitados.`,
+      );
+      this.router.navigate(['/', this.local.slug(), 'admin', 'plan-bloqueado'], {
+        queryParams: { capacidad: 'limite_productos' },
+      });
+      return;
+    }
+
     const copia: Producto = {
       ...structuredClone(producto),
       id: 0,

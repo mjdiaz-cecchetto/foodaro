@@ -27,7 +27,18 @@ class ProductoController extends Controller
 
     public function store(GuardarProductoRequest $request): JsonResponse
     {
-        $producto = $this->catalogo->crearProducto($request->user()->local, $request->validated());
+        $local = $request->user()->local;
+        $limite = $local->limiteProductos();
+
+        if ($limite !== null && $local->productos()->count() >= $limite) {
+            return response()->json([
+                'message' => "Alcanzaste el límite de {$limite} productos de tu plan actual. Mejorá tu plan para agregar más productos.",
+                'codigo' => 'limite_productos_alcanzado',
+                'limite' => $limite,
+            ], 422);
+        }
+
+        $producto = $this->catalogo->crearProducto($local, $request->validated());
 
         return (new ProductoResource($producto))->response()->setStatusCode(201);
     }

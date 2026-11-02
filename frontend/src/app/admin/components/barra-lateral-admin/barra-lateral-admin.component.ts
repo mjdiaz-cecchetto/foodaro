@@ -92,12 +92,19 @@ export class BarraLateralAdminComponente implements OnInit {
   }
 
   alClickItem(item: ItemNavegacionAdmin): void {
-    if (item.subitems?.length) {
+    if (item.subitems?.length && !this.estaBloqueado(item)) {
       this.submenuAbierto.set(item.ruta);
     } else {
       this.submenuAbierto.set(null);
     }
     this.navegado.emit();
+  }
+
+  estaBloqueado(item: ItemNavegacionAdmin): boolean {
+    if (item.ruta === 'pedidos') return !this.local.tieneCapacidad('pedidos_en_vivo');
+    if (item.ruta === 'promociones' || item.ruta === 'cupones') return !this.local.tieneCapacidad('promociones_cupones');
+    if (item.ruta === 'empleados') return !this.local.tieneCapacidad('personal_asistencia');
+    return false;
   }
 
   contadorDe(_item: ItemNavegacionAdmin): number {

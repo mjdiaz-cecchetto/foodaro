@@ -9,6 +9,17 @@
     </div>
 
     <div class="flex items-center gap-3">
+      @if (limiteProductos(); as limite) {
+        <span
+          class="text-[11px] font-bold px-3 py-1.5 rounded-xl border flex items-center gap-1.5"
+          [class]="catalogo.cantidadProductos() >= limite ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-400' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300'"
+          [title]="catalogo.cantidadProductos() >= limite ? 'Límite alcanzado en Plan Inicial (máx. 50)' : 'Cupo de productos de tu plan'"
+        >
+          <i class="fa-solid fa-boxes-stacked text-[10px]"></i>
+          <span>{{ catalogo.cantidadProductos() }} / {{ limite }} productos</span>
+        </span>
+      }
+
       <button
         type="button"
         (click)="abrirAltaProducto()"
