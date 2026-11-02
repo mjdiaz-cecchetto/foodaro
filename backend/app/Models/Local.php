@@ -20,7 +20,7 @@ class Local extends Model
         'slug', 'nombre', 'eslogan', 'rubro', 'logo_url', 'portada_url',
         'direccion', 'referencia_direccion', 'maps_url',
         'whatsapp', 'whatsapp_pedidos', 'instagram', 'tiktok', 'telefono',
-        'moneda', 'cargo_servicio', 'etiqueta_cargo_servicio',
+        'moneda', 'tema_por_defecto', 'cargo_servicio', 'etiqueta_cargo_servicio',
         'costo_envio', 'monto_minimo_envio', 'alias_transferencia', 'titular_transferencia',
         'activo', 'cerrado_temporalmente', 'envios_pausados',
         'plan_id', 'estado_suscripcion', 'vencimiento_suscripcion',

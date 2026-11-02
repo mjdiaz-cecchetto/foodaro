@@ -15,9 +15,11 @@ import {
   SuscripcionLocal,
 } from '../../shared/models';
 import { RespuestaApi } from '../../shared/utils/api';
+import { TemaServicio } from './tema.service';
 
 const CONFIGURACION_POR_DEFECTO: ConfiguracionLocal = {
   moneda: 'ARS',
+  temaPorDefecto: 'light',
   cargoServicio: 0,
   etiquetaCargoServicio: 'Servicio / empaque',
   costoEnvio: 0,
@@ -34,6 +36,7 @@ const CONFIGURACION_POR_DEFECTO: ConfiguracionLocal = {
 @Injectable({ providedIn: 'root' })
 export class LocalServicio {
   private readonly http = inject(HttpClient);
+  private readonly tema = inject(TemaServicio);
 
   readonly id = signal<number | null>(null);
   readonly slug = signal<string | null>(null);
@@ -54,6 +57,7 @@ export class LocalServicio {
   resolver(slug: string): Observable<boolean> {
     const normalizado = slug.trim().toLowerCase();
     if (this.slug() === normalizado && this.perfil()) {
+      this.tema.aplicarTemaPorDefectoLocal(this.configuracion().temaPorDefecto);
       return of(true);
     }
     return this.http.get<RespuestaApi<Local>>(`${environment.apiUrl}/locales/${encodeURIComponent(normalizado)}`).pipe(
@@ -83,6 +87,9 @@ export class LocalServicio {
     this.cupones.set(local.cupones ?? []);
     this.plantillasOpciones.set(local.plantillasOpciones ?? []);
     this.cargaCompleta.set(completo);
+    if (!completo) {
+      this.tema.aplicarTemaPorDefectoLocal(local.configuracion?.temaPorDefecto);
+    }
   }
 
   /** Actualiza el perfil del local activo (usado por el panel admin). */

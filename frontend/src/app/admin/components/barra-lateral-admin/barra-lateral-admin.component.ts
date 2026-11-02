@@ -24,7 +24,10 @@ export class BarraLateralAdminComponente implements OnInit {
 
   /** Abierta en móvil (drawer). En escritorio siempre visible. */
   readonly abierta = input<boolean>(false);
+  /** Modo riel (solo íconos) en escritorio, pensado para notebooks chicas. */
+  readonly colapsada = input<boolean>(false);
   readonly navegado = output<void>();
+  readonly alternarColapso = output<void>();
 
   readonly perfil = this.localAdmin.perfil;
   readonly enlaceCarta = computed(() => this.local.ruta('pedido'));
@@ -35,7 +38,6 @@ export class BarraLateralAdminComponente implements OnInit {
 
   readonly items: ItemNavegacionAdmin[] = [
     { ruta: 'inicio', etiqueta: 'Inicio', icono: 'fa-house', indicador: 'flecha' },
-    { ruta: 'perfil', etiqueta: 'Datos del Local', icono: 'fa-store', indicador: 'flecha' },
     {
       ruta: 'pedidos',
       etiqueta: 'Gestión de Ventas',
@@ -68,6 +70,7 @@ export class BarraLateralAdminComponente implements OnInit {
     { ruta: 'promociones', etiqueta: 'Promociones', icono: 'fa-tags', indicador: 'punto' },
     { ruta: 'cupones', etiqueta: 'Cupones', icono: 'fa-ticket', indicador: 'flecha' },
     { ruta: 'empleados', etiqueta: 'Personal y Asistencia', icono: 'fa-users-gear', indicador: 'flecha' },
+    { ruta: 'perfil', etiqueta: 'Datos del Local', icono: 'fa-store', indicador: 'flecha' },
   ];
 
   readonly claseActiva = 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400';

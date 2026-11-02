@@ -1,7 +1,6 @@
 import { Component, computed, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { LogoComponente } from '../../../shared/components/logo/logo.component';
 import { AlternarTemaComponente } from '../../../shared/components/alternar-tema/alternar-tema.component';
 import { LocalServicio } from '../../../core/services/local.service';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
@@ -17,7 +16,7 @@ import { MapaUbicacionComponente } from '../../../shared/components/mapa-ubicaci
 @Component({
   selector: 'app-portada-local',
   standalone: true,
-  imports: [RouterLink, LogoComponente, AlternarTemaComponente, ListaHorariosComponente, MapaUbicacionComponente],
+  imports: [RouterLink, AlternarTemaComponente, ListaHorariosComponente, MapaUbicacionComponente],
   templateUrl: './portada-local.component.html',
   styleUrl: './portada-local.component.scss',
 })

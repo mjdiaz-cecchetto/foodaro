@@ -1,14 +1,20 @@
 @let p = perfil();
 @let s = suscripcion();
-<header class="shrink-0 h-16 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 bg-white dark:bg-surface-dark border-b border-zinc-200 dark:border-surface-borderDark z-30">
+<header class="shrink-0 h-14 lg:h-16 flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-5 lg:px-6 xl:px-8 bg-white dark:bg-surface-dark border-b border-zinc-200 dark:border-surface-borderDark z-30">
 
   <!-- Izquierda: menú (móvil) + identidad del local -->
-  <div class="flex items-center gap-3 min-w-0">
-    <button type="button" (click)="alternarMenu.emit()" class="md:hidden w-10 h-10 -ml-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-surface-cardDark flex items-center justify-center" aria-label="Abrir menú">
-      <i class="fa-solid fa-bars text-lg"></i>
+  <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+    <button
+      type="button"
+      (click)="alternarMenu.emit()"
+      class="w-9 h-9 sm:w-10 sm:h-10 -ml-1.5 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-surface-cardDark flex items-center justify-center shrink-0 cursor-pointer"
+      [attr.aria-label]="menuColapsado() ? 'Expandir menú' : 'Compactar menú'"
+      [title]="menuColapsado() ? 'Expandir menú lateral' : 'Compactar menú lateral'"
+    >
+      <i class="fa-solid text-lg" [class]="menuColapsado() ? 'fa-bars' : 'fa-bars-staggered'"></i>
     </button>
     @if (p.logoUrl) {
-      <img [src]="p.logoUrl" alt="" class="w-9 h-9 rounded-xl object-cover ring-2 ring-brand-500/20 shrink-0" />
+      <img [src]="p.logoUrl" alt="" class="hidden sm:block w-9 h-9 rounded-xl object-cover ring-2 ring-brand-500/20 shrink-0" />
     }
     <div class="min-w-0 leading-tight">
       <h1 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white truncate">{{ p.nombre || 'Mi local' }}</h1>
@@ -61,7 +67,7 @@
       (alternado)="alAlternarTema($event)"
     />
     <a [href]="enlaceCarta()" target="_blank" class="h-9 px-3 rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-bold hidden sm:flex items-center gap-2 tap-scale" title="Ver carta en vivo">
-      <i class="fa-solid fa-arrow-up-right-from-square"></i><span class="hidden lg:inline">Ver carta</span>
+      <i class="fa-solid fa-arrow-up-right-from-square"></i><span class="hidden xl:inline">Ver carta</span>
     </a>
 
     <!-- Botón Mi Cuenta y Suscripción -->
@@ -74,7 +80,7 @@
       <span class="w-8 h-8 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-black flex items-center justify-center uppercase shrink-0">
         {{ (usuario()?.nombre || 'A').charAt(0) }}
       </span>
-      <div class="leading-tight hidden lg:block text-left">
+      <div class="leading-tight hidden xl:block text-left">
         <p class="text-xs font-bold text-zinc-900 dark:text-white truncate max-w-[140px]">{{ usuario()?.nombre }}</p>
         <p class="text-[10px] text-zinc-400 truncate max-w-[155px]">
           <span class="text-brand-600 font-extrabold">Mi cuenta y Plan</span>

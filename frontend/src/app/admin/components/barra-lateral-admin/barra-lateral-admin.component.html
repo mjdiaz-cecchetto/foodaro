@@ -1,23 +1,31 @@
 @let p = perfil();
+@let riel = colapsada();
 <aside
-  class="fixed md:static inset-y-0 left-0 z-50 w-64 h-full bg-white dark:bg-surface-dark border-r border-zinc-200 dark:border-surface-borderDark flex flex-col transform md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"
+  class="fixed md:static inset-y-0 left-0 z-50 h-full bg-white dark:bg-surface-dark border-r border-zinc-200 dark:border-surface-borderDark flex flex-col transform md:translate-x-0 transition-[transform,width] duration-300 ease-in-out shrink-0"
+  [class]="riel ? 'w-64 md:w-[72px]' : 'w-64'"
   [class.-translate-x-full]="!abierta()"
 >
   <!-- Marca -->
-  <div class="h-16 shrink-0 px-5 border-b border-zinc-100 dark:border-surface-borderDark flex items-center gap-2.5">
+  <div class="h-14 lg:h-16 shrink-0 border-b border-zinc-100 dark:border-surface-borderDark flex items-center gap-2.5" [class]="riel ? 'px-5 md:px-0 md:justify-center' : 'px-5'">
     <app-logo variante="isotipo" tamanio="sm" [href]="'/'" />
-    <div class="min-w-0">
+    <div class="min-w-0" [class.md:hidden]="riel">
       <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider leading-none">Panel de</p>
       <h4 class="text-sm font-extrabold text-zinc-900 dark:text-white truncate mt-0.5">Administración</h4>
     </div>
   </div>
 
-  <div class="flex-1 min-h-0 overflow-y-auto custom-scroll">
+  <div class="flex-1 min-h-0" [class]="riel ? 'overflow-y-auto md:overflow-visible custom-scroll' : 'overflow-y-auto custom-scroll'">
     <!-- Tarjeta del local -->
-    <div class="px-5 py-4 border-b border-zinc-100 dark:border-surface-borderDark">
-      <a [href]="enlacePortada()" target="_blank" class="flex items-center gap-3 p-2 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark/70 border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition">
-        <img [src]="p.logoUrl" alt="Logo" class="w-10 h-10 rounded-xl object-cover ring-2 ring-brand-500/20" />
-        <div class="min-w-0 flex-1">
+    <div class="border-b border-zinc-100 dark:border-surface-borderDark" [class]="riel ? 'px-5 py-4 md:px-3 md:py-3' : 'px-5 py-4'">
+      <a
+        [href]="enlacePortada()"
+        target="_blank"
+        class="flex items-center gap-3 rounded-2xl bg-zinc-50 dark:bg-surface-cardDark/70 border border-zinc-100 dark:border-surface-borderDark hover:border-brand-300 transition"
+        [class]="riel ? 'p-2 md:p-1 md:justify-center' : 'p-2'"
+        [title]="riel ? p.nombre + ' · Ver portada' : 'Ver portada del local'"
+      >
+        <img [src]="p.logoUrl" alt="Logo" class="w-10 h-10 rounded-xl object-cover ring-2 ring-brand-500/20 shrink-0" [class.md:w-9]="riel" [class.md:h-9]="riel" />
+        <div class="min-w-0 flex-1" [class.md:hidden]="riel">
           <h4 class="text-xs font-bold text-zinc-900 dark:text-white truncate">{{ p.nombre }}</h4>
           <div class="flex items-center gap-1.5 mt-0.5">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -28,41 +36,49 @@
     </div>
 
     <!-- Navegación -->
-    <nav class="p-4 space-y-1.5">
+    <nav class="space-y-1.5" [class]="riel ? 'p-4 md:p-2.5' : 'p-4'">
       @for (item of items; track item.ruta) {
-        <div>
+        <div class="relative group/item">
           <a
             [routerLink]="item.ruta"
             routerLinkActive
             [routerLinkActiveOptions]="{ exact: !!item.subitems?.length }"
             #rla="routerLinkActive"
             (click)="alClickItem(item)"
-            class="w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-[13px] transition-all"
-            [class]="rla.isActive ? claseActiva : (submenuAbierto() === item.ruta ? 'bg-zinc-100/80 dark:bg-surface-cardDark text-zinc-900 dark:text-white' : claseInactiva)"
+            class="w-full flex items-center justify-between rounded-2xl font-bold text-[13px] transition-all"
+            [class]="(rla.isActive ? claseActiva : (submenuAbierto() === item.ruta ? 'bg-zinc-100/80 dark:bg-surface-cardDark text-zinc-900 dark:text-white' : claseInactiva))
+              + (riel ? ' px-3.5 py-3 md:px-0 md:py-2.5 md:justify-center' : ' px-3.5 py-3')"
+            [title]="riel ? item.etiqueta : ''"
           >
-            <div class="flex items-center gap-3">
-              <i class="fa-solid w-4 text-center" [class]="item.icono"></i>
-              <span>{{ item.etiqueta }}</span>
+            <div class="flex items-center gap-3" [class.md:gap-0]="riel">
+              <i class="fa-solid w-4 text-center" [class]="item.icono + (riel ? ' md:text-[15px] md:w-5' : '')"></i>
+              <span [class.md:hidden]="riel">{{ item.etiqueta }}</span>
             </div>
             @switch (item.indicador) {
               @case ('contador') {
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">{{ contadorDe(item) }}</span>
+                <span
+                  class="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                  [class]="riel ? 'md:absolute md:-top-1 md:-right-1 md:px-1.5 md:py-0 md:min-w-[18px] md:text-center md:bg-brand-600 md:text-white md:dark:bg-brand-600 md:dark:text-white' : ''"
+                >{{ contadorDe(item) }}</span>
               }
               @case ('punto') {
-                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                <span class="w-2 h-2 rounded-full bg-brand-500" [class]="riel ? 'md:absolute md:top-2 md:right-2' : ''"></span>
               }
               @default {
-                <i
-                  class="fa-solid text-[10px] opacity-70 transition-transform duration-200"
-                  [class]="item.subitems?.length && submenuAbierto() === item.ruta ? 'fa-chevron-down' : 'fa-chevron-right'"
-                ></i>
+                <!-- Envuelto en <span>: el CSS de Font Awesome fija display en <i> y pisaría el md:hidden -->
+                <span [class.md:hidden]="riel">
+                  <i
+                    class="fa-solid text-[10px] opacity-70 transition-transform duration-200"
+                    [class]="item.subitems?.length && submenuAbierto() === item.ruta ? 'fa-chevron-down' : 'fa-chevron-right'"
+                  ></i>
+                </span>
               }
             }
           </a>
 
-          <!-- Submenú desplegable -->
+          <!-- Submenú desplegable (barra expandida o drawer móvil) -->
           @if (item.subitems?.length && submenuAbierto() === item.ruta) {
-            <div class="mt-1 ml-5 pl-3 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-1">
+            <div class="mt-1 ml-5 pl-3 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-1" [class.md:hidden]="riel">
               @for (sub of item.subitems; track sub.ruta) {
                 <a
                   [routerLink]="sub.ruta"
@@ -78,17 +94,69 @@
               }
             </div>
           }
+
+          <!-- Submenú flotante (solo en modo riel, al pasar el mouse) -->
+          @if (item.subitems?.length && riel) {
+            <div class="hidden md:group-hover/item:block md:group-focus-within/item:block absolute left-full top-0 pl-2 z-50">
+              <div class="w-60 rounded-2xl bg-white dark:bg-surface-dark border border-zinc-200 dark:border-surface-borderDark shadow-xl p-2 space-y-1">
+                <a
+                  [routerLink]="item.ruta"
+                  routerLinkActive
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  #rlaFly="routerLinkActive"
+                  (click)="alClickItem(item)"
+                  class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-extrabold text-xs transition-all"
+                  [class]="rlaFly.isActive ? claseActiva : claseInactiva"
+                >
+                  <i class="fa-solid w-3.5 text-center text-[11px]" [class]="item.icono"></i>
+                  <span class="truncate">{{ item.etiqueta }}</span>
+                </a>
+                <div class="h-px bg-zinc-100 dark:bg-surface-borderDark mx-2"></div>
+                @for (sub of item.subitems; track sub.ruta) {
+                  <a
+                    [routerLink]="sub.ruta"
+                    routerLinkActive
+                    #rlaSubFly="routerLinkActive"
+                    (click)="navegado.emit()"
+                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-bold text-xs transition-all"
+                    [class]="rlaSubFly.isActive ? claseActiva : claseInactiva"
+                  >
+                    <i class="fa-solid w-3.5 text-center text-[11px]" [class]="sub.icono"></i>
+                    <span class="truncate">{{ sub.etiqueta }}</span>
+                  </a>
+                }
+              </div>
+            </div>
+          }
         </div>
       }
     </nav>
   </div>
 
   <!-- Acciones inferiores (fijas) -->
-  <div class="shrink-0 p-5 border-t border-zinc-100 dark:border-surface-borderDark space-y-3">
-    <a [href]="enlaceCarta()" target="_blank" class="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-black dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold flex items-center justify-center gap-2 tap-scale shadow-sm transition">
+  <div class="shrink-0 border-t border-zinc-100 dark:border-surface-borderDark" [class]="riel ? 'p-5 space-y-3 md:p-2.5 md:space-y-2' : 'p-5 space-y-3'">
+    <a
+      [href]="enlaceCarta()"
+      target="_blank"
+      class="w-full rounded-xl bg-zinc-900 hover:bg-black dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold flex items-center justify-center gap-2 tap-scale shadow-sm transition"
+      [class]="riel ? 'py-2.5 px-4 md:h-10 md:px-0' : 'py-2.5 px-4'"
+      title="Abrir carta digital"
+    >
       <i class="fa-solid fa-arrow-up-right-from-square"></i>
-      <span>Abrir carta digital</span>
+      <span [class.md:hidden]="riel">Abrir carta digital</span>
     </a>
-    <p class="text-[10px] text-zinc-400 text-center font-medium">Hecho con <span class="font-brand text-sm align-middle">foodaro</span></p>
+
+    <!-- Colapsar / expandir (solo escritorio) -->
+    <button
+      type="button"
+      (click)="alternarColapso.emit()"
+      class="hidden md:flex w-full h-9 rounded-xl border border-zinc-200 dark:border-surface-borderDark text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-surface-cardDark items-center justify-center gap-2 text-[11px] font-bold transition cursor-pointer"
+      [title]="riel ? 'Expandir menú' : 'Compactar menú'"
+    >
+      <i class="fa-solid" [class]="riel ? 'fa-angles-right' : 'fa-angles-left'"></i>
+      <span [class.hidden]="riel">Compactar menú</span>
+    </button>
+
+    <p class="text-[10px] text-zinc-400 text-center font-medium" [class.md:hidden]="riel">Hecho con <span class="font-brand text-sm align-middle">foodaro</span></p>
   </div>
 </aside>

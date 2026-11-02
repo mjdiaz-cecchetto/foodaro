@@ -1,27 +1,66 @@
 @let p = perfil();
-<!-- En móvil ocupa todo el ancho (sin márgenes ni radios); desde sm vuelve a ser una tarjeta -->
+<!-- En móvil ocupa todo el ancho desde arriba (sin header blanco); desde sm vuelve a ser una tarjeta -->
 <section
   (click)="abrirPerfil()"
-  class="relative overflow-hidden bg-neutral-900 shadow-card cursor-pointer group h-56 sm:h-72 -mx-4 sm:mx-0 sm:rounded-3xl sm:border sm:border-gray-100 sm:dark:border-dark-border"
+  class="relative overflow-hidden bg-neutral-900 shadow-card cursor-pointer group h-60 sm:h-72 -mx-4 sm:mx-0 sm:rounded-3xl sm:border sm:border-gray-100 sm:dark:border-dark-border"
   role="button"
   tabindex="0"
   (keydown.enter)="abrirPerfil()"
   aria-label="Ver información y horarios del local"
 >
   <img [src]="p.portadaUrl" alt="" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition duration-700" />
-  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10"></div>
+  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/25"></div>
 
-  <!-- Estado -->
-  <div class="absolute top-3 left-4 sm:top-4 sm:left-5 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-white text-[10px] sm:text-xs font-bold backdrop-blur-md shadow-md" [class]="p.abiertoAhora ? 'bg-emerald-500/90' : 'bg-zinc-800/80'">
-    <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white" [class.animate-pulse]="p.abiertoAhora"></span>
-    <span>{{ p.estado }}</span>
-  </div>
+  <!-- Barra superior flotante organizada: Estado a la izquierda · Info + QR + Tema a la derecha -->
+  <div class="absolute top-3.5 left-4 right-4 sm:top-4 sm:left-5 sm:right-5 flex items-center justify-between gap-2 z-20">
+    <!-- Estado (Abierto / Cerrado) -->
+    <div
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[11px] sm:text-xs font-extrabold backdrop-blur-md shadow-md border border-white/15"
+      [class]="p.abiertoAhora ? 'bg-emerald-500/90' : 'bg-zinc-900/80'"
+    >
+      <span class="w-2 h-2 rounded-full bg-white" [class.animate-pulse]="p.abiertoAhora"></span>
+      <span>{{ p.estado }}</span>
+    </div>
 
-  <!-- Acceso al perfil -->
-  <div class="absolute top-3 right-4 sm:top-4 sm:right-5 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-white/15 text-white text-[10px] sm:text-xs font-bold backdrop-blur-md border border-white/20">
-    <span class="hidden sm:inline">Ver Info y Horarios</span>
-    <span class="sm:hidden">Info</span>
-    <i class="fa-solid fa-chevron-right text-[9px] opacity-80"></i>
+    <!-- Botones flotantes (Info, QR y Tema Claro/Oscuro) -->
+    <div class="flex items-center gap-1.5 sm:gap-2" (click)="$event.stopPropagation()">
+      @if (ui.modo() === 'menu' && ui.localAbierto()) {
+        <a
+          [routerLink]="enlacePedido()"
+          class="h-9 px-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md tap-scale transition"
+          title="Ir a hacer un pedido"
+        >
+          <i class="fa-solid fa-bag-shopping text-xs"></i>
+          <span>Pedir</span>
+        </a>
+      }
+
+      <button
+        type="button"
+        (click)="abrirPerfil()"
+        class="h-9 px-3 rounded-full bg-black/45 hover:bg-black/65 text-white text-[11px] sm:text-xs font-bold backdrop-blur-md border border-white/25 flex items-center gap-1.5 shadow-md tap-scale transition cursor-pointer"
+        title="Ver información, horarios y ubicación"
+      >
+        <i class="fa-solid fa-circle-info text-xs opacity-90"></i>
+        <span>Info</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="abrirQr()"
+        class="w-9 h-9 rounded-full bg-black/45 hover:bg-black/65 text-white backdrop-blur-md border border-white/25 flex items-center justify-center shadow-md tap-scale transition cursor-pointer"
+        title="Compartir carta por código QR"
+        aria-label="Código QR de la carta"
+      >
+        <i class="fa-solid fa-qrcode text-sm"></i>
+      </button>
+
+      <app-alternar-tema
+        claseBoton="w-9 h-9 rounded-full bg-black/45 hover:bg-black/65 text-white dark:text-amber-300 backdrop-blur-md border border-white/25 flex items-center justify-center shadow-md tap-scale transition cursor-pointer"
+        claseIcono="text-sm"
+        (alternado)="alAlternarTema($event)"
+      />
+    </div>
   </div>
 
   <!-- Logo en cuadro + identidad -->

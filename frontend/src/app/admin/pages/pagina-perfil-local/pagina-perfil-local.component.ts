@@ -36,6 +36,9 @@ export class PaginaPerfilLocalComponente {
   private readonly notificaciones = inject(NotificacionesServicio);
 
   private readonly inicial = this.localAdmin.perfil();
+  readonly temaPorDefecto = signal<'light' | 'dark'>(
+    this.localAdmin.configuracion().temaPorDefecto === 'dark' ? 'dark' : 'light',
+  );
 
   readonly secciones: { id: Seccion; etiqueta: string; icono: string }[] = [
     { id: 'identidad', etiqueta: 'Identidad', icono: 'fa-store' },
@@ -97,7 +100,7 @@ export class PaginaPerfilLocalComponente {
     }
 
     this.guardando.set(true);
-    this.localAdmin.guardar(this.aPerfil()).subscribe({
+    this.localAdmin.guardar(this.aPerfil(), { temaPorDefecto: this.temaPorDefecto() }).subscribe({
       next: (perfil) => {
         this.guardando.set(false);
         this.horarios.set(clonarHorarios(perfil.horarios));

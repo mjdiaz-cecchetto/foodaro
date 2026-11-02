@@ -4,7 +4,6 @@ import { ActivatedRoute, RouterOutlet } from '@angular/router';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
 import { UiClienteServicio } from '../../services/ui-cliente.service';
 import { ModoCliente } from '../../interfaces';
-import { EncabezadoClienteComponente } from '../../components/encabezado-cliente/encabezado-cliente.component';
 import { PieClienteComponente } from '../../components/pie-cliente/pie-cliente.component';
 import { HojaCarritoComponente } from '../../components/hoja-carrito/hoja-carrito.component';
 import { BarraCarritoMovilComponente } from '../../components/barra-carrito-movil/barra-carrito-movil.component';
@@ -21,7 +20,6 @@ import { ModalConfirmarPedidoComponente } from '../../components/modal-confirmar
   standalone: true,
   imports: [
     RouterOutlet,
-    EncabezadoClienteComponente,
     PieClienteComponente,
     HojaCarritoComponente,
     BarraCarritoMovilComponente,

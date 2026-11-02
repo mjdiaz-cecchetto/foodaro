@@ -27,6 +27,15 @@ export class TemaServicio {
     return siguiente;
   }
 
+  /**
+   * Aplica el tema por defecto configurado por el administrador del local ('light' o 'dark')
+   * al ingresar a la portada o carta pública del comercio.
+   */
+  aplicarTemaPorDefectoLocal(temaPorDefecto?: 'light' | 'dark'): void {
+    const oscuro = temaPorDefecto === 'dark';
+    this.aplicar(oscuro);
+  }
+
   private aplicar(oscuro: boolean): void {
     document.documentElement.classList.toggle('dark', oscuro);
     this.esOscuro.set(oscuro);

@@ -61,6 +61,8 @@ export interface PerfilLocal {
 export interface ConfiguracionLocal {
   /** Código ISO de la moneda (ARS, USD...). */
   moneda: string;
+  /** Tema visual con el que se abre la carta pública por defecto ('light' | 'dark'). */
+  temaPorDefecto?: 'light' | 'dark';
   /** Cargo fijo por servicio / empaque que se suma al pedido. */
   cargoServicio: number;
   etiquetaCargoServicio: string;

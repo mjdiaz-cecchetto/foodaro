@@ -21,6 +21,7 @@ class LocalResource extends JsonResource
             'perfil' => new PerfilLocalResource($this->resource),
             'configuracion' => [
                 'moneda' => $this->moneda,
+                'temaPorDefecto' => $this->tema_por_defecto ?? 'light',
                 'cargoServicio' => (float) $this->cargo_servicio,
                 'etiquetaCargoServicio' => $this->etiqueta_cargo_servicio,
                 'costoEnvio' => (float) ($this->costo_envio ?? 0),

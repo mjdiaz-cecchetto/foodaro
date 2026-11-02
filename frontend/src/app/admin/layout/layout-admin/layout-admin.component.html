@@ -5,11 +5,16 @@
   <div (click)="cerrarBarraLateral()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity" [class.hidden]="!barraLateralAbierta()"></div>
 
   <!-- Navegación lateral (fija) -->
-  <app-barra-lateral-admin [abierta]="barraLateralAbierta()" (navegado)="cerrarBarraLateral()" />
+  <app-barra-lateral-admin
+    [abierta]="barraLateralAbierta()"
+    [colapsada]="barraLateralColapsada()"
+    (navegado)="cerrarBarraLateral()"
+    (alternarColapso)="alternarColapsoBarra()"
+  />
 
   <!-- Columna derecha: encabezado fijo + contenido con scroll propio -->
   <div class="flex-1 min-w-0 h-full flex flex-col">
-    <app-barra-superior-admin (alternarMenu)="alternarBarraLateral()" (cerrarSesion)="cerrarSesion()" />
+    <app-barra-superior-admin [menuColapsado]="barraLateralColapsada()" (alternarMenu)="alternarBarraLateral()" (cerrarSesion)="cerrarSesion()" />
 
     <!-- Aviso automático de suscripción (Por vencer / Período de gracia / Carta suspendida) -->
     @if (suscripcion(); as s) {
@@ -43,8 +48,9 @@
       }
     }
 
-    <main class="flex-1 min-h-0 overflow-y-auto custom-scroll">
-      <div class="p-4 sm:p-5 lg:px-7 lg:py-4 w-full">
+    <!-- @container: las páginas pueden adaptar su grilla al ancho real del contenido (varía con el menú compactado) -->
+    <main class="flex-1 min-h-0 overflow-y-auto custom-scroll @container/contenido">
+      <div class="p-3 sm:p-4 lg:px-5 lg:py-4 xl:px-7 w-full">
         <router-outlet />
       </div>
     </main>

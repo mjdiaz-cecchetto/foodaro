@@ -162,6 +162,75 @@ body {
     cursor: pointer;
   }
 
+  /* ---------- Tablero de pedidos: tarjetas, arrastre y animaciones ---------- */
+  @keyframes tablero-entrada {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes tablero-pulso {
+    0%, 100% { opacity: 0.75; }
+    50% { opacity: 1; }
+  }
+  .tablero-card {
+    animation: tablero-entrada 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      opacity 0.18s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .tablero-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.25);
+  }
+  /* La tarjeta original queda como "hueco" mientras su fantasma viaja */
+  .tablero-card-origen {
+    opacity: 0.35;
+    transform: scale(0.97);
+    border-style: dashed !important;
+    box-shadow: none !important;
+  }
+  .tablero-card-origen:hover {
+    transform: scale(0.97);
+  }
+  /* Tarjeta fantasma que sigue al puntero (se inserta en <body>) */
+  .tablero-ghost {
+    position: fixed;
+    z-index: 9999;
+    margin: 0;
+    pointer-events: none;
+    will-change: transform;
+    cursor: grabbing;
+    box-shadow:
+      0 24px 48px -12px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(255, 59, 48, 0.25);
+    animation: none;
+    transition: none;
+  }
+  .tablero-columna {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+  .tablero-drop-hint {
+    animation: tablero-entrada 0.2s ease both, tablero-pulso 1.4s ease-in-out 0.2s infinite;
+  }
+  body.tablero-arrastrando,
+  body.tablero-arrastrando * {
+    cursor: grabbing !important;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
   /* Transición de bottom-sheets / drawers */
   .sheet-transition {
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;

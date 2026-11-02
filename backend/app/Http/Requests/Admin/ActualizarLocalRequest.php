@@ -60,6 +60,7 @@ class ActualizarLocalRequest extends FormRequest
             'perfil.contacto.tiktok' => ['nullable', 'string', 'max:80'],
             'perfil.contacto.telefono' => ['nullable', 'string', 'max:40'],
             'configuracion.moneda' => ['sometimes', 'string', 'size:3'],
+            'configuracion.temaPorDefecto' => ['sometimes', 'string', 'in:light,dark'],
             'configuracion.cargoServicio' => ['sometimes', 'numeric', 'min:0', 'max:99999999'],
             'configuracion.etiquetaCargoServicio' => ['sometimes', 'string', 'max:80'],
             'configuracion.costoEnvio' => ['sometimes', 'numeric', 'min:0', 'max:99999999'],

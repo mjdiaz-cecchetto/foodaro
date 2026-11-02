@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { environment } from '../../../../environments/environment';
-import { ConfiguracionLocal, PerfilLocal, Producto } from '../../../shared/models';
+import { ConfiguracionLocal, GrupoOpciones, OpcionProducto, PerfilLocal, Producto } from '../../../shared/models';
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { mensajeDeError, RespuestaApi } from '../../../shared/utils/api';
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
@@ -145,17 +145,50 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     const id = this.pedidoDetalleId();
     return id ? (this.pedidos().find((p) => p.id === id) ?? null) : null;
   });
+
+  readonly mostrandoSelectorProductos = signal(false);
+  readonly categoriaAgregarId = signal<number | 'todas'>('todas');
   readonly busquedaProductoAgregar = signal('');
-  readonly productoAgregarId = signal<number | null>(null);
+  readonly productoConfigurando = signal<Producto | null>(null);
+  readonly opcionesSeleccionadas = signal<Record<number, number[]>>({});
   readonly cantidadAgregar = signal<number>(1);
   readonly notasAgregar = signal<string>('');
   readonly guardandoItemPedido = signal(false);
 
   readonly productosCatalogoFiltrados = computed(() => {
     const q = this.busquedaProductoAgregar().trim().toLowerCase();
-    const prods = this.catalogo.productos();
-    if (!q) return prods;
-    return prods.filter((p) => p.nombre.toLowerCase().includes(q));
+    const cat = this.categoriaAgregarId();
+    return this.catalogo.productos().filter((p) => {
+      if (cat !== 'todas' && p.categoriaId !== cat) return false;
+      if (q && !p.nombre.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  });
+
+  readonly precioUnitarioConfigurando = computed(() => {
+    const prod = this.productoConfigurando();
+    if (!prod) return 0;
+    let base = prod.precio;
+    let adicionales = 0;
+    const sel = this.opcionesSeleccionadas();
+
+    for (const grupo of prod.gruposOpciones ?? []) {
+      const ids = sel[grupo.id] ?? [];
+      const modo = grupo.modoPrecio ?? 'adicional';
+      for (const op of grupo.opciones ?? []) {
+        if (!ids.includes(op.id)) continue;
+        if (modo === 'variante') {
+          base = op.precioAdicional > 0 ? op.precioAdicional : prod.precio;
+        } else if (modo === 'adicional') {
+          adicionales += op.precioAdicional || 0;
+        }
+      }
+    }
+    return base + adicionales;
+  });
+
+  readonly totalProductoConfigurando = computed(() => {
+    return this.precioUnitarioConfigurando() * Math.max(1, this.cantidadAgregar() || 1);
   });
 
   readonly pedidoComandaSelector = signal<PedidoAdmin | null>(null);
@@ -206,6 +239,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   readonly fechaHasta = signal('');
   readonly filtroEstado = signal<'todos' | EstadoPedidoAdmin>('todos');
   readonly filtroPago = signal<'todos' | 'sin_pagar' | 'pagados'>('todos');
+  readonly filtroEntrega = signal<'todos' | 'envio' | 'retiro' | 'mesa'>('todos');
   readonly mostrarDesgloseDiario = signal(false);
 
   /* ------------------------ Cocina y Ranking de Productos ------------------------ */
@@ -298,14 +332,26 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     };
   });
 
+  readonly conteoEntregas = computed(() => {
+    const validos = this.pedidos().filter((p) => p.estado !== 'cancelado');
+    return {
+      todos: validos.length,
+      envio: validos.filter((p) => p.modoEntrega === 'envio').length,
+      retiro: validos.filter((p) => p.modoEntrega === 'retiro').length,
+      mesa: validos.filter((p) => (p.modoEntrega as string) === 'mesa').length,
+    };
+  });
+
   readonly pedidosFiltrados = computed(() => {
     const f = this.filtroEstado();
     const fp = this.filtroPago();
+    const fe = this.filtroEntrega();
     const busq = this.busquedaPedido().trim().toLowerCase();
     const filtrados = this.pedidos().filter((p) => {
       if (f !== 'todos' && p.estado !== f) return false;
       if (fp === 'pagados' && !p.pagado) return false;
       if (fp === 'sin_pagar' && (p.pagado || p.estado === 'cancelado')) return false;
+      if (fe !== 'todos' && p.modoEntrega !== fe) return false;
       if (busq) {
         const num = this.formatearNumero(p.numero);
         const coincideCliente = p.cliente.nombre.toLowerCase().includes(busq) || (p.cliente.telefono || '').includes(busq);
@@ -323,14 +369,190 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
 
   readonly busquedaPedido = signal('');
 
-  /** Columnas para la vista Tablero (mostrador / cocina). */
+  /* ------------------------ Drag & Drop entre columnas del Tablero (puntero + tarjeta fantasma) ------------------------ */
+  /** Estado reactivo del arrastre en curso: qué pedido se mueve, desde qué columna y sobre cuál está el puntero. */
+  readonly arrastre = signal<{ pedidoId: number; columnaOrigen: string; columnaDestino: string | null } | null>(null);
+
+  private dragPedido: PedidoAdmin | null = null;
+  private dragColumnaOrigen = '';
+  private dragCard: HTMLElement | null = null;
+  private dragGhost: HTMLElement | null = null;
+  private dragActivo = false;
+  private dragInicio = { x: 0, y: 0 };
+  private dragOffset = { x: 0, y: 0 };
+  private dragUltimoPunto = { x: 0, y: 0 };
+  private dragPuntoPrevioX = 0;
+  private dragFrame: number | null = null;
+  private readonly onPointerMove = (e: PointerEvent) => this.moverArrastre(e);
+  private readonly onPointerUp = (e: PointerEvent) => this.finalizarArrastre(e);
+  private readonly onPointerCancel = () => this.cancelarArrastre();
+
+  /** Comienza a escuchar el puntero; el arrastre real recién se activa al superar un umbral (para no romper clics ni scroll). */
+  iniciarArrastre(event: PointerEvent, pedido: PedidoAdmin, columnaId: string): void {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('button, a, select, input, textarea')) return;
+    if (this.dragCard) this.cancelarArrastre();
+    // Con mouse evitamos que el navegador inicie una selección de texto mientras se arrastra.
+    if (event.pointerType === 'mouse') event.preventDefault();
+
+    this.dragPedido = pedido;
+    this.dragColumnaOrigen = columnaId;
+    this.dragCard = event.currentTarget as HTMLElement;
+    this.dragActivo = false;
+    this.dragInicio = { x: event.clientX, y: event.clientY };
+    this.dragUltimoPunto = { ...this.dragInicio };
+    this.dragPuntoPrevioX = this.dragInicio.x;
+
+    document.addEventListener('pointermove', this.onPointerMove, { passive: false });
+    document.addEventListener('pointerup', this.onPointerUp);
+    document.addEventListener('pointercancel', this.onPointerCancel);
+  }
+
+  private moverArrastre(event: PointerEvent): void {
+    if (!this.dragCard || !this.dragPedido) return;
+    const dx = event.clientX - this.dragInicio.x;
+    const dy = event.clientY - this.dragInicio.y;
+
+    if (!this.dragActivo) {
+      if (Math.hypot(dx, dy) < 6) return;
+      // En táctil, un gesto mayormente vertical es scroll: lo dejamos pasar.
+      if (event.pointerType === 'touch' && Math.abs(dy) > Math.abs(dx) * 1.5) {
+        this.cancelarArrastre();
+        return;
+      }
+      this.activarArrastre();
+    }
+
+    event.preventDefault();
+    this.dragUltimoPunto = { x: event.clientX, y: event.clientY };
+    if (this.dragFrame === null) {
+      this.dragFrame = requestAnimationFrame(() => {
+        this.dragFrame = null;
+        this.posicionarFantasma();
+        this.detectarColumnaDestino();
+      });
+    }
+  }
+
+  /** Crea la tarjeta fantasma que sigue al puntero y deja la original como "hueco". */
+  private activarArrastre(): void {
+    if (!this.dragCard || !this.dragPedido) return;
+    const rect = this.dragCard.getBoundingClientRect();
+    this.dragOffset = { x: this.dragInicio.x - rect.left, y: this.dragInicio.y - rect.top };
+
+    const ghost = this.dragCard.cloneNode(true) as HTMLElement;
+    ghost.classList.remove('tablero-card-origen', 'tablero-card');
+    ghost.classList.add('tablero-ghost');
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    document.body.appendChild(ghost);
+    this.dragGhost = ghost;
+
+    document.body.classList.add('tablero-arrastrando');
+    this.dragActivo = true;
+    this.arrastre.set({ pedidoId: this.dragPedido.id, columnaOrigen: this.dragColumnaOrigen, columnaDestino: null });
+    this.posicionarFantasma();
+  }
+
+  private posicionarFantasma(): void {
+    if (!this.dragGhost) return;
+    const x = this.dragUltimoPunto.x - this.dragOffset.x;
+    const y = this.dragUltimoPunto.y - this.dragOffset.y;
+    // Inclinación sutil según la dirección horizontal del movimiento.
+    const inclinacion = Math.max(-4, Math.min(4, (this.dragUltimoPunto.x - this.dragPuntoPrevioX) * 0.35));
+    this.dragPuntoPrevioX = this.dragUltimoPunto.x;
+    this.dragGhost.style.transform = `translate(${x - parseFloat(this.dragGhost.style.left)}px, ${y - parseFloat(this.dragGhost.style.top)}px) rotate(${inclinacion}deg) scale(1.03)`;
+  }
+
+  private detectarColumnaDestino(): void {
+    const actual = this.arrastre();
+    if (!actual) return;
+    const elemento = document.elementFromPoint(this.dragUltimoPunto.x, this.dragUltimoPunto.y);
+    const columna = elemento?.closest<HTMLElement>('[data-columna]');
+    const destino = columna?.dataset['columna'] ?? null;
+    const nuevoDestino = destino && destino !== actual.columnaOrigen ? destino : null;
+    if (nuevoDestino !== actual.columnaDestino) {
+      this.arrastre.set({ ...actual, columnaDestino: nuevoDestino });
+    }
+  }
+
+  private finalizarArrastre(event: PointerEvent): void {
+    if (!this.dragActivo) {
+      this.cancelarArrastre();
+      return;
+    }
+    this.dragUltimoPunto = { x: event.clientX, y: event.clientY };
+    this.detectarColumnaDestino();
+
+    const estado = this.arrastre();
+    const pedido = this.dragPedido;
+    const ghost = this.dragGhost;
+    const destinoId = estado?.columnaDestino ?? null;
+    const columnaDestino = destinoId ? this.columnasTablero().find((c) => c.id === destinoId) : null;
+
+    if (pedido && ghost && columnaDestino) {
+      // La fantasma "cae" dentro de la columna destino mientras la tarjeta real aparece allí.
+      const contenedor = document.querySelector<HTMLElement>(`[data-columna="${columnaDestino.id}"]`);
+      const rectDestino = contenedor?.getBoundingClientRect();
+      const rectGhost = ghost.getBoundingClientRect();
+      if (rectDestino) {
+        const destX = rectDestino.left + rectDestino.width / 2 - rectGhost.width / 2;
+        const destY = rectDestino.top + 56;
+        ghost.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease';
+        ghost.style.transform = `translate(${destX - parseFloat(ghost.style.left)}px, ${destY - parseFloat(ghost.style.top)}px) scale(0.92)`;
+        ghost.style.opacity = '0';
+      }
+      this.cambiarEstadoPedido(pedido, columnaDestino.estadoDestino, true);
+      this.limpiarArrastre(220);
+      return;
+    }
+
+    // Sin destino válido: la fantasma vuelve a su lugar y se desvanece.
+    if (ghost) {
+      ghost.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease 0.1s';
+      ghost.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
+      ghost.style.opacity = '0';
+    }
+    this.limpiarArrastre(260);
+  }
+
+  /** Aborta el arrastre sin mover nada (por ejemplo, scroll táctil o pointercancel). */
+  cancelarArrastre(): void {
+    this.limpiarArrastre(0);
+  }
+
+  private limpiarArrastre(retardoMs: number): void {
+    document.removeEventListener('pointermove', this.onPointerMove);
+    document.removeEventListener('pointerup', this.onPointerUp);
+    document.removeEventListener('pointercancel', this.onPointerCancel);
+    if (this.dragFrame !== null) {
+      cancelAnimationFrame(this.dragFrame);
+      this.dragFrame = null;
+    }
+    document.body.classList.remove('tablero-arrastrando');
+
+    const ghost = this.dragGhost;
+    const quitarFantasma = () => ghost?.remove();
+    if (ghost) retardoMs > 0 ? setTimeout(quitarFantasma, retardoMs) : quitarFantasma();
+
+    this.dragGhost = null;
+    this.dragCard = null;
+    this.dragPedido = null;
+    this.dragColumnaOrigen = '';
+    this.dragActivo = false;
+    this.arrastre.set(null);
+  }
   readonly columnasTablero = computed(() => {
     const ordenarPrioridad = (arr: PedidoAdmin[]) =>
       [...arr].sort((a, b) => {
         if (!!a.prioritario !== !!b.prioritario) return a.prioritario ? -1 : 1;
         return b.id - a.id;
       });
-    const lista = this.pedidos();
+    const fe = this.filtroEntrega();
+    const lista = fe === 'todos' ? this.pedidos() : this.pedidos().filter((p) => p.modoEntrega === fe);
     return [
       {
         id: 'pendientes',
@@ -339,6 +561,8 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         colorCabecera: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300/60',
         pedidos: ordenarPrioridad(lista.filter((p) => p.estado === 'pendiente' || p.estado === 'confirmado')),
         siguienteEstado: 'en_preparacion' as EstadoPedidoAdmin,
+        estadoAnterior: null as EstadoPedidoAdmin | null,
+        estadoDestino: 'pendiente' as EstadoPedidoAdmin,
         etiquetaSiguiente: 'Pasar a Cocina',
       },
       {
@@ -348,6 +572,8 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         colorCabecera: 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-300/60',
         pedidos: ordenarPrioridad(lista.filter((p) => p.estado === 'en_preparacion')),
         siguienteEstado: 'listo' as EstadoPedidoAdmin,
+        estadoAnterior: 'pendiente' as EstadoPedidoAdmin,
+        estadoDestino: 'en_preparacion' as EstadoPedidoAdmin,
         etiquetaSiguiente: 'Marcar Listo',
       },
       {
@@ -357,6 +583,8 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         colorCabecera: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300/60',
         pedidos: ordenarPrioridad(lista.filter((p) => p.estado === 'listo')),
         siguienteEstado: 'entregado' as EstadoPedidoAdmin,
+        estadoAnterior: 'en_preparacion' as EstadoPedidoAdmin,
+        estadoDestino: 'listo' as EstadoPedidoAdmin,
         etiquetaSiguiente: 'Entregado',
       },
       {
@@ -365,7 +593,9 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         icono: 'fa-circle-check',
         colorCabecera: 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border-zinc-300/60',
         pedidos: lista.filter((p) => p.estado === 'entregado'),
-        siguienteEstado: null,
+        siguienteEstado: null as EstadoPedidoAdmin | null,
+        estadoAnterior: 'listo' as EstadoPedidoAdmin,
+        estadoDestino: 'entregado' as EstadoPedidoAdmin,
         etiquetaSiguiente: '',
       },
     ];
@@ -451,6 +681,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.detenerAutoRefresco();
+    this.cancelarArrastre();
   }
 
   iniciarAutoRefresco(): void {
@@ -579,7 +810,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         this.pedidos.set(lista);
         this.cargandoPedidos.set(false);
         this.ultimaActualizacion.set(
-          new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
         );
       },
       error: () => {
@@ -617,8 +848,17 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     }
   }
 
-  cambiarEstadoPedido(pedido: PedidoAdmin, estado: EstadoPedidoAdmin): void {
+  /**
+   * Cambia el estado de un pedido. Con `optimista` la tarjeta se mueve de columna al instante
+   * (feedback inmediato al soltar en el tablero) y se revierte si el servidor rechaza el cambio.
+   */
+  cambiarEstadoPedido(pedido: PedidoAdmin, estado: EstadoPedidoAdmin, optimista = false): void {
     this.marcarPedidoVisto(pedido.id);
+    if (pedido.estado === estado) return;
+    const estadoPrevio = pedido.estado;
+    if (optimista) {
+      this.pedidos.update((lista) => lista.map((p) => (p.id === pedido.id ? { ...p, estado } : p)));
+    }
     this.http
       .patch<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${pedido.id}/estado`, { estado })
       .subscribe({
@@ -627,7 +867,12 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
           this.notificaciones.mostrar(`Pedido #${this.formatearNumero(pedido.numero)}: ${this.etiquetaEstado(estado)}`);
           this.cargarPedidos(true);
         },
-        error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo actualizar el estado')),
+        error: (err: unknown) => {
+          if (optimista) {
+            this.pedidos.update((lista) => lista.map((p) => (p.id === pedido.id ? { ...p, estado: estadoPrevio } : p)));
+          }
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo actualizar el estado'));
+        },
       });
   }
 
@@ -690,18 +935,85 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     return Boolean(p.comentarios) || p.items.some((i) => Boolean(i.notas));
   }
 
-  abrirDetallePedido(p: PedidoAdmin): void {
+  abrirDetallePedido(p: PedidoAdmin, abrirBuscadorProductos = false): void {
     this.marcarPedidoVisto(p.id);
     this.pedidoDetalleId.set(p.id);
+    this.mostrandoSelectorProductos.set(abrirBuscadorProductos);
+    this.categoriaAgregarId.set('todas');
     this.busquedaProductoAgregar.set('');
     this.cantidadAgregar.set(1);
     this.notasAgregar.set('');
-    const primerProd = this.catalogo.productos()[0];
-    this.productoAgregarId.set(primerProd ? primerProd.id : null);
+    const primerProd = this.catalogo.productos()[0] ?? null;
+    if (abrirBuscadorProductos && primerProd) {
+      this.seleccionarProductoParaAgregar(primerProd);
+    } else {
+      this.productoConfigurando.set(null);
+      this.opcionesSeleccionadas.set({});
+    }
+  }
+
+  abrirBuscadorProductosPedido(): void {
+    this.mostrandoSelectorProductos.set(true);
+    this.categoriaAgregarId.set('todas');
+    this.busquedaProductoAgregar.set('');
+    const actual = this.productoConfigurando() ?? this.catalogo.productos()[0] ?? null;
+    if (actual) {
+      this.seleccionarProductoParaAgregar(actual);
+    }
+  }
+
+  cerrarBuscadorProductosPedido(): void {
+    this.mostrandoSelectorProductos.set(false);
+  }
+
+  seleccionarProductoParaAgregar(prod: Producto): void {
+    this.productoConfigurando.set(prod);
+    this.cantidadAgregar.set(1);
+    this.notasAgregar.set('');
+
+    const inicial: Record<number, number[]> = {};
+    for (const grupo of prod.gruposOpciones ?? []) {
+      const porDef = (grupo.opciones ?? []).filter((o) => o.porDefecto).map((o) => o.id);
+      if (porDef.length > 0) {
+        inicial[grupo.id] = grupo.tipo === 'unica' ? [porDef[0]] : porDef;
+      } else if (grupo.obligatorio && grupo.opciones?.length) {
+        inicial[grupo.id] = [grupo.opciones[0].id];
+      } else {
+        inicial[grupo.id] = [];
+      }
+    }
+    this.opcionesSeleccionadas.set(inicial);
+  }
+
+  estaOpcionSeleccionada(grupoId: number, opcionId: number): boolean {
+    return (this.opcionesSeleccionadas()[grupoId] ?? []).includes(opcionId);
+  }
+
+  alternarOpcionProducto(grupo: GrupoOpciones, opcion: OpcionProducto): void {
+    this.opcionesSeleccionadas.update((actual) => {
+      const lista = actual[grupo.id] ?? [];
+      if (grupo.tipo === 'unica') {
+        if (lista.includes(opcion.id) && !grupo.obligatorio) {
+          return { ...actual, [grupo.id]: [] };
+        }
+        return { ...actual, [grupo.id]: [opcion.id] };
+      } else {
+        if (lista.includes(opcion.id)) {
+          if (grupo.obligatorio && lista.length <= 1) return actual;
+          return { ...actual, [grupo.id]: lista.filter((id) => id !== opcion.id) };
+        }
+        if (grupo.maximo && lista.length >= grupo.maximo) {
+          this.notificaciones.mostrar(`Máximo ${grupo.maximo} opciones en "${grupo.nombre}"`);
+          return actual;
+        }
+        return { ...actual, [grupo.id]: [...lista, opcion.id] };
+      }
+    });
   }
 
   cerrarDetallePedido(): void {
     this.pedidoDetalleId.set(null);
+    this.mostrandoSelectorProductos.set(false);
   }
 
   abrirSelectorComanda(p: PedidoAdmin): void {
@@ -724,26 +1036,53 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     }
   }
 
-  /** Agrega un producto del catálogo a cualquier pedido existente y recalcula los totales. */
-  agregarProductoAPedido(productoDirecto?: Producto): void {
+  /** Agrega el producto configurado (con sus variantes, adicionales y notas) al pedido actual. */
+  agregarProductoAPedido(productoDirectoSinOpciones?: Producto): void {
     const p = this.pedidoDetalle();
     if (!p || this.guardandoItemPedido()) return;
 
-    const prodId = productoDirecto ? productoDirecto.id : Number(this.productoAgregarId());
-    if (!prodId) {
+    const prod = productoDirectoSinOpciones ?? this.productoConfigurando();
+    if (!prod) {
       this.notificaciones.mostrar('Seleccioná un producto para agregar al pedido');
       return;
     }
 
-    const cantidad = productoDirecto ? 1 : Math.max(1, Number(this.cantidadAgregar()) || 1);
-    const notas = productoDirecto ? '' : this.notasAgregar().trim();
+    const cantidad = productoDirectoSinOpciones ? 1 : Math.max(1, Number(this.cantidadAgregar()) || 1);
+    const notas = productoDirectoSinOpciones ? '' : this.notasAgregar().trim();
+
+    const opcionesPayload: { grupoNombre: string; etiqueta: string; precioAdicional: number }[] = [];
+    let precioUnitarioCalculado = prod.precio;
+
+    if (!productoDirectoSinOpciones) {
+      const sel = this.opcionesSeleccionadas();
+      for (const grupo of prod.gruposOpciones ?? []) {
+        const ids = sel[grupo.id] ?? [];
+        if (grupo.obligatorio && ids.length === 0) {
+          this.notificaciones.mostrar(`Elegí una opción en "${grupo.nombre}"`);
+          return;
+        }
+        const modo = grupo.modoPrecio ?? 'adicional';
+        for (const op of grupo.opciones ?? []) {
+          if (ids.includes(op.id)) {
+            opcionesPayload.push({
+              grupoNombre: grupo.nombre,
+              etiqueta: op.etiqueta,
+              precioAdicional: modo === 'informativo' ? 0 : op.precioAdicional || 0,
+            });
+          }
+        }
+      }
+      precioUnitarioCalculado = this.precioUnitarioConfigurando();
+    }
 
     this.guardandoItemPedido.set(true);
     this.http
       .post<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${p.id}/items`, {
-        productoId: prodId,
+        productoId: prod.id,
+        precioUnitario: precioUnitarioCalculado,
         cantidad,
         notas: notas || null,
+        opciones: opcionesPayload,
       })
       .subscribe({
         next: ({ data }) => {
@@ -751,7 +1090,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
           this.pedidos.update((lista) => lista.map((item) => (item.id === p.id ? data : item)));
           this.cantidadAgregar.set(1);
           this.notasAgregar.set('');
-          this.notificaciones.mostrar(`➕ Producto agregado al pedido #${this.formatearNumero(p.numero)}`);
+          this.notificaciones.mostrar(`➕ ${cantidad}x ${prod.nombre} sumado al pedido #${this.formatearNumero(p.numero)}`);
           this.cargarPedidos(true);
         },
         error: (err: unknown) => {
@@ -1474,7 +1813,14 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       month: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: false,
     });
+  }
+
+  /** Solo la hora (HH:mm), para tarjetas compactas; la fecha completa queda en el tooltip. */
+  formatearHora(iso: string): string {
+    if (!iso) return '';
+    return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
   formatearFechaDia(ymd: string): string {

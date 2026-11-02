@@ -1,4 +1,4 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { AlternarTemaComponente } from '../../../shared/components/alternar-tema/alternar-tema.component';
@@ -29,6 +29,8 @@ export class BarraSuperiorAdminComponente {
   private readonly localAdmin = inject(LocalAdminServicio);
   private readonly autenticacion = inject(AutenticacionServicio);
 
+  /** Estado del menú lateral (riel compactado o expandido) para el ícono del botón de menú. */
+  readonly menuColapsado = input<boolean>(false);
   readonly alternarMenu = output<void>();
   readonly cerrarSesion = output<void>();
 

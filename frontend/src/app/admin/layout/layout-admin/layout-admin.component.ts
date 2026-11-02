@@ -1,4 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+
+const CLAVE_BARRA_COLAPSADA = 'foodaro_admin_barra_colapsada';
+/** Por debajo de este ancho (xl de Tailwind) el menú arranca compactado para ganar espacio. */
+const ANCHO_RIEL_POR_DEFECTO = 1280;
+/** Por debajo de este ancho (md de Tailwind) el menú es un drawer móvil. */
+const ANCHO_DRAWER = 768;
 import { Router, RouterOutlet } from '@angular/router';
 
 import { NotificacionesServicio } from '../../../core/services/notificaciones.service';
@@ -22,14 +28,42 @@ export class LayoutAdminComponente implements OnInit {
   private readonly router = inject(Router);
 
   readonly barraLateralAbierta = signal(false);
+  /** Menú lateral en modo riel (íconos). Se persiste la elección del usuario; si no eligió, depende del ancho. */
+  readonly barraLateralColapsada = signal(this.leerColapsoInicial());
   readonly suscripcion = this.local.suscripcion;
 
   ngOnInit(): void {
     this.notificaciones.definirPosicion('abajo-derecha');
   }
 
+  /** Botón de menú de la barra superior: en móvil abre el drawer, en escritorio compacta/expande el riel. */
   alternarBarraLateral(): void {
-    this.barraLateralAbierta.update((v) => !v);
+    if (window.innerWidth < ANCHO_DRAWER) {
+      this.barraLateralAbierta.update((v) => !v);
+    } else {
+      this.alternarColapsoBarra();
+    }
+  }
+
+  alternarColapsoBarra(): void {
+    const valor = !this.barraLateralColapsada();
+    this.barraLateralColapsada.set(valor);
+    try {
+      localStorage.setItem(CLAVE_BARRA_COLAPSADA, valor ? '1' : '0');
+    } catch {
+      /* almacenamiento no disponible: la preferencia dura la sesión */
+    }
+  }
+
+  private leerColapsoInicial(): boolean {
+    try {
+      const guardado = localStorage.getItem(CLAVE_BARRA_COLAPSADA);
+      if (guardado === '1') return true;
+      if (guardado === '0') return false;
+    } catch {
+      /* sin localStorage */
+    }
+    return window.innerWidth < ANCHO_RIEL_POR_DEFECTO;
   }
 
   cerrarBarraLateral(): void {

@@ -1,6 +1,7 @@
 @let m = metricas();
 @let a = m.arqueo;
 @let cp = conteoPagos();
+@let ce = conteoEntregas();
 
 <section class="space-y-3">
   <app-encabezado-pagina
@@ -76,9 +77,9 @@
       </div>
 
       <!-- Consola Principal de Pedidos del Día (Aprovecha todo el alto de pantalla) -->
-      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3">
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-3 sm:p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3 @container/consola">
         <!-- Barra de herramientas: En vivo, Timbre, Buscador rápido y Selector Lista / Tablero -->
-        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 pb-2.5 border-b border-zinc-100 dark:border-surface-borderDark">
+        <div class="flex flex-col @5xl:flex-row @5xl:items-center justify-between gap-2.5 pb-2.5 border-b border-zinc-100 dark:border-surface-borderDark">
           <div class="flex items-center gap-2 flex-wrap">
             <button
               type="button"
@@ -126,8 +127,51 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap">
+            <!-- Filtro de modalidad de entrega (Envío / Retiro / Mesa) activo para Tabla y Tablero -->
+            <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-xs font-bold max-w-full overflow-x-auto no-scrollbar [&>button]:shrink-0 [&>button]:whitespace-nowrap">
+              <button
+                type="button"
+                (click)="filtroEntrega.set('todos')"
+                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
+                [class]="filtroEntrega() === 'todos' ? 'bg-white dark:bg-surface-dark text-zinc-900 dark:text-white shadow-xs font-extrabold' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'"
+                title="Ver todas las modalidades de entrega"
+              >
+                <span>Todas</span>
+              </button>
+              <button
+                type="button"
+                (click)="filtroEntrega.set('envio')"
+                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1.5"
+                [class]="filtroEntrega() === 'envio' ? 'bg-brand-600 text-white shadow-xs font-extrabold' : 'text-zinc-600 dark:text-zinc-300 hover:text-brand-600'"
+                title="Filtrar pedidos para envío a domicilio"
+              >
+                <i class="fa-solid fa-motorcycle text-[11px]"></i>
+                <span>Envío ({{ ce.envio }})</span>
+              </button>
+              <button
+                type="button"
+                (click)="filtroEntrega.set('retiro')"
+                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1.5"
+                [class]="filtroEntrega() === 'retiro' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs font-extrabold' : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'"
+                title="Filtrar pedidos para retiro en mostrador"
+              >
+                <i class="fa-solid fa-store text-[11px]"></i>
+                <span>Retiro ({{ ce.retiro }})</span>
+              </button>
+              <button
+                type="button"
+                (click)="filtroEntrega.set('mesa')"
+                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1.5 opacity-90"
+                [class]="filtroEntrega() === 'mesa' ? 'bg-indigo-600 text-white shadow-xs font-extrabold' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'"
+                title="Filtrar pedidos para mesa del local (servicio de salón)"
+              >
+                <i class="fa-solid fa-utensils text-[11px]"></i>
+                <span>Mesa ({{ ce.mesa }})</span>
+              </button>
+            </div>
+
             <!-- Buscador instantáneo en la tabla -->
-            <div class="relative flex-1 sm:w-60">
+            <div class="relative flex-1 min-w-[150px] @3xl:flex-none @3xl:w-56">
               <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-zinc-400 text-xs"></i>
               <input
                 type="text"
@@ -156,7 +200,7 @@
                 [class]="modoVista() === 'tablero' ? 'bg-white dark:bg-surface-dark text-brand-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'"
               >
                 <i class="fa-solid fa-table-columns"></i>
-                <span>Tablero Mostrador</span>
+                <span><span class="hidden sm:inline">Tablero </span>Mostrador</span>
               </button>
             </div>
           </div>
@@ -166,8 +210,8 @@
              MODO 1: VISTA TABLA PRECISA DE PEDIDOS DEL DÍA
              =============================================================== -->
         @if (modoVista() === 'lista') {
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5 flex-wrap text-xs font-bold">
+          <div class="flex flex-col @3xl:flex-row @3xl:items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-visible no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 text-xs font-bold [&>button]:shrink-0 [&>button]:whitespace-nowrap">
               <button
                 type="button"
                 (click)="filtroEstado.set('todos')"
@@ -188,7 +232,7 @@
               }
             </div>
 
-            <div class="flex items-center gap-1.5 flex-wrap text-xs font-extrabold">
+            <div class="flex items-center gap-1.5 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-visible no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 text-xs font-extrabold [&>button]:shrink-0 [&>button]:whitespace-nowrap">
               <button
                 type="button"
                 (click)="filtroPago.set('todos')"
@@ -360,21 +404,30 @@
                         <button
                           type="button"
                           (click)="abrirDetallePedido(p)"
-                          class="h-8 px-2.5 rounded-xl border border-brand-200 dark:border-brand-500/30 bg-brand-50/70 dark:bg-brand-500/10 hover:bg-brand-600 hover:text-white text-brand-700 dark:text-brand-300 text-xs font-extrabold flex items-center gap-1 transition cursor-pointer"
-                          title="Ver detalle completo o agregar más productos al pedido"
+                          class="h-8 px-2.5 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-cardDark hover:border-zinc-900 dark:hover:border-white text-zinc-700 dark:text-zinc-200 text-xs font-extrabold flex items-center gap-1 transition cursor-pointer"
+                          title="Ver detalle completo del pedido"
+                        >
+                          <i class="fa-regular fa-eye text-[11px]"></i>
+                          <span>Detalle</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="abrirDetallePedido(p, true)"
+                          class="h-8 px-2.5 rounded-xl border border-brand-200 dark:border-brand-500/30 bg-brand-50/80 dark:bg-brand-500/10 hover:bg-brand-600 hover:text-white text-brand-700 dark:text-brand-300 text-xs font-extrabold flex items-center gap-1 transition cursor-pointer"
+                          title="Agregar más productos a este pedido"
                         >
                           <i class="fa-solid fa-plus text-[10px]"></i>
-                          <span>Detalle / Prod.</span>
+                          <span>Prod.</span>
                         </button>
 
                         <button
                           type="button"
                           (click)="abrirSelectorComanda(p)"
-                          class="h-8 px-2.5 rounded-xl border border-zinc-300 dark:border-surface-borderDark hover:border-zinc-900 dark:hover:border-white bg-zinc-50 dark:bg-surface-cardDark text-zinc-800 dark:text-zinc-100 text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
-                          title="Elegir comanda a imprimir (Ticket Cliente o Comanda Cocina)"
+                          class="h-8 w-8 rounded-xl border border-zinc-300 dark:border-surface-borderDark hover:border-zinc-900 dark:hover:border-white bg-zinc-50 dark:bg-surface-cardDark text-zinc-800 dark:text-zinc-100 text-xs font-extrabold flex items-center justify-center transition cursor-pointer"
+                          title="Imprimir comanda (Ticket Cliente o Comanda Cocina)"
                         >
                           <i class="fa-solid fa-print"></i>
-                          <span>Comanda</span>
                         </button>
 
                         <select
@@ -407,9 +460,18 @@
              MODO 2: VISTA TABLERO EN COLUMNAS (TARJETAS UNIFORMES)
              =============================================================== -->
         @if (modoVista() === 'tablero') {
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <!-- 1 columna en celular, 2 en tablet y 4 cuando el contenido supera ~900px (p. ej. notebook con menú compactado) -->
+          <div class="grid grid-cols-1 @md:grid-cols-2 @4xl:grid-cols-4 gap-2.5 @5xl:gap-3">
             @for (col of columnasTablero(); track col.id) {
-              <div class="rounded-2xl bg-zinc-50/80 dark:bg-surface-cardDark border border-zinc-200/70 dark:border-surface-borderDark p-3 flex flex-col gap-2.5 min-h-[340px]">
+              <div
+                [attr.data-columna]="col.id"
+                class="tablero-columna rounded-2xl border p-2 @5xl:p-2.5 flex flex-col gap-2 min-h-[220px] @md:min-h-[340px]"
+                [class]="arrastre()?.columnaDestino === col.id
+                  ? 'bg-brand-50/70 dark:bg-brand-500/10 border-brand-500 ring-2 ring-brand-500/30 shadow-lg shadow-brand-500/10'
+                  : (arrastre() && arrastre()?.columnaOrigen !== col.id
+                      ? 'bg-zinc-50/80 dark:bg-surface-cardDark border-dashed border-brand-300 dark:border-brand-500/40'
+                      : 'bg-zinc-50/80 dark:bg-surface-cardDark border-zinc-200/70 dark:border-surface-borderDark')"
+              >
                 <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs font-extrabold" [class]="col.colorCabecera">
                   <span class="flex items-center gap-1.5">
                     <i class="fa-solid" [class]="col.icono"></i>
@@ -418,116 +480,133 @@
                   <span class="px-2 py-0.5 rounded-md bg-white/80 dark:bg-zinc-900/60 font-black">{{ col.pedidos.length }}</span>
                 </div>
 
-                <div class="space-y-2.5 flex-1">
+                <div class="space-y-2 flex-1">
+                  @if (arrastre() && arrastre()?.columnaOrigen !== col.id) {
+                    <div
+                      class="tablero-drop-hint rounded-xl border-2 border-dashed px-3 py-2.5 text-center text-[11px] font-extrabold transition"
+                      [class]="arrastre()?.columnaDestino === col.id
+                        ? 'border-brand-500 bg-brand-500/10 text-brand-700 dark:text-brand-300'
+                        : 'border-brand-300/70 dark:border-brand-500/30 text-brand-500/70'"
+                    >
+                      <i class="fa-solid" [class]="arrastre()?.columnaDestino === col.id ? 'fa-arrow-down-long' : 'fa-hand-pointer'"></i>
+                      {{ arrastre()?.columnaDestino === col.id ? 'Soltar para marcar como ' + etiquetaEstado(col.estadoDestino) : 'Arrastrar aquí' }}
+                    </div>
+                  }
+
                   @for (p of col.pedidos; track p.id) {
                     <div
-                      class="rounded-xl bg-white dark:bg-surface-dark p-3 shadow-sm border transition space-y-2"
+                      class="tablero-card group relative rounded-xl bg-white dark:bg-surface-dark px-2.5 py-2 shadow-sm border select-none touch-pan-y cursor-grab"
+                      [class.tablero-card-origen]="arrastre()?.pedidoId === p.id"
                       [class]="p.prioritario
                         ? 'border-red-500 ring-2 ring-red-500/30'
-                        : (esPedidoNuevo(p.id) ? 'border-amber-400 ring-2 ring-amber-400/40' : 'border-zinc-200/80 dark:border-surface-borderDark')"
+                        : (esPedidoNuevo(p.id) ? 'border-amber-400 ring-2 ring-amber-400/40' : 'border-zinc-200/80 dark:border-surface-borderDark hover:border-zinc-300 dark:hover:border-zinc-600')"
+                      (pointerdown)="iniciarArrastre($event, p, col.id)"
                     >
-                      <div class="flex items-center justify-between gap-1">
-                        <div class="flex items-center gap-1.5">
-                          <span class="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
-                            #{{ formatearNumero(p.numero) }}
-                          </span>
-                          <span
-                            class="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                            [class]="p.modoEntrega === 'envio' ? 'bg-brand-50 dark:bg-brand-500/15 text-brand-600' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300'"
-                          >
-                            {{ p.modoEntrega === 'envio' ? 'Envío' : 'Retiro' }}
-                          </span>
-                          @if (p.prioritario) {
-                            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-red-600 text-white">🔥</span>
-                          }
-                        </div>
+                      <!-- Fila 1: número · modo · cliente · hora · prioridad -->
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <i class="fa-solid fa-grip-vertical text-[10px] text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-400 shrink-0"></i>
+                        <span class="font-mono text-[11px] font-black px-1.5 py-px rounded bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shrink-0">
+                          #{{ formatearNumero(p.numero) }}
+                        </span>
+                        <span
+                          class="text-[10px] font-bold px-1.5 py-px rounded shrink-0"
+                          [class]="p.modoEntrega === 'envio' ? 'bg-brand-50 dark:bg-brand-500/15 text-brand-600' : 'bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300'"
+                          [title]="p.modoEntrega === 'envio' ? 'Envío a domicilio' : 'Retiro en el local'"
+                        >
+                          <i class="fa-solid" [class]="p.modoEntrega === 'envio' ? 'fa-motorcycle' : 'fa-bag-shopping'"></i>
+                        </span>
+                        <p class="flex-1 min-w-0 truncate text-xs font-extrabold text-zinc-900 dark:text-white">{{ p.cliente.nombre }}</p>
+                        <span class="text-[10px] font-semibold text-zinc-400 shrink-0 tabular-nums" [title]="formatearFecha(p.creadoEn)">{{ formatearHora(p.creadoEn) }}</span>
                         <button
                           type="button"
                           (click)="alternarPrioridadPedido(p)"
-                          class="text-xs px-1.5 py-0.5 rounded-md transition cursor-pointer"
-                          [class]="p.prioritario ? 'text-red-600 font-black' : 'text-zinc-300 hover:text-red-500'"
-                          title="Alternar prioridad"
+                          class="w-6 h-6 -mr-1 rounded-md flex items-center justify-center text-[11px] transition cursor-pointer shrink-0"
+                          [class]="p.prioritario ? 'text-red-600 bg-red-50 dark:bg-red-500/15' : 'text-zinc-300 dark:text-zinc-600 hover:text-red-500'"
+                          title="Alternar prioridad en cocina"
                         >
                           <i class="fa-solid fa-fire"></i>
                         </button>
                       </div>
 
-                      <div>
-                        <p class="text-xs font-extrabold text-zinc-900 dark:text-white truncate">{{ p.cliente.nombre }}</p>
-                        <div class="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
-                          <a [href]="enlaceWhatsAppCliente(p.cliente.telefono)" target="_blank" rel="noopener" class="text-emerald-600 font-bold hover:underline">
-                            <i class="fa-brands fa-whatsapp mr-0.5"></i>{{ p.cliente.telefono }}
-                          </a>
-                          <span>· {{ formatearFecha(p.creadoEn) }}</span>
-                        </div>
-                      </div>
-
-                      <!-- Resumen uniforme de productos (clic abre modal) -->
+                      <!-- Fila 2: productos (clic abre detalle) -->
                       <button
                         type="button"
                         (click)="abrirDetallePedido(p)"
-                        class="w-full text-left text-xs text-zinc-700 dark:text-zinc-200 border-t border-b border-zinc-100 dark:border-surface-borderDark py-1.5 flex items-center justify-between gap-2 hover:text-brand-600 cursor-pointer"
+                        class="mt-1.5 w-full text-left flex items-center gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-200 hover:text-brand-600 cursor-pointer"
+                        title="Ver detalle del pedido"
                       >
-                        <span class="font-bold truncate">{{ resumenItemsCorto(p) }}</span>
-                        <span class="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-surface-cardDark text-[10px] font-black shrink-0">
-                          {{ p.totales.cantidadTotal }} u.
-                        </span>
+                        <span class="font-semibold truncate flex-1">{{ resumenItemsCorto(p) }}</span>
+                        <span class="px-1.5 py-px rounded bg-zinc-100 dark:bg-surface-cardDark text-[10px] font-black shrink-0">{{ p.totales.cantidadTotal }} u.</span>
                       </button>
 
-                      <div class="flex items-center justify-between text-xs gap-1.5">
-                        <div class="flex items-center gap-1.5">
-                          <span class="text-[10px] font-bold uppercase text-zinc-400">{{ p.medioPago }}</span>
-                          <button
-                            type="button"
-                            (click)="alternarPagoPedido(p)"
-                            class="px-2 py-0.5 rounded-md border text-[10px] font-extrabold flex items-center gap-1 transition cursor-pointer"
-                            [class]="p.pagado
-                              ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                              : 'border-amber-400 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white'"
-                          >
-                            <i class="fa-solid text-[9px]" [class]="p.pagado ? 'fa-circle-check' : 'fa-clock'"></i>
-                            <span>{{ p.pagado ? 'Pagado' : 'Sin pagar' }}</span>
-                          </button>
-                        </div>
-                        <span class="font-black text-zinc-900 dark:text-white">{{ p.totales.total | precio }}</span>
+                      <!-- Fila 3: pago · medio · total · acciones -->
+                      <div class="mt-1.5 pt-1.5 border-t border-zinc-100 dark:border-surface-borderDark flex items-center gap-1">
+                        <button
+                          type="button"
+                          (click)="alternarPagoPedido(p)"
+                          class="h-6 px-1.5 rounded-md border text-[10px] font-extrabold flex items-center gap-1 transition cursor-pointer shrink-0"
+                          [class]="p.pagado
+                            ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                            : 'border-amber-400 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white'"
+                          [title]="p.pagado ? 'Marcar como sin pagar' : 'Marcar como pagado'"
+                        >
+                          <i class="fa-solid text-[9px]" [class]="p.pagado ? 'fa-circle-check' : 'fa-clock'"></i>
+                          <span>{{ p.pagado ? 'Pagado' : 'Sin pagar' }}</span>
+                        </button>
+                        <span class="text-[9px] font-bold uppercase text-zinc-400 truncate">{{ p.medioPago }}</span>
+                        <span class="flex-1"></span>
+                        <span class="font-black text-xs text-zinc-900 dark:text-white tabular-nums">{{ p.totales.total | precio }}</span>
                       </div>
 
-                      <div class="flex items-center gap-1 pt-1">
+                      <div class="mt-1.5 flex items-center gap-1">
+                        <a
+                          [href]="enlaceWhatsAppCliente(p.cliente.telefono)"
+                          target="_blank"
+                          rel="noopener"
+                          class="w-6 h-6 rounded-md border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-[11px] shrink-0"
+                          [title]="'WhatsApp ' + p.cliente.telefono"
+                        >
+                          <i class="fa-brands fa-whatsapp"></i>
+                        </a>
                         <button
                           type="button"
                           (click)="abrirDetallePedido(p)"
-                          class="h-7 px-2 rounded-lg border border-brand-200 dark:border-brand-500/30 bg-brand-50/70 dark:bg-brand-500/10 text-[10px] font-extrabold text-brand-700 dark:text-brand-300 hover:bg-brand-600 hover:text-white flex items-center gap-1 cursor-pointer"
+                          class="w-6 h-6 rounded-md border border-brand-200 dark:border-brand-500/30 bg-brand-50/70 dark:bg-brand-500/10 text-brand-700 dark:text-brand-300 hover:bg-brand-600 hover:text-white flex items-center justify-center text-[11px] cursor-pointer shrink-0"
                           title="Ver detalle o agregar productos"
                         >
                           <i class="fa-solid fa-plus"></i>
-                          <span>Detalle</span>
                         </button>
                         <button
                           type="button"
                           (click)="abrirSelectorComanda(p)"
-                          class="h-7 px-2 rounded-lg border border-zinc-300 dark:border-surface-borderDark text-[10px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-surface-cardDark flex items-center gap-1 cursor-pointer"
-                          title="Elegir comanda a imprimir"
+                          class="w-6 h-6 rounded-md border border-zinc-300 dark:border-surface-borderDark text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-surface-cardDark flex items-center justify-center text-[11px] cursor-pointer shrink-0"
+                          title="Imprimir comanda"
                         >
                           <i class="fa-solid fa-print"></i>
-                          <span>Comanda</span>
                         </button>
 
                         @if (col.siguienteEstado) {
                           <button
                             type="button"
                             (click)="cambiarEstadoPedido(p, col.siguienteEstado)"
-                            class="flex-1 h-7 px-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                            class="flex-1 h-6 px-2 rounded-md bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
                           >
                             <span>{{ col.etiquetaSiguiente }}</span>
                             <i class="fa-solid fa-arrow-right text-[9px]"></i>
                           </button>
+                        } @else {
+                          <span class="flex-1 text-right text-[10px] font-bold text-zinc-400">
+                            <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>Entregado
+                          </span>
                         }
                       </div>
                     </div>
                   } @empty {
-                    <div class="py-8 text-center text-[11px] text-zinc-400">
-                      Sin pedidos en esta etapa
-                    </div>
+                    @if (!arrastre() || arrastre()?.columnaOrigen === col.id) {
+                      <div class="py-8 text-center text-[11px] text-zinc-400">
+                        Sin pedidos en esta etapa
+                      </div>
+                    }
                   }
                 </div>
               </div>
@@ -804,10 +883,10 @@
                         <button
                           type="button"
                           (click)="abrirSelectorComanda(p)"
-                          class="h-7 px-2 rounded-lg border border-zinc-300 dark:border-surface-borderDark text-[10px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-surface-cardDark cursor-pointer"
-                          title="Elegir comanda a imprimir"
+                          class="h-7 w-7 rounded-lg border border-zinc-300 dark:border-surface-borderDark text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-surface-cardDark inline-flex items-center justify-center cursor-pointer"
+                          title="Imprimir comanda (Ticket Cliente o Comanda Cocina)"
                         >
-                          <i class="fa-solid fa-print mr-0.5"></i>Comanda
+                          <i class="fa-solid fa-print"></i>
                         </button>
                       </div>
                     </td>
@@ -1429,13 +1508,220 @@
             }
           </div>
 
-          <!-- Lista de Productos del Pedido (con botones - / + / quitar) -->
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
+          <!-- Lista de Productos del Pedido + Botón para abrir la Mini-Carta POS -->
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
               <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
                 Productos en el pedido ({{ pd.totales.cantidadTotal }} unidades)
               </h4>
+
+              <button
+                type="button"
+                (click)="mostrandoSelectorProductos() ? cerrarBuscadorProductosPedido() : abrirBuscadorProductosPedido()"
+                class="h-8 px-3 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                [class]="mostrandoSelectorProductos()
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                  : 'bg-brand-600 hover:bg-brand-700 text-white'"
+              >
+                <i class="fa-solid" [class]="mostrandoSelectorProductos() ? 'fa-chevron-up' : 'fa-plus'"></i>
+                <span>{{ mostrandoSelectorProductos() ? 'Ocultar carta de productos' : 'Agregar más productos' }}</span>
+              </button>
             </div>
+
+            <!-- ===============================================================
+                 MINI-CARTA RÁPIDA (ESTILO POS CON VARIANTES, TAMAÑOS Y ADICIONALES)
+                 =============================================================== -->
+            @if (mostrandoSelectorProductos()) {
+              <div class="rounded-2xl border-2 border-brand-500/40 bg-zinc-50/70 dark:bg-surface-cardDark p-3.5 space-y-3">
+                <!-- Buscador + Pestañas de Categorías -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-zinc-400 text-xs"></i>
+                    <input
+                      type="text"
+                      [ngModel]="busquedaProductoAgregar()"
+                      (ngModelChange)="busquedaProductoAgregar.set($event)"
+                      placeholder="Buscar plato o bebida para sumar al pedido..."
+                      class="w-full h-8 pl-8 pr-3 rounded-xl bg-white dark:bg-surface-dark border border-zinc-200 dark:border-surface-borderDark text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+                    />
+                  </div>
+
+                  <div class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[11px] font-extrabold">
+                    <button
+                      type="button"
+                      (click)="categoriaAgregarId.set('todas')"
+                      class="px-2.5 py-1 rounded-lg border whitespace-nowrap transition cursor-pointer"
+                      [class]="categoriaAgregarId() === 'todas'
+                        ? 'border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                        : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300'"
+                    >
+                      Todas
+                    </button>
+                    @for (cat of catalogo.categorias(); track cat.id) {
+                      <button
+                        type="button"
+                        (click)="categoriaAgregarId.set(cat.id)"
+                        class="px-2.5 py-1 rounded-lg border whitespace-nowrap transition cursor-pointer"
+                        [class]="categoriaAgregarId() === cat.id
+                          ? 'border-brand-600 bg-brand-600 text-white'
+                          : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300'"
+                      >
+                        {{ cat.nombre }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Grilla Maestra: Lista de productos a la izquierda + Variantes/Adicionales a la derecha -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                  <!-- Columna Izquierda: Lista compacta de productos de la carta -->
+                  <div class="md:col-span-6 max-h-64 overflow-y-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark divide-y divide-zinc-100 dark:divide-surface-borderDark">
+                    @for (prod of productosCatalogoFiltrados(); track prod.id) {
+                      @let activo = productoConfigurando()?.id === prod.id;
+                      <div
+                        (click)="seleccionarProductoParaAgregar(prod)"
+                        class="px-3 py-2 flex items-center justify-between gap-2 cursor-pointer transition"
+                        [class]="activo
+                          ? 'bg-brand-50 dark:bg-brand-500/15 border-l-4 border-brand-600'
+                          : 'hover:bg-zinc-50 dark:hover:bg-surface-cardDark/50'"
+                      >
+                        <div class="min-w-0 flex-1">
+                          <p class="font-extrabold text-zinc-900 dark:text-white truncate text-xs">{{ prod.nombre }}</p>
+                          <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-[11px] font-black text-brand-600">{{ prod.precio | precio }}</span>
+                            @if (prod.gruposOpciones && prod.gruposOpciones.length > 0) {
+                              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
+                                {{ prod.gruposOpciones.length }} {{ prod.gruposOpciones.length === 1 ? 'opción' : 'opciones' }}
+                              </span>
+                            }
+                          </div>
+                        </div>
+
+                        @if (!prod.gruposOpciones || prod.gruposOpciones.length === 0) {
+                          <button
+                            type="button"
+                            [disabled]="guardandoItemPedido()"
+                            (click)="$event.stopPropagation(); agregarProductoAPedido(prod)"
+                            class="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black flex items-center gap-1 shrink-0 cursor-pointer"
+                            title="Sumar 1 unidad directo al pedido"
+                          >
+                            <i class="fa-solid fa-plus text-[9px]"></i>1
+                          </button>
+                        } @else {
+                          <i class="fa-solid fa-sliders text-xs" [class]="activo ? 'text-brand-600' : 'text-zinc-300'"></i>
+                        }
+                      </div>
+                    } @empty {
+                      <div class="p-6 text-center text-zinc-400 text-xs">
+                        No se encontraron productos con ese nombre.
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Columna Derecha: Configurador rápido de Variantes, Adicionales, Cantidad y Nota -->
+                  <div class="md:col-span-6 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark p-3 flex flex-col justify-between gap-3">
+                    @if (productoConfigurando(); as pc) {
+                      <div class="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                        <div class="flex items-start justify-between gap-2 pb-1.5 border-b border-zinc-100 dark:border-surface-borderDark">
+                          <div>
+                            <p class="text-xs font-black text-zinc-900 dark:text-white leading-tight">{{ pc.nombre }}</p>
+                            <p class="text-[10px] text-zinc-400">{{ catalogo.nombreCategoria(pc.categoriaId) }}</p>
+                          </div>
+                          <span class="text-xs font-black text-brand-600 shrink-0">{{ precioUnitarioConfigurando() | precio }} c/u</span>
+                        </div>
+
+                        <!-- Grupos de Opciones (Variantes, Tamaños, Sabores, Adicionales) -->
+                        @if (pc.gruposOpciones && pc.gruposOpciones.length > 0) {
+                          @for (grupo of pc.gruposOpciones; track grupo.id) {
+                            <div class="space-y-1">
+                              <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+                                  {{ grupo.nombre }}
+                                </span>
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-surface-cardDark text-zinc-500">
+                                  {{ grupo.obligatorio ? 'Obligatorio' : 'Opcional' }} · {{ grupo.tipo === 'unica' ? 'Elegí 1' : 'Múltiple' }}
+                                </span>
+                              </div>
+
+                              <div class="flex flex-wrap gap-1.5">
+                                @for (op of grupo.opciones; track op.id) {
+                                  @let marcada = estaOpcionSeleccionada(grupo.id, op.id);
+                                  <button
+                                    type="button"
+                                    (click)="alternarOpcionProducto(grupo, op)"
+                                    class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition cursor-pointer flex items-center gap-1"
+                                    [class]="marcada
+                                      ? 'border-brand-600 bg-brand-600 text-white shadow-2xs'
+                                      : 'border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 hover:border-brand-400'"
+                                  >
+                                    <span>{{ op.etiqueta }}</span>
+                                    @if (op.precioAdicional > 0 && grupo.modoPrecio !== 'informativo') {
+                                      <span class="text-[10px] opacity-85 font-black">
+                                        {{ grupo.modoPrecio === 'variante' ? (op.precioAdicional | precio) : '+' + (op.precioAdicional | precio) }}
+                                      </span>
+                                    }
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          }
+                        } @else {
+                          <p class="text-[11px] text-zinc-400 italic py-1">
+                            Este producto no tiene variantes ni adicionales. Podés elegir cantidad o agregar una nota para cocina.
+                          </p>
+                        }
+
+                        <!-- Nota rápida para cocina -->
+                        <div>
+                          <input
+                            type="text"
+                            [ngModel]="notasAgregar()"
+                            (ngModelChange)="notasAgregar.set($event)"
+                            placeholder="Nota cocina (ej: sin aceitunas, bien cocido)..."
+                            class="w-full h-7 px-2.5 rounded-lg bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark text-[11px] font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+                          />
+                        </div>
+                      </div>
+
+                      <!-- Barra inferior: Cantidad (- 1 +) y Botón Sumar al pedido -->
+                      <div class="pt-2 border-t border-zinc-100 dark:border-surface-borderDark flex items-center gap-2">
+                        <div class="inline-flex items-center rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark h-8">
+                          <button
+                            type="button"
+                            (click)="cantidadAgregar.set(cantidadAgregar() > 1 ? cantidadAgregar() - 1 : 1)"
+                            class="w-7 h-8 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span class="px-2 font-black text-xs text-zinc-900 dark:text-white">{{ cantidadAgregar() }}</span>
+                          <button
+                            type="button"
+                            (click)="cantidadAgregar.set(cantidadAgregar() + 1)"
+                            class="w-7 h-8 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          [disabled]="guardandoItemPedido()"
+                          (click)="agregarProductoAPedido()"
+                          class="flex-1 h-8 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition"
+                        >
+                          <i class="fa-solid fa-plus"></i>
+                          <span>Sumar · {{ totalProductoConfigurando() | precio }}</span>
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="py-10 text-center text-zinc-400 text-xs">
+                        Seleccioná un producto de la izquierda para elegir sus variantes o adicionales.
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
 
             <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark rounded-xl border border-zinc-200 dark:border-surface-borderDark">
               @for (item of pd.items; track item.id) {
@@ -1498,62 +1784,6 @@
                   </div>
                 </div>
               }
-            </div>
-          </div>
-
-          <!-- Bloque para AGREGAR MÁS PRODUCTOS a cualquier pedido -->
-          <div class="p-3.5 rounded-xl border-2 border-dashed border-brand-200 dark:border-brand-500/30 bg-brand-50/40 dark:bg-brand-500/5 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <p class="text-xs font-extrabold text-brand-700 dark:text-brand-300 flex items-center gap-1.5">
-                <i class="fa-solid fa-circle-plus"></i>
-                <span>Agregar más productos a este pedido</span>
-              </p>
-              <span class="text-[10px] font-bold text-zinc-400">Recalcula el total automáticamente</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-              <div class="sm:col-span-6">
-                <select
-                  [ngModel]="productoAgregarId()"
-                  (ngModelChange)="productoAgregarId.set($event)"
-                  [class]="claseCampo"
-                >
-                  @for (prod of catalogo.productos(); track prod.id) {
-                    <option [ngValue]="prod.id">{{ prod.nombre }} ({{ prod.precio | precio }})</option>
-                  }
-                </select>
-              </div>
-              <div class="sm:col-span-2">
-                <input
-                  type="number"
-                  min="1"
-                  max="99"
-                  [ngModel]="cantidadAgregar()"
-                  (ngModelChange)="cantidadAgregar.set($event)"
-                  placeholder="Cant."
-                  [class]="claseCampo + ' text-center font-black'"
-                />
-              </div>
-              <div class="sm:col-span-4">
-                <button
-                  type="button"
-                  [disabled]="guardandoItemPedido()"
-                  (click)="agregarProductoAPedido()"
-                  class="w-full h-9 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition"
-                >
-                  <i class="fa-solid fa-plus"></i>
-                  <span>{{ guardandoItemPedido() ? 'Agregando…' : 'Sumar al pedido' }}</span>
-                </button>
-              </div>
-              <div class="sm:col-span-12">
-                <input
-                  type="text"
-                  [ngModel]="notasAgregar()"
-                  (ngModelChange)="notasAgregar.set($event)"
-                  placeholder="Nota opcional para cocina (ej: sin aceitunas, bien cocido)..."
-                  [class]="claseCampo"
-                />
-              </div>
             </div>
           </div>
 

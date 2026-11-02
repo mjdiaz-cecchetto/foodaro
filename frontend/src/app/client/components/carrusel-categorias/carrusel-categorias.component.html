@@ -1,5 +1,38 @@
-<!-- sticky bajo el header (h-14 móvil / h-16 sm). -mx-4 para que el fondo cubra el ancho completo en móvil -->
-<section #barra class="sticky top-14 sm:top-16 z-20 -mx-4 px-4 sm:mx-0 sm:px-0 py-2 bg-gray-50/95 dark:bg-dark-bg/95 backdrop-blur-md">
+<!-- sticky al borde superior (sin header blanco). -mx-4 para que el fondo cubra el ancho completo en móvil -->
+<section
+  #barra
+  class="sticky top-0 z-20 -mx-4 px-4 sm:mx-0 sm:px-0 py-2 bg-gray-50/95 dark:bg-dark-bg/95 backdrop-blur-md transition-shadow"
+  [class.shadow-sm]="compacto()"
+>
+  <!-- Mini-cabecera: logo circular + nombre del local (aparece al bajar, cuando el banner ya no se ve) -->
+  @let p = perfil();
+  <div
+    #miniCabecera
+    class="overflow-hidden transition-all duration-300 ease-out"
+    [class]="compacto() ? 'max-h-12 opacity-100 mb-1.5' : 'max-h-0 opacity-0 mb-0'"
+    [attr.aria-hidden]="!compacto()"
+  >
+    <button
+      type="button"
+      (click)="abrirInfo()"
+      class="h-10 w-full flex items-center gap-2.5 text-left cursor-pointer"
+      [tabindex]="compacto() ? 0 : -1"
+      title="Ver información y horarios del local"
+    >
+      <img
+        [src]="p.logoUrl"
+        alt="Logo del local"
+        class="w-9 h-9 rounded-full object-cover ring-2 ring-white dark:ring-dark-border shadow-sm bg-white shrink-0"
+      />
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-black text-gray-900 dark:text-white leading-tight truncate">{{ p.nombre }}</p>
+        <p class="text-[10px] font-bold leading-tight truncate" [class]="p.abiertoAhora ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-dark-muted'">
+          <span class="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle" [class]="p.abiertoAhora ? 'bg-emerald-500' : 'bg-gray-400'"></span>{{ p.estado }}
+        </p>
+      </div>
+      <i class="fa-solid fa-circle-info text-gray-400 dark:text-dark-muted text-sm shrink-0"></i>
+    </button>
+  </div>
   <div class="flex items-center gap-2">
     <div #pista class="flex-1 flex gap-2.5 overflow-x-auto no-scrollbar py-1 -my-1 -mx-1 px-1 scroll-smooth">
       @for (c of categorias(); track c.id) {

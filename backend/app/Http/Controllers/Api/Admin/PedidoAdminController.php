@@ -277,13 +277,15 @@ class PedidoAdminController extends Controller
         }
 
         $nombre = $producto ? $producto->nombre : trim($datos['nombre'] ?? 'Producto');
-        $precioBase = isset($datos['precioUnitario'])
-            ? (float) $datos['precioUnitario']
-            : (float) ($producto?->precio ?? 0);
-
         $opciones = $datos['opciones'] ?? [];
-        $extraOpciones = collect($opciones)->sum(fn ($op) => (float) ($op['precioAdicional'] ?? 0));
-        $precioUnitarioFinal = $precioBase + $extraOpciones;
+
+        if (isset($datos['precioUnitario'])) {
+            $precioUnitarioFinal = (float) $datos['precioUnitario'];
+        } else {
+            $precioBase = (float) ($producto?->precio ?? 0);
+            $extraOpciones = collect($opciones)->sum(fn ($op) => (float) ($op['precioAdicional'] ?? 0));
+            $precioUnitarioFinal = $precioBase + $extraOpciones;
+        }
         $cantidad = (int) $datos['cantidad'];
         $totalLinea = round($precioUnitarioFinal * $cantidad, 2);
 

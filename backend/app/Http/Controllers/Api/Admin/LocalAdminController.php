@@ -64,6 +64,9 @@ class LocalAdminController extends Controller
         if (isset($c['moneda'])) {
             $local->moneda = strtoupper($c['moneda']);
         }
+        if (isset($c['temaPorDefecto']) && in_array($c['temaPorDefecto'], ['light', 'dark'], true)) {
+            $local->tema_por_defecto = $c['temaPorDefecto'];
+        }
         if (array_key_exists('cargoServicio', $c)) {
             $local->cargo_servicio = $c['cargoServicio'];
         }
