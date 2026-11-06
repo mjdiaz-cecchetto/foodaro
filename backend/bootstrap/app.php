@@ -3,6 +3,7 @@
 use App\Http\Middleware\ForzarRespuestaJson;
 use App\Http\Middleware\SoloAdministradorLocal;
 use App\Http\Middleware\SoloRoot;
+use App\Http\Middleware\VerificarCapacidadPlan;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,10 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Toda la API responde JSON aunque el cliente no mande Accept.
         $middleware->api(prepend: [ForzarRespuestaJson::class]);
 
-        // Separación estricta de paneles: el Root no entra al panel del local y viceversa.
+        // Separación estricta de paneles y validación de capacidades por plan
         $middleware->alias([
             'solo.admin' => SoloAdministradorLocal::class,
             'solo.root' => SoloRoot::class,
+            'plan.capacidad' => VerificarCapacidadPlan::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

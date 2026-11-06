@@ -111,4 +111,17 @@ export class LocalServicio {
   urlApiPublica(...segmentos: string[]): string {
     return [`${environment.apiUrl}/locales/${this.slug() ?? ''}`, ...segmentos].join('/');
   }
+
+  /** Evalúa si el local tiene habilitada una capacidad según su plan contratado. */
+  tieneCapacidad(capacidad: string): boolean {
+    const s = this.suscripcion();
+    if (!s) return true;
+    if (!s.capacidades) return true;
+    return s.capacidades.includes(capacidad);
+  }
+
+  /** Límite de productos en catálogo (null si es ilimitado). */
+  limiteProductos(): number | null {
+    return this.suscripcion()?.limiteProductos ?? null;
+  }
 }

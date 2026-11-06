@@ -54,24 +54,34 @@
               <i class="fa-solid w-4 text-center" [class]="item.icono + (riel ? ' md:text-[15px] md:w-5' : '')"></i>
               <span [class.md:hidden]="riel">{{ item.etiqueta }}</span>
             </div>
-            @switch (item.indicador) {
-              @case ('contador') {
-                <span
-                  class="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-                  [class]="riel ? 'md:absolute md:-top-1 md:-right-1 md:px-1.5 md:py-0 md:min-w-[18px] md:text-center md:bg-brand-600 md:text-white md:dark:bg-brand-600 md:dark:text-white' : ''"
-                >{{ contadorDe(item) }}</span>
-              }
-              @case ('punto') {
-                <span class="w-2 h-2 rounded-full bg-brand-500" [class]="riel ? 'md:absolute md:top-2 md:right-2' : ''"></span>
-              }
-              @default {
-                <!-- Envuelto en <span>: el CSS de Font Awesome fija display en <i> y pisaría el md:hidden -->
-                <span [class.md:hidden]="riel">
-                  <i
-                    class="fa-solid text-[10px] opacity-70 transition-transform duration-200"
-                    [class]="item.subitems?.length && submenuAbierto() === item.ruta ? 'fa-chevron-down' : 'fa-chevron-right'"
-                  ></i>
-                </span>
+            @if (estaBloqueado(item)) {
+              <span
+                class="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-surface-borderDark text-zinc-400 dark:text-zinc-500 inline-flex items-center gap-1 shrink-0"
+                [class]="riel ? 'md:absolute md:top-1.5 md:right-1.5 md:p-1' : ''"
+                title="Función no incluida en tu plan actual (clic para ver)"
+              >
+                <i class="fa-solid fa-lock text-[8px]"></i>
+              </span>
+            } @else {
+              @switch (item.indicador) {
+                @case ('contador') {
+                  <span
+                    class="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                    [class]="riel ? 'md:absolute md:-top-1 md:-right-1 md:px-1.5 md:py-0 md:min-w-[18px] md:text-center md:bg-brand-600 md:text-white md:dark:bg-brand-600 md:dark:text-white' : ''"
+                  >{{ contadorDe(item) }}</span>
+                }
+                @case ('punto') {
+                  <span class="w-2 h-2 rounded-full bg-brand-500" [class]="riel ? 'md:absolute md:top-2 md:right-2' : ''"></span>
+                }
+                @default {
+                  <!-- Envuelto en <span>: el CSS de Font Awesome fija display en <i> y pisaría el md:hidden -->
+                  <span [class.md:hidden]="riel">
+                    <i
+                      class="fa-solid text-[10px] opacity-70 transition-transform duration-200"
+                      [class]="item.subitems?.length && submenuAbierto() === item.ruta ? 'fa-chevron-down' : 'fa-chevron-right'"
+                    ></i>
+                  </span>
+                }
               }
             }
           </a>

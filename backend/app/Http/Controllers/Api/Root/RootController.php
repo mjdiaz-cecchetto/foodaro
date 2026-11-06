@@ -240,7 +240,11 @@ class RootController extends Controller
                 ]);
             }
 
-            return $local->load(['plan', 'usuarios'])->loadCount(['productos', 'categorias', 'usuarios', 'pedidos']);
+            return $local->load(['plan', 'usuarios'])
+                ->loadCount(['productos', 'categorias', 'usuarios', 'pedidos'])
+                ->loadMax('pedidos', 'created_at')
+                ->loadMax('productos', 'updated_at')
+                ->loadMax('usuarios', 'ultimo_acceso_en');
         });
 
         return response()->json(['data' => $this->formatearLocal($local)], 201);
@@ -275,7 +279,11 @@ class RootController extends Controller
             'activo' => $datos['activo'] ?? $local->activo,
         ]);
 
-        $local->load(['plan', 'usuarios'])->loadCount(['productos', 'categorias', 'usuarios', 'pedidos']);
+        $local->load(['plan', 'usuarios'])
+            ->loadCount(['productos', 'categorias', 'usuarios', 'pedidos'])
+            ->loadMax('pedidos', 'created_at')
+            ->loadMax('productos', 'updated_at')
+            ->loadMax('usuarios', 'ultimo_acceso_en');
 
         return response()->json(['data' => $this->formatearLocal($local)]);
     }
@@ -285,7 +293,11 @@ class RootController extends Controller
     {
         $this->verificarSuperadmin($request);
         $local->update(['activo' => ! $local->activo]);
-        $local->load(['plan', 'usuarios'])->loadCount(['productos', 'categorias', 'usuarios', 'pedidos']);
+        $local->load(['plan', 'usuarios'])
+            ->loadCount(['productos', 'categorias', 'usuarios', 'pedidos'])
+            ->loadMax('pedidos', 'created_at')
+            ->loadMax('productos', 'updated_at')
+            ->loadMax('usuarios', 'ultimo_acceso_en');
 
         return response()->json(['data' => $this->formatearLocal($local)]);
     }
@@ -673,10 +685,11 @@ class RootController extends Controller
     {
         $resumen = $l->resumenSuscripcion();
 
+        $attrs = $l->getAttributes();
         $fechasActividad = array_filter([
-            $l->usuarios_max_ultimo_acceso_en ? Carbon::parse($l->usuarios_max_ultimo_acceso_en) : null,
-            $l->pedidos_max_created_at ? Carbon::parse($l->pedidos_max_created_at) : null,
-            $l->productos_max_updated_at ? Carbon::parse($l->productos_max_updated_at) : null,
+            ! empty($attrs['usuarios_max_ultimo_acceso_en']) ? Carbon::parse($attrs['usuarios_max_ultimo_acceso_en']) : null,
+            ! empty($attrs['pedidos_max_created_at']) ? Carbon::parse($attrs['pedidos_max_created_at']) : null,
+            ! empty($attrs['productos_max_updated_at']) ? Carbon::parse($attrs['productos_max_updated_at']) : null,
             $l->updated_at,
         ]);
 

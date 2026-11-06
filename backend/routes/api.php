@@ -59,35 +59,44 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'solo.admin'])->group(functi
     Route::patch('productos/{producto}/disponibilidad', [ProductoController::class, 'alternarDisponibilidad']);
     Route::apiResource('productos', ProductoController::class);
 
-    Route::patch('promociones/{promocion}/estado', [PromocionController::class, 'alternarEstado']);
-    Route::apiResource('promociones', PromocionController::class)->except('show')->parameters(['promociones' => 'promocion']);
-
-    Route::patch('cupones/{cupon}/estado', [CuponController::class, 'alternarEstado']);
-    Route::apiResource('cupones', CuponController::class)->except('show')->parameters(['cupones' => 'cupon']);
-
     Route::apiResource('plantillas-opciones', PlantillaOpcionesController::class)
         ->except('show')
         ->parameters(['plantillas-opciones' => 'plantilla']);
 
-    Route::get('pedidos/metricas', [PedidoAdminController::class, 'metricas']);
-    Route::get('pedidos', [PedidoAdminController::class, 'index']);
-    Route::get('pedidos/{pedido}', [PedidoAdminController::class, 'show']);
-    Route::patch('pedidos/{pedido}/estado', [PedidoAdminController::class, 'cambiarEstado']);
-    Route::patch('pedidos/{pedido}/pago', [PedidoAdminController::class, 'alternarPago']);
-    Route::patch('pedidos/{pedido}/prioridad', [PedidoAdminController::class, 'alternarPrioridad']);
-    Route::post('pedidos/{pedido}/items', [PedidoAdminController::class, 'agregarItem']);
-    Route::patch('pedidos/{pedido}/items/{item}', [PedidoAdminController::class, 'actualizarItem']);
-    Route::delete('pedidos/{pedido}/items/{item}', [PedidoAdminController::class, 'eliminarItem']);
+    // Promociones y Cupones (Plan Control & Stock o superior)
+    Route::middleware('plan.capacidad:promociones_cupones')->group(function () {
+        Route::patch('promociones/{promocion}/estado', [PromocionController::class, 'alternarEstado']);
+        Route::apiResource('promociones', PromocionController::class)->except('show')->parameters(['promociones' => 'promocion']);
 
-    Route::get('empleados', [EmpleadoAdminController::class, 'index']);
-    Route::post('empleados', [EmpleadoAdminController::class, 'storeEmpleado']);
-    Route::put('empleados/{empleado}', [EmpleadoAdminController::class, 'updateEmpleado']);
-    Route::delete('empleados/{empleado}', [EmpleadoAdminController::class, 'destroyEmpleado']);
+        Route::patch('cupones/{cupon}/estado', [CuponController::class, 'alternarEstado']);
+        Route::apiResource('cupones', CuponController::class)->except('show')->parameters(['cupones' => 'cupon']);
+    });
 
-    Route::post('asistencias', [EmpleadoAdminController::class, 'registrarAsistencia']);
-    Route::put('asistencias/{asistencia}', [EmpleadoAdminController::class, 'actualizarAsistencia']);
-    Route::patch('asistencias/{asistencia}/pago', [EmpleadoAdminController::class, 'alternarPagoAsistencia']);
-    Route::delete('asistencias/{asistencia}', [EmpleadoAdminController::class, 'eliminarAsistencia']);
+    // Consola de Pedidos y Reportes en Vivo (Plan Control & Stock o superior)
+    Route::middleware('plan.capacidad:pedidos_en_vivo')->group(function () {
+        Route::get('pedidos/metricas', [PedidoAdminController::class, 'metricas']);
+        Route::get('pedidos', [PedidoAdminController::class, 'index']);
+        Route::get('pedidos/{pedido}', [PedidoAdminController::class, 'show']);
+        Route::patch('pedidos/{pedido}/estado', [PedidoAdminController::class, 'cambiarEstado']);
+        Route::patch('pedidos/{pedido}/pago', [PedidoAdminController::class, 'alternarPago']);
+        Route::patch('pedidos/{pedido}/prioridad', [PedidoAdminController::class, 'alternarPrioridad']);
+        Route::post('pedidos/{pedido}/items', [PedidoAdminController::class, 'agregarItem']);
+        Route::patch('pedidos/{pedido}/items/{item}', [PedidoAdminController::class, 'actualizarItem']);
+        Route::delete('pedidos/{pedido}/items/{item}', [PedidoAdminController::class, 'eliminarItem']);
+    });
+
+    // Personal y Asistencia (Exclusivo Plan Full / Operación Completa)
+    Route::middleware('plan.capacidad:personal_asistencia')->group(function () {
+        Route::get('empleados', [EmpleadoAdminController::class, 'index']);
+        Route::post('empleados', [EmpleadoAdminController::class, 'storeEmpleado']);
+        Route::put('empleados/{empleado}', [EmpleadoAdminController::class, 'updateEmpleado']);
+        Route::delete('empleados/{empleado}', [EmpleadoAdminController::class, 'destroyEmpleado']);
+
+        Route::post('asistencias', [EmpleadoAdminController::class, 'registrarAsistencia']);
+        Route::put('asistencias/{asistencia}', [EmpleadoAdminController::class, 'actualizarAsistencia']);
+        Route::patch('asistencias/{asistencia}/pago', [EmpleadoAdminController::class, 'alternarPagoAsistencia']);
+        Route::delete('asistencias/{asistencia}', [EmpleadoAdminController::class, 'eliminarAsistencia']);
+    });
 });
 
 /*

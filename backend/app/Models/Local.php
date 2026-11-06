@@ -138,6 +138,26 @@ class Local extends Model
     }
 
     /**
+     * Evalúa si el local tiene habilitada una capacidad específica según su plan contratado.
+     */
+    public function tieneCapacidad(string $capacidad): bool
+    {
+        if (! $this->plan) {
+            return true;
+        }
+
+        return $this->plan->tieneCapacidad($capacidad);
+    }
+
+    /**
+     * Límite de productos en el catálogo según el plan (null si es ilimitado).
+     */
+    public function limiteProductos(): ?int
+    {
+        return $this->plan?->limiteProductos();
+    }
+
+    /**
      * Devuelve el estado detallado de la suscripción (días restantes, período de gracia y si la carta pública está suspendida).
      */
     public function resumenSuscripcion(): array
@@ -153,13 +173,24 @@ class Local extends Model
         $diasGraciaRestantes = $enPeriodoGracia ? (self::DIAS_GRACIA + $diasRestantes) : 0;
         $suspendidaPorVencimiento = $diasRestantes !== null && $diasRestantes < -self::DIAS_GRACIA;
 
+        $capacidades = $this->plan ? $this->plan->capacidades() : [
+            Plan::CAP_PEDIDOS_EN_VIVO,
+            Plan::CAP_REPORTES_CAJA,
+            Plan::CAP_PROMOCIONES_CUPONES,
+            Plan::CAP_PERSONAL_ASISTENCIA,
+        ];
+
         return [
             'planId' => $this->plan_id,
+            'planCodigo' => $this->plan?->codigo,
             'planNombre' => $this->plan?->nombre ?? 'Sin plan',
             'planNivel' => $this->plan?->nivel ?? '',
             'planMensual' => (float) ($this->plan?->mensual ?? 0),
             'planAnual' => (float) ($this->plan?->anual ?? 0),
             'planCaracteristicas' => $this->plan?->caracteristicas ?? [],
+            'capacidades' => $capacidades,
+            'limiteProductos' => $this->limiteProductos(),
+            'totalProductos' => $this->productos()->count(),
             'estado' => $this->estado_suscripcion ?? 'al_dia',
             'vencimiento' => $this->vencimiento_suscripcion ? $this->vencimiento_suscripcion->format('Y-m-d') : null,
             'diasRestantes' => $diasRestantes,
