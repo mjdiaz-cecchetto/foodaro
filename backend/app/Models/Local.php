@@ -85,6 +85,16 @@ class Local extends Model
         return $this->hasMany(Pedido::class);
     }
 
+    public function cajasDiarias(): HasMany
+    {
+        return $this->hasMany(CajaDiaria::class, 'local_id')->orderByDesc('fecha');
+    }
+
+    public function movimientosCaja(): HasMany
+    {
+        return $this->hasMany(MovimientoCaja::class, 'local_id')->orderByDesc('id');
+    }
+
     public function empleados(): HasMany
     {
         return $this->hasMany(Empleado::class, 'local_id')->orderBy('nombre');

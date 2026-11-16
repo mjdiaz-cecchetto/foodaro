@@ -75,6 +75,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'solo.admin'])->group(functi
     // Consola de Pedidos y Reportes en Vivo (Plan Control & Stock o superior)
     Route::middleware('plan.capacidad:pedidos_en_vivo')->group(function () {
         Route::get('pedidos/metricas', [PedidoAdminController::class, 'metricas']);
+        Route::put('pedidos/caja/fondo-inicial', [PedidoAdminController::class, 'guardarFondoInicial']);
+        Route::post('pedidos/caja/movimientos', [PedidoAdminController::class, 'registrarMovimientoCaja']);
+        Route::delete('pedidos/caja/movimientos/{movimiento}', [PedidoAdminController::class, 'eliminarMovimientoCaja']);
         Route::get('pedidos', [PedidoAdminController::class, 'index']);
         Route::get('pedidos/{pedido}', [PedidoAdminController::class, 'show']);
         Route::patch('pedidos/{pedido}/estado', [PedidoAdminController::class, 'cambiarEstado']);

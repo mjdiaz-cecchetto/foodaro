@@ -6,6 +6,8 @@ use App\Enums\EstadoPedido;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CambiarEstadoPedidoRequest;
 use App\Http\Resources\PedidoResource;
+use App\Models\CajaDiaria;
+use App\Models\MovimientoCaja;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
 use App\Models\Producto;
@@ -17,10 +19,20 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
 
-/** Pedidos recibidos y arqueo/métricas de ventas por día, semana y mes del local. */
+/**
+ * Pedidos recibidos, arqueo/métricas de ventas y movimientos de caja del local.
+ *
+ * IMPORTANTE — Jornada Comercial Gastronómica:
+ * El día comercial corta a las 06:00 AM (HORA_CORTE_JORNADA = 6).
+ * Ejemplo: la jornada del 16/11 abarca desde el 16/11 a las 06:00:00 hasta el 17/11 a las 05:59:59.
+ * De esta forma, si el local abre el 16/11 a las 21:00 y cierra el 17/11 a las 02:00,
+ * toda esa noche pertenece íntegramente al cierre del 16/11.
+ */
 class PedidoAdminController extends Controller
 {
     use AuthorizesRequests;
+
+    public const HORA_CORTE_JORNADA = 6;
 
     /** GET /api/admin/pedidos?periodo=hoy&desde=...&hasta=...&estado=pendiente */
     public function index(Request $request): AnonymousResourceCollection
@@ -47,7 +59,8 @@ class PedidoAdminController extends Controller
 
     /**
      * GET /api/admin/pedidos/metricas?periodo=hoy&desde=...&hasta=...
-     * Devuelve el resumen exacto de ventas (Hoy, Esta Semana, Este Mes) y el arqueo del período seleccionado.
+     * Devuelve el resumen exacto de ventas (Hoy, Esta Semana, Este Mes), el arqueo del período seleccionado
+     * y el estado de la caja física (fondo inicial + efectivo de ventas - retiros/gastos urgentes).
      */
     public function metricas(Request $request): JsonResponse
     {
@@ -58,29 +71,35 @@ class PedidoAdminController extends Controller
         ]);
 
         $localId = $request->user()->local->id;
-        $ahora = Carbon::now();
 
-        $inicioHoy = $ahora->copy()->startOfDay();
-        $inicioSemana = $ahora->copy()->startOfWeek(Carbon::MONDAY);
-        $inicioMes = $ahora->copy()->startOfMonth();
+        $hoyJornada = $this->fechaJornadaActual();
+        $lunesJornada = Carbon::parse($hoyJornada)->startOfWeek(Carbon::MONDAY)->toDateString();
+        $primeroMesJornada = Carbon::parse($hoyJornada)->startOfMonth()->toDateString();
 
-        // 1. Comparativa fija: Hoy, Semana actual y Mes actual (excluyendo cancelados)
+        $inicioHoy = $this->inicioJornada($hoyJornada);
+        $inicioSemana = $this->inicioJornada($lunesJornada);
+        $inicioMes = $this->inicioJornada($primeroMesJornada);
+
+        // 1. Comparativa fija: Hoy comercial, Semana actual y Mes actual (SOLO pedidos cobrados/pagados)
         $resumenRapido = function (Carbon $desde) use ($localId): array {
             $base = Pedido::query()
                 ->where('local_id', $localId)
                 ->where('created_at', '>=', $desde);
 
             $validos = (clone $base)->where('estado', '!=', EstadoPedido::Cancelado->value);
+            $cobrados = (clone $validos)->where('pagado', true);
             $cancelados = (clone $base)->where('estado', EstadoPedido::Cancelado->value)->count();
 
             return [
-                'monto' => (float) $validos->sum('total'),
-                'pedidos' => (int) $validos->count(),
+                'monto' => (float) $cobrados->sum('total'),
+                'pedidos' => (int) $cobrados->count(),
                 'cancelados' => (int) $cancelados,
             ];
         };
 
         // 2. Desglose prolijo del período seleccionado
+        $rango = $this->resolverRangoJornada($request);
+
         $queryPeriodo = Pedido::query()
             ->where('local_id', $localId)
             ->with('items.producto.categoria');
@@ -97,31 +116,33 @@ class PedidoAdminController extends Controller
             EstadoPedido::Listo,
         ], true));
 
-        $totalVendido = (float) $validos->sum('total');
-        $cantidadValidos = $validos->count();
-        $ticketPromedio = $cantidadValidos > 0 ? round($totalVendido / $cantidadValidos, 2) : 0.0;
-
-        // Control de pedidos Pagados vs Sin Pagar (sobre pedidos válidos, excluyendo cancelados)
+        // Control de pedidos Pagados vs Sin Pagar:
+        // NINGÚN pedido suma a la caja ni al arqueo de medios de pago hasta que esté marcado como PAGADO.
         $pagadosValidos = $validos->filter(fn (Pedido $p) => (bool) $p->pagado);
         $sinPagarValidos = $validos->filter(fn (Pedido $p) => ! $p->pagado);
 
-        // Arqueo por medio de pago
+        $totalVendido = (float) $pagadosValidos->sum('total');
+        $cantidadPagados = $pagadosValidos->count();
+        $cantidadValidos = $validos->count();
+        $ticketPromedio = $cantidadPagados > 0 ? round($totalVendido / $cantidadPagados, 2) : 0.0;
+
+        // Arqueo por medio de pago (exclusivamente sobre pedidos YA COBRADOS / PAGADOS)
         $porMedioPago = [];
         foreach (['efectivo', 'transferencia', 'debito'] as $medio) {
-            $grupo = $validos->filter(fn (Pedido $p) => $p->medio_pago->value === $medio);
+            $grupo = $pagadosValidos->filter(fn (Pedido $p) => $p->medio_pago->value === $medio);
             $porMedioPago[$medio] = [
                 'monto' => (float) $grupo->sum('total'),
                 'cantidad' => $grupo->count(),
             ];
         }
 
-        // Arqueo por modalidad de entrega
-        $envios = $validos->filter(fn (Pedido $p) => $p->modo_entrega->value === 'envio');
-        $retiros = $validos->filter(fn (Pedido $p) => $p->modo_entrega->value === 'retiro');
+        // Arqueo por modalidad de entrega (exclusivamente sobre pedidos YA COBRADOS / PAGADOS)
+        $envios = $pagadosValidos->filter(fn (Pedido $p) => $p->modo_entrega->value === 'envio');
+        $retiros = $pagadosValidos->filter(fn (Pedido $p) => $p->modo_entrega->value === 'retiro');
 
-        // Desglose día por día dentro del período
-        $ventasPorDia = $validos
-            ->groupBy(fn (Pedido $p) => $p->created_at->format('Y-m-d'))
+        // Desglose día por día comercial (cortando a las 06:00 AM, sumando solo pedidos PAGADOS)
+        $ventasPorDia = $pagadosValidos
+            ->groupBy(fn (Pedido $p) => $p->created_at->copy()->subHours(self::HORA_CORTE_JORNADA)->format('Y-m-d'))
             ->map(function ($grupoDia, string $fecha) {
                 return [
                     'fecha' => $fecha,
@@ -162,6 +183,64 @@ class PedidoAdminController extends Controller
             ->sortByDesc('unidades')
             ->values();
 
+        // 3. Fondo Inicial de Caja y Movimientos (Retiros / Gastos Urgentes / Ingresos extra)
+        $fechaObjetivoCaja = $rango['fechaObjetivo'];
+
+        $cajaObjetivo = CajaDiaria::query()
+            ->where('local_id', $localId)
+            ->whereDate('fecha', $fechaObjetivoCaja)
+            ->first();
+
+        $queryCajasPeriodo = CajaDiaria::query()->where('local_id', $localId);
+        if ($rango['desdeFecha']) {
+            $queryCajasPeriodo->whereDate('fecha', '>=', $rango['desdeFecha']);
+        }
+        if ($rango['hastaFecha']) {
+            $queryCajasPeriodo->whereDate('fecha', '<=', $rango['hastaFecha']);
+        }
+
+        $esDiaUnico = $rango['desdeFecha'] !== null && $rango['desdeFecha'] === $rango['hastaFecha'];
+        $montoInicial = $esDiaUnico
+            ? (float) ($cajaObjetivo?->monto_inicial ?? 0)
+            : (float) $queryCajasPeriodo->sum('monto_inicial');
+
+        $queryMovimientos = MovimientoCaja::query()->where('local_id', $localId);
+        if ($rango['desdeFecha']) {
+            $queryMovimientos->whereDate('fecha_jornada', '>=', $rango['desdeFecha']);
+        }
+        if ($rango['hastaFecha']) {
+            $queryMovimientos->whereDate('fecha_jornada', '<=', $rango['hastaFecha']);
+        }
+
+        $movimientos = $queryMovimientos
+            ->orderByDesc('fecha_jornada')
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get();
+
+        $egresosEfectivo = (float) $movimientos
+            ->filter(fn (MovimientoCaja $m) => $m->tipo === 'egreso' && $m->medio_pago === 'efectivo')
+            ->sum('monto');
+        $egresosTransferencia = (float) $movimientos
+            ->filter(fn (MovimientoCaja $m) => $m->tipo === 'egreso' && $m->medio_pago === 'transferencia')
+            ->sum('monto');
+        $ingresosExtraEfectivo = (float) $movimientos
+            ->filter(fn (MovimientoCaja $m) => $m->tipo === 'ingreso' && $m->medio_pago === 'efectivo')
+            ->sum('monto');
+        $totalEgresos = round($egresosEfectivo + $egresosTransferencia, 2);
+
+        $efectivoVentasTotal = (float) $porMedioPago['efectivo']['monto'];
+        $efectivoVentasCobrado = (float) $pagadosValidos
+            ->filter(fn (Pedido $p) => $p->medio_pago->value === 'efectivo')
+            ->sum('total');
+
+        $efectivoEnCaja = round($montoInicial + $efectivoVentasTotal + $ingresosExtraEfectivo - $egresosEfectivo, 2);
+        $efectivoCobradoEnCaja = round($montoInicial + $efectivoVentasCobrado + $ingresosExtraEfectivo - $egresosEfectivo, 2);
+        $transferenciaEnCuenta = round(((float) $porMedioPago['transferencia']['monto']) - $egresosTransferencia, 2);
+        $debitoEnCuenta = round((float) $porMedioPago['debito']['monto'], 2);
+        $digitalEnCuenta = round($transferenciaEnCuenta + $debitoEnCuenta, 2);
+        $saldoNetoTotal = round($montoInicial + $totalVendido + $ingresosExtraEfectivo - $totalEgresos, 2);
+
         return response()->json([
             'data' => [
                 'comparativa' => [
@@ -195,12 +274,106 @@ class PedidoAdminController extends Controller
                             'cantidad' => $retiros->count(),
                         ],
                     ],
+                    'caja' => [
+                        'fechaJornada' => $fechaObjetivoCaja,
+                        'horaCorte' => '06:00',
+                        'rangoHorarioTexto' => $rango['rangoTexto'],
+                        'montoInicial' => $montoInicial,
+                        'montoInicialDiaObjetivo' => (float) ($cajaObjetivo?->monto_inicial ?? 0),
+                        'efectivoVentas' => $efectivoVentasTotal,
+                        'efectivoVentasCobrado' => $efectivoVentasCobrado,
+                        'ingresosExtraEfectivo' => $ingresosExtraEfectivo,
+                        'egresosEfectivo' => $egresosEfectivo,
+                        'egresosTransferencia' => $egresosTransferencia,
+                        'totalEgresos' => $totalEgresos,
+                        'efectivoEnCaja' => $efectivoEnCaja,
+                        'efectivoCobradoEnCaja' => $efectivoCobradoEnCaja,
+                        'transferenciaEnCuenta' => $transferenciaEnCuenta,
+                        'debitoEnCuenta' => $debitoEnCuenta,
+                        'digitalEnCuenta' => $digitalEnCuenta,
+                        'saldoNetoTotal' => $saldoNetoTotal,
+                        'movimientos' => $movimientos->map(fn (MovimientoCaja $m) => $this->formatearMovimientoCaja($m))->values(),
+                    ],
                     'ventasPorDia' => $ventasPorDia,
                     'productosVendidos' => $productosVendidos,
                     'totalUnidadesVendidas' => $totalUnidadesPeriodo,
                 ],
             ],
         ]);
+    }
+
+    /** PUT /api/admin/pedidos/caja/fondo-inicial — Define el monto con el que arranca la caja de la jornada. */
+    public function guardarFondoInicial(Request $request): JsonResponse
+    {
+        $datos = $request->validate([
+            'montoInicial' => ['required', 'numeric', 'min:0'],
+            'fecha' => ['nullable', 'date'],
+            'observaciones' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $local = $request->user()->local;
+        $fecha = ! empty($datos['fecha'])
+            ? Carbon::parse($datos['fecha'])->toDateString()
+            : $this->fechaJornadaActual();
+
+        $caja = CajaDiaria::updateOrCreate(
+            [
+                'local_id' => $local->id,
+                'fecha' => $fecha,
+            ],
+            [
+                'monto_inicial' => round((float) $datos['montoInicial'], 2),
+                'observaciones' => isset($datos['observaciones']) ? trim($datos['observaciones']) : null,
+            ]
+        );
+
+        return response()->json([
+            'data' => [
+                'id' => $caja->id,
+                'fecha' => $caja->fecha->format('Y-m-d'),
+                'montoInicial' => (float) $caja->monto_inicial,
+                'observaciones' => $caja->observaciones ?? '',
+            ],
+        ]);
+    }
+
+    /** POST /api/admin/pedidos/caja/movimientos — Registra un retiro/gasto urgente (o ingreso extra) en la caja. */
+    public function registrarMovimientoCaja(Request $request): JsonResponse
+    {
+        $datos = $request->validate([
+            'monto' => ['required', 'numeric', 'min:0.01'],
+            'concepto' => ['required', 'string', 'max:200'],
+            'medioPago' => ['nullable', 'string', Rule::in(['efectivo', 'transferencia'])],
+            'tipo' => ['nullable', 'string', Rule::in(['egreso', 'ingreso'])],
+            'fechaJornada' => ['nullable', 'date'],
+        ]);
+
+        $local = $request->user()->local;
+        $fechaJornada = ! empty($datos['fechaJornada'])
+            ? Carbon::parse($datos['fechaJornada'])->toDateString()
+            : $this->fechaJornadaActual();
+
+        $movimiento = MovimientoCaja::create([
+            'local_id' => $local->id,
+            'fecha_jornada' => $fechaJornada,
+            'tipo' => $datos['tipo'] ?? 'egreso',
+            'monto' => round((float) $datos['monto'], 2),
+            'medio_pago' => $datos['medioPago'] ?? 'efectivo',
+            'concepto' => trim($datos['concepto']),
+        ]);
+
+        return response()->json([
+            'data' => $this->formatearMovimientoCaja($movimiento),
+        ], 201);
+    }
+
+    /** DELETE /api/admin/pedidos/caja/movimientos/{movimiento} — Elimina un movimiento de caja mal cargado. */
+    public function eliminarMovimientoCaja(Request $request, MovimientoCaja $movimiento): JsonResponse
+    {
+        abort_if($movimiento->local_id !== $request->user()->local_id, 403);
+        $movimiento->delete();
+
+        return response()->json(['message' => 'Movimiento de caja eliminado']);
     }
 
     public function show(Pedido $pedido): PedidoResource
@@ -219,19 +392,35 @@ class PedidoAdminController extends Controller
         return new PedidoResource($pedido->load('items.opciones'));
     }
 
-    /** PATCH /api/admin/pedidos/{pedido}/pago — Marca un pedido como Pagado o Sin Pagar en 1 clic. */
+    /** PATCH /api/admin/pedidos/{pedido}/pago — Marca un pedido como Pagado/Sin Pagar o cambia su medio de pago en 1 clic. */
     public function alternarPago(Request $request, Pedido $pedido): PedidoResource
     {
         $this->authorize('update', $pedido);
 
-        $nuevoEstadoPago = $request->has('pagado')
-            ? (bool) $request->boolean('pagado')
-            : ! $pedido->pagado;
-
-        $pedido->update([
-            'pagado' => $nuevoEstadoPago,
-            'pagado_en' => $nuevoEstadoPago ? now() : null,
+        $datos = $request->validate([
+            'pagado' => ['sometimes', 'boolean'],
+            'medioPago' => ['sometimes', 'string', Rule::in(['efectivo', 'transferencia', 'debito'])],
         ]);
+
+        $atributos = [];
+
+        if (array_key_exists('medioPago', $datos)) {
+            $atributos['medio_pago'] = $datos['medioPago'];
+        }
+
+        if (array_key_exists('pagado', $datos)) {
+            $nuevoEstadoPago = (bool) $datos['pagado'];
+            $atributos['pagado'] = $nuevoEstadoPago;
+            $atributos['pagado_en'] = $nuevoEstadoPago ? now() : null;
+        } elseif (! array_key_exists('medioPago', $datos)) {
+            $nuevoEstadoPago = ! $pedido->pagado;
+            $atributos['pagado'] = $nuevoEstadoPago;
+            $atributos['pagado_en'] = $nuevoEstadoPago ? now() : null;
+        }
+
+        if (! empty($atributos)) {
+            $pedido->update($atributos);
+        }
 
         return new PedidoResource($pedido->load('items.opciones'));
     }
@@ -366,23 +555,118 @@ class PedidoAdminController extends Controller
         ]);
     }
 
-    private function aplicarFiltroPeriodo(Builder|\Illuminate\Database\Eloquent\Relations\HasMany $query, Request $request): void
+    /**
+     * Devuelve la fecha comercial actual (YYYY-MM-DD) restando las 6 horas de corte nocturno.
+     * Si son las 02:00 AM del 17/11, sigue siendo la jornada comercial del 16/11.
+     */
+    private function fechaJornadaActual(?Carbon $instante = null): string
+    {
+        return ($instante ?? Carbon::now())->copy()->subHours(self::HORA_CORTE_JORNADA)->toDateString();
+    }
+
+    /** Inicio de una jornada comercial: YYYY-MM-DD a las 06:00:00. */
+    private function inicioJornada(string $fechaYmd): Carbon
+    {
+        return Carbon::parse($fechaYmd)->startOfDay()->addHours(self::HORA_CORTE_JORNADA);
+    }
+
+    /** Fin de una jornada comercial: (YYYY-MM-DD + 1 día) a las 05:59:59. */
+    private function finJornada(string $fechaYmd): Carbon
+    {
+        return Carbon::parse($fechaYmd)->addDay()->startOfDay()->addHours(self::HORA_CORTE_JORNADA)->subSecond();
+    }
+
+    /**
+     * Resuelve el rango de fechas comerciales y timestamps reales (con corte a las 06:00 AM).
+     *
+     * @return array{desdeFecha: ?string, hastaFecha: ?string, inicio: ?Carbon, fin: ?Carbon, fechaObjetivo: string, rangoTexto: string}
+     */
+    private function resolverRangoJornada(Request $request): array
     {
         $periodo = $request->input('periodo', 'todos');
-        $ahora = Carbon::now();
+        $hoyJornada = $this->fechaJornadaActual();
+        $ayerJornada = Carbon::parse($hoyJornada)->subDay()->toDateString();
+        $lunesJornada = Carbon::parse($hoyJornada)->startOfWeek(Carbon::MONDAY)->toDateString();
+        $primeroMesJornada = Carbon::parse($hoyJornada)->startOfMonth()->toDateString();
 
-        match ($periodo) {
-            'hoy' => $query->where('created_at', '>=', $ahora->copy()->startOfDay()),
-            'ayer' => $query->whereBetween('created_at', [
-                $ahora->copy()->subDay()->startOfDay(),
-                $ahora->copy()->subDay()->endOfDay(),
-            ]),
-            'semana' => $query->where('created_at', '>=', $ahora->copy()->startOfWeek(Carbon::MONDAY)),
-            'mes' => $query->where('created_at', '>=', $ahora->copy()->startOfMonth()),
-            'personalizado' => $query
-                ->when($request->filled('desde'), fn ($q) => $q->where('created_at', '>=', Carbon::parse($request->input('desde'))->startOfDay()))
-                ->when($request->filled('hasta'), fn ($q) => $q->where('created_at', '<=', Carbon::parse($request->input('hasta'))->endOfDay())),
-            default => null,
-        };
+        $desdeFecha = null;
+        $hastaFecha = null;
+        $fechaObjetivo = $hoyJornada;
+
+        switch ($periodo) {
+            case 'hoy':
+                $desdeFecha = $hoyJornada;
+                $hastaFecha = $hoyJornada;
+                $fechaObjetivo = $hoyJornada;
+                break;
+            case 'ayer':
+                $desdeFecha = $ayerJornada;
+                $hastaFecha = $ayerJornada;
+                $fechaObjetivo = $ayerJornada;
+                break;
+            case 'semana':
+                $desdeFecha = $lunesJornada;
+                $hastaFecha = $hoyJornada;
+                $fechaObjetivo = $hoyJornada;
+                break;
+            case 'mes':
+                $desdeFecha = $primeroMesJornada;
+                $hastaFecha = $hoyJornada;
+                $fechaObjetivo = $hoyJornada;
+                break;
+            case 'personalizado':
+                $desdeFecha = $request->filled('desde') ? Carbon::parse($request->input('desde'))->toDateString() : null;
+                $hastaFecha = $request->filled('hasta') ? Carbon::parse($request->input('hasta'))->toDateString() : null;
+                if ($desdeFecha && ! $hastaFecha) {
+                    $hastaFecha = $desdeFecha;
+                }
+                if ($desdeFecha && $desdeFecha === $hastaFecha) {
+                    $fechaObjetivo = $desdeFecha;
+                }
+                break;
+            default:
+                break;
+        }
+
+        $inicio = $desdeFecha ? $this->inicioJornada($desdeFecha) : null;
+        $fin = $hastaFecha ? $this->finJornada($hastaFecha) : null;
+
+        $rangoTexto = ($inicio && $fin)
+            ? $inicio->format('d/m H:i').' hs → '.$fin->format('d/m H:i').' hs'
+            : 'Historial completo';
+
+        return [
+            'desdeFecha' => $desdeFecha,
+            'hastaFecha' => $hastaFecha,
+            'inicio' => $inicio,
+            'fin' => $fin,
+            'fechaObjetivo' => $fechaObjetivo,
+            'rangoTexto' => $rangoTexto,
+        ];
+    }
+
+    private function aplicarFiltroPeriodo(Builder|\Illuminate\Database\Eloquent\Relations\HasMany $query, Request $request): void
+    {
+        $rango = $this->resolverRangoJornada($request);
+
+        if ($rango['inicio']) {
+            $query->where('created_at', '>=', $rango['inicio']);
+        }
+        if ($rango['fin']) {
+            $query->where('created_at', '<=', $rango['fin']);
+        }
+    }
+
+    private function formatearMovimientoCaja(MovimientoCaja $m): array
+    {
+        return [
+            'id' => $m->id,
+            'fechaJornada' => $m->fecha_jornada ? $m->fecha_jornada->format('Y-m-d') : '',
+            'tipo' => $m->tipo,
+            'monto' => (float) $m->monto,
+            'medioPago' => $m->medio_pago,
+            'concepto' => $m->concepto,
+            'creadoEn' => $m->created_at?->toIso8601String() ?? '',
+        ];
     }
 }

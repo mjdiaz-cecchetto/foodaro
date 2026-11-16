@@ -88,6 +88,37 @@ export interface VentaDiaria {
   total: number;
 }
 
+export interface MovimientoCajaAdmin {
+  id: number;
+  fechaJornada: string;
+  tipo: 'egreso' | 'ingreso';
+  monto: number;
+  medioPago: 'efectivo' | 'transferencia';
+  concepto: string;
+  creadoEn: string;
+}
+
+export interface ResumenCajaAdmin {
+  fechaJornada: string;
+  horaCorte: string;
+  rangoHorarioTexto: string;
+  montoInicial: number;
+  montoInicialDiaObjetivo: number;
+  efectivoVentas: number;
+  efectivoVentasCobrado: number;
+  ingresosExtraEfectivo: number;
+  egresosEfectivo: number;
+  egresosTransferencia: number;
+  totalEgresos: number;
+  efectivoEnCaja: number;
+  efectivoCobradoEnCaja: number;
+  transferenciaEnCuenta?: number;
+  debitoEnCuenta?: number;
+  digitalEnCuenta?: number;
+  saldoNetoTotal: number;
+  movimientos: MovimientoCajaAdmin[];
+}
+
 export interface MetricasPedidosAdmin {
   comparativa: {
     hoy: ResumenCortoPeriodo;
@@ -111,6 +142,7 @@ export interface MetricasPedidosAdmin {
       envio: { monto: number; cantidad: number; costoEnviosCobrado: number };
       retiro: { monto: number; cantidad: number };
     };
+    caja?: ResumenCajaAdmin;
     ventasPorDia: VentaDiaria[];
     productosVendidos?: ProductoVendidoRanking[];
     totalUnidadesVendidas?: number;
@@ -247,6 +279,18 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   readonly busquedaRanking = signal('');
   readonly categoriaRanking = signal('todas');
   readonly ordenRanking = signal<'unidades' | 'monto'>('unidades');
+
+  /* ------------------------ Fondo Inicial de Caja y Retiros / Gastos Urgentes ------------------------ */
+  readonly editandoFondoInicial = signal(false);
+  readonly montoFondoInicialInput = signal<number>(0);
+  readonly guardandoFondoInicial = signal(false);
+
+  readonly formularioGastoAbierto = signal(false);
+  readonly verGastosHoy = signal(false);
+  readonly gastoMontoInput = signal<number | null>(null);
+  readonly gastoConceptoInput = signal('');
+  readonly gastoMedioPagoInput = signal<'efectivo' | 'transferencia'>('efectivo');
+  readonly guardandoGasto = signal(false);
 
   readonly categoriasRankingDisponibles = computed(() => {
     const lista = this.metricas().arqueo.productosVendidos ?? [];
@@ -895,6 +939,24 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       });
   }
 
+  /** Permite cambiar en 1 clic el medio de pago del pedido (ej. pidió en Efectivo y al entregar paga por Transferencia). */
+  cambiarMedioPagoPedido(pedido: PedidoAdmin, medioPago: 'efectivo' | 'transferencia' | 'debito'): void {
+    this.marcarPedidoVisto(pedido.id);
+    if (pedido.medioPago === medioPago) return;
+    this.http
+      .patch<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${pedido.id}/pago`, { medioPago })
+      .subscribe({
+        next: ({ data }) => {
+          this.pedidos.update((lista) => lista.map((p) => (p.id === pedido.id ? data : p)));
+          this.notificaciones.mostrar(
+            `💳 Pedido #${this.formatearNumero(pedido.numero)}: medio de pago cambiado a ${medioPago.toUpperCase()}`,
+          );
+          this.cargarPedidos(true);
+        },
+        error: (err: unknown) => this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo cambiar el medio de pago')),
+      });
+  }
+
   /** Marca o desmarca un pedido como Prioritario (Urgente para cocina) en 1 clic. */
   alternarPrioridadPedido(pedido: PedidoAdmin): void {
     this.marcarPedidoVisto(pedido.id);
@@ -1508,12 +1570,112 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       .replace(/"/g, '&quot;');
   }
 
+  /* ------------------------ Gestión de Fondo Inicial y Gastos / Retiros de Caja ------------------------ */
+  abrirEditorFondoInicial(): void {
+    const actual = this.metricas().arqueo.caja?.montoInicialDiaObjetivo ?? this.metricas().arqueo.caja?.montoInicial ?? 0;
+    this.montoFondoInicialInput.set(actual);
+    this.editandoFondoInicial.set(true);
+  }
+
+  cancelarEditorFondoInicial(): void {
+    this.editandoFondoInicial.set(false);
+  }
+
+  guardarFondoInicialCaja(): void {
+    if (this.guardandoFondoInicial()) return;
+    const monto = Math.max(0, Number(this.montoFondoInicialInput()) || 0);
+    const fecha = this.metricas().arqueo.caja?.fechaJornada;
+
+    this.guardandoFondoInicial.set(true);
+    this.http
+      .put<RespuestaApi<{ montoInicial: number; fecha: string }>>(`${environment.apiUrl}/admin/pedidos/caja/fondo-inicial`, {
+        montoInicial: monto,
+        fecha: fecha || null,
+      })
+      .subscribe({
+        next: () => {
+          this.guardandoFondoInicial.set(false);
+          this.editandoFondoInicial.set(false);
+          this.notificaciones.mostrar('💵 Fondo inicial de caja actualizado');
+          this.cargarPedidos(true);
+        },
+        error: (err: unknown) => {
+          this.guardandoFondoInicial.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar el monto inicial de caja'));
+        },
+      });
+  }
+
+  alternarFormularioGasto(): void {
+    this.formularioGastoAbierto.update((v) => !v);
+    if (this.formularioGastoAbierto()) {
+      this.gastoMontoInput.set(null);
+      this.gastoConceptoInput.set('');
+      this.gastoMedioPagoInput.set('efectivo');
+    }
+  }
+
+  registrarMovimientoCaja(): void {
+    if (this.guardandoGasto()) return;
+    const monto = Number(this.gastoMontoInput()) || 0;
+    const concepto = this.gastoConceptoInput().trim();
+
+    if (monto <= 0) {
+      this.notificaciones.mostrar('Ingresá un monto mayor a $0 para restar de la caja');
+      return;
+    }
+    if (!concepto) {
+      this.notificaciones.mostrar('Indicá el motivo del retiro o gasto urgente (ej: Compra de hielo)');
+      return;
+    }
+
+    const fechaJornada = this.metricas().arqueo.caja?.fechaJornada;
+
+    this.guardandoGasto.set(true);
+    this.http
+      .post<RespuestaApi<MovimientoCajaAdmin>>(`${environment.apiUrl}/admin/pedidos/caja/movimientos`, {
+        monto,
+        concepto,
+        medioPago: this.gastoMedioPagoInput(),
+        tipo: 'egreso',
+        fechaJornada: fechaJornada || null,
+      })
+      .subscribe({
+        next: () => {
+          this.guardandoGasto.set(false);
+          this.formularioGastoAbierto.set(false);
+          this.gastoMontoInput.set(null);
+          this.gastoConceptoInput.set('');
+          this.notificaciones.mostrar('➖ Retiro / gasto urgente registrado y descontado de la caja');
+          this.cargarPedidos(true);
+        },
+        error: (err: unknown) => {
+          this.guardandoGasto.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo registrar el movimiento de caja'));
+        },
+      });
+  }
+
+  eliminarMovimientoCaja(mov: MovimientoCajaAdmin): void {
+    this.http.delete(`${environment.apiUrl}/admin/pedidos/caja/movimientos/${mov.id}`).subscribe({
+      next: () => {
+        this.notificaciones.mostrar('Movimiento eliminado de la caja');
+        this.cargarPedidos(true);
+      },
+      error: (err: unknown) => {
+        this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo eliminar el movimiento'));
+      },
+    });
+  }
+
   /**
    * Descarga en 1 clic un archivo CSV (con BOM UTF-8 compatible con Excel en español)
-   * con el Resumen del Arqueo de Caja, el desglose día por día y el detalle de pedidos del período.
+   * con el Resumen del Arqueo de Caja, el saldo real de caja (fondo inicial - gastos),
+   * el desglose día por día y el detalle de pedidos del período.
    */
   exportarCierreCsv(): void {
     const a = this.metricas().arqueo;
+    const caja = a.caja;
     const nombreLocal = this.localAdmin.perfil().nombre || 'Local';
     const periodo = this.etiquetaPeriodoActivo();
     const fechaEmision = new Date().toLocaleString('es-AR');
@@ -1526,10 +1688,26 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     const filas: string[] = [];
     filas.push(['CIERRE DE CAJA - ' + nombreLocal.toUpperCase(), ''].map(escCsv).join(';'));
     filas.push(['Período', periodo].map(escCsv).join(';'));
+    if (caja?.rangoHorarioTexto) {
+      filas.push(['Jornada comercial (Corte 06:00 AM)', caja.rangoHorarioTexto].map(escCsv).join(';'));
+    }
     filas.push(['Emitido el', fechaEmision].map(escCsv).join(';'));
     filas.push('');
 
-    filas.push(['RESUMEN GENERAL', 'CANTIDAD', 'MONTO ($)'].map(escCsv).join(';'));
+    filas.push(['CAJA FÍSICA Y SALDO EN EFECTIVO / DIGITAL', 'DETALLE', 'MONTO ($)'].map(escCsv).join(';'));
+    filas.push(['(+) Fondo inicial de caja (cambio)', caja?.fechaJornada ?? '-', Math.round(caja?.montoInicial ?? 0)].map(escCsv).join(';'));
+    filas.push(['(+) Ventas en efectivo cobradas', `${a.porMedioPago.efectivo.cantidad} pedidos`, Math.round(a.porMedioPago.efectivo.monto)].map(escCsv).join(';'));
+    filas.push(['(-) Retiros / compras urgentes en efectivo', `${(caja?.movimientos ?? []).filter((m) => m.medioPago === 'efectivo').length} retiros`, -Math.round(caja?.egresosEfectivo ?? 0)].map(escCsv).join(';'));
+    filas.push(['(=) EFECTIVO ESPERADO EN CAJÓN', 'Fondo + Efectivo - Retiros', Math.round(caja?.efectivoEnCaja ?? a.porMedioPago.efectivo.monto)].map(escCsv).join(';'));
+    filas.push(['(+) Cobrado por Transferencia', `${a.porMedioPago.transferencia.cantidad} pedidos`, Math.round(a.porMedioPago.transferencia.monto)].map(escCsv).join(';'));
+    filas.push(['(+) Cobrado por Débito / Tarjeta', `${a.porMedioPago.debito.cantidad} pedidos`, Math.round(a.porMedioPago.debito.monto)].map(escCsv).join(';'));
+    if ((caja?.egresosTransferencia ?? 0) > 0) {
+      filas.push(['(-) Gastos pagados por transferencia', '-', -Math.round(caja?.egresosTransferencia ?? 0)].map(escCsv).join(';'));
+    }
+    filas.push(['(=) DINERO ESPERADO EN TRANSF. / DÉBITO', 'Transferencia + Débito - Gastos Transf.', Math.round(caja?.digitalEnCuenta ?? (a.porMedioPago.transferencia.monto + a.porMedioPago.debito.monto))].map(escCsv).join(';'));
+    filas.push('');
+
+    filas.push(['RESUMEN GENERAL DE VENTAS', 'CANTIDAD', 'MONTO ($)'].map(escCsv).join(';'));
     filas.push(['Total vendido (válidos)', a.pedidosValidos, Math.round(a.totalVendido)].map(escCsv).join(';'));
     filas.push(['Cobrado (pedidos pagados)', a.cobrado?.cantidad ?? 0, Math.round(a.cobrado?.monto ?? 0)].map(escCsv).join(';'));
     filas.push(['Pendiente de cobro (sin pagar)', a.pendienteCobro?.cantidad ?? 0, Math.round(a.pendienteCobro?.monto ?? 0)].map(escCsv).join(';'));
@@ -1544,6 +1722,19 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     filas.push(['Débito / Tarjeta', a.porMedioPago.debito.cantidad, Math.round(a.porMedioPago.debito.monto)].map(escCsv).join(';'));
     filas.push('');
 
+    if (caja && caja.movimientos.length > 0) {
+      filas.push(['RETIROS Y COMPRAS URGENTES DE CAJA', 'FECHA / HORA', 'MEDIO', 'MONTO ($)'].map(escCsv).join(';'));
+      for (const mov of caja.movimientos) {
+        filas.push([
+          mov.concepto,
+          this.formatearFecha(mov.creadoEn),
+          mov.medioPago.toUpperCase(),
+          -Math.round(mov.monto),
+        ].map(escCsv).join(';'));
+      }
+      filas.push('');
+    }
+
     filas.push(['POR MODALIDAD DE ENTREGA', 'PEDIDOS', 'MONTO ($)'].map(escCsv).join(';'));
     filas.push(['Envío a domicilio', a.porModoEntrega.envio.cantidad, Math.round(a.porModoEntrega.envio.monto)].map(escCsv).join(';'));
     filas.push(['Costo de envíos cobrado', '-', Math.round(a.porModoEntrega.envio.costoEnviosCobrado)].map(escCsv).join(';'));
@@ -1551,7 +1742,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     filas.push('');
 
     if (a.ventasPorDia.length > 0) {
-      filas.push(['DESGLOSE DÍA POR DÍA', 'PEDIDOS', 'EFECTIVO ($)', 'TRANSFERENCIA ($)', 'DÉBITO ($)', 'TOTAL DÍA ($)'].map(escCsv).join(';'));
+      filas.push(['DESGLOSE DÍA POR DÍA (CORTE 06:00 AM)', 'PEDIDOS', 'EFECTIVO ($)', 'TRANSFERENCIA ($)', 'DÉBITO ($)', 'TOTAL DÍA ($)'].map(escCsv).join(';'));
       for (const d of a.ventasPorDia) {
         filas.push([
           d.fecha,
@@ -1605,7 +1796,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     const blob = new Blob([contenidoCsv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const enlace = document.createElement('a');
-    const fechaArchivo = new Date().toISOString().slice(0, 10);
+    const fechaArchivo = caja?.fechaJornada || new Date().toISOString().slice(0, 10);
     enlace.href = url;
     enlace.download = `cierre-caja-${this.periodoActivo()}-${fechaArchivo}.csv`;
     enlace.click();
@@ -1618,16 +1809,30 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
    */
   imprimirCierreCaja(): void {
     const a = this.metricas().arqueo;
+    const caja = a.caja;
     const nombreLocal = this.escaparHtml(this.localAdmin.perfil().nombre || 'Local');
     const periodo = this.escaparHtml(this.etiquetaPeriodoActivo());
+    const rangoHorario = this.escaparHtml(caja?.rangoHorarioTexto || '');
     const fechaEmision = new Date().toLocaleString('es-AR');
     const fmt = (n: number) => '$' + Math.round(n || 0).toLocaleString('es-AR');
 
-    const ventana = window.open('', '_blank', 'width=680,height=780');
+    const ventana = window.open('', '_blank', 'width=680,height=820');
     if (!ventana) {
       this.notificaciones.mostrar('Habilitá las ventanas emergentes para imprimir el cierre de caja');
       return;
     }
+
+    const filasMovimientos = (caja?.movimientos ?? [])
+      .map(
+        (m) => `
+        <tr>
+          <td>${this.escaparHtml(this.formatearFecha(m.creadoEn))}</td>
+          <td>${this.escaparHtml(m.concepto)}</td>
+          <td>${this.escaparHtml(m.medioPago.toUpperCase())}</td>
+          <td class="der negrita" style="color:#dc2626;">-${fmt(m.monto)}</td>
+        </tr>`,
+      )
+      .join('');
 
     const filasDias = a.ventasPorDia
       .map(
@@ -1696,6 +1901,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       border: 1px solid #d4d4d8;
       border-radius: 10px;
       padding: 12px;
+      margin-bottom: 12px;
     }
     .caja h3 {
       margin: 0 0 8px;
@@ -1723,31 +1929,39 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   <div class="encabezado">
     <div>
       <h1>CIERRE DE CAJA · ${nombreLocal}</h1>
-      <div class="sub">Período: <strong>${periodo}</strong></div>
+      <div class="sub">Período: <strong>${periodo}</strong> ${rangoHorario ? `(${rangoHorario})` : ''}</div>
     </div>
     <div style="text-align: right" class="sub">
       <div>Emitido: ${fechaEmision}</div>
-      <div>Foodaro Administración</div>
+      <div>Corte comercial: 06:00 AM</div>
     </div>
   </div>
 
   <div class="grilla-4">
     <div class="kpi kpi-destacado">
-      <div class="kpi-etiq">Total Vendido</div>
-      <div class="kpi-val">${fmt(a.totalVendido)}</div>
+      <div class="kpi-etiq">Efectivo en Cajón</div>
+      <div class="kpi-val">${fmt(caja?.efectivoEnCaja ?? a.porMedioPago.efectivo.monto)}</div>
     </div>
     <div class="kpi">
-      <div class="kpi-etiq">Pedidos Válidos</div>
-      <div class="kpi-val">${a.pedidosValidos}</div>
+      <div class="kpi-etiq">En Transf. / Débito</div>
+      <div class="kpi-val">${fmt(caja?.digitalEnCuenta ?? (a.porMedioPago.transferencia.monto + a.porMedioPago.debito.monto))}</div>
     </div>
     <div class="kpi">
-      <div class="kpi-etiq">Ticket Promedio</div>
-      <div class="kpi-val">${fmt(a.ticketPromedio)}</div>
+      <div class="kpi-etiq">Fondo Inicial Caja</div>
+      <div class="kpi-val">${fmt(caja?.montoInicial ?? 0)}</div>
     </div>
     <div class="kpi">
-      <div class="kpi-etiq">Cancelados</div>
-      <div class="kpi-val">${a.pedidosCancelados}</div>
+      <div class="kpi-etiq">Retiros / Gastos</div>
+      <div class="kpi-val" style="color:#dc2626;">-${fmt(caja?.totalEgresos ?? 0)}</div>
     </div>
+  </div>
+
+  <div class="caja">
+    <h3>Arqueo de Efectivo en Caja Física</h3>
+    <div class="fila"><span>(+) Fondo inicial de caja (cambio)</span><span class="negrita">${fmt(caja?.montoInicial ?? 0)}</span></div>
+    <div class="fila"><span>(+) Ventas en efectivo (${a.porMedioPago.efectivo.cantidad} pedidos)</span><span class="negrita">${fmt(a.porMedioPago.efectivo.monto)}</span></div>
+    <div class="fila"><span>(-) Retiros / compras urgentes en efectivo</span><span class="negrita" style="color:#dc2626;">-${fmt(caja?.egresosEfectivo ?? 0)}</span></div>
+    <div class="fila" style="border-top:2px solid #18181b;padding-top:6px;font-size:14px;"><span class="negrita">(=) EFECTIVO ESPERADO EN CAJÓN</span><span class="negrita">${fmt(caja?.efectivoEnCaja ?? a.porMedioPago.efectivo.monto)}</span></div>
   </div>
 
   <div class="grilla-2">
@@ -1766,9 +1980,28 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   </div>
 
   ${
+    filasMovimientos
+      ? `<div class="caja">
+           <h3>Detalle de Retiros y Compras Urgentes de Caja</h3>
+           <table>
+             <thead>
+               <tr>
+                 <th>Fecha y Hora</th>
+                 <th>Concepto / Motivo</th>
+                 <th>Medio</th>
+                 <th class="der">Monto</th>
+               </tr>
+             </thead>
+             <tbody>${filasMovimientos}</tbody>
+           </table>
+         </div>`
+      : ''
+  }
+
+  ${
     a.ventasPorDia.length > 0
       ? `<div class="caja">
-           <h3>Desglose Día por Día</h3>
+           <h3>Desglose Día por Día (Jornada comercial corte 06:00 AM)</h3>
            <table>
              <thead>
                <tr>

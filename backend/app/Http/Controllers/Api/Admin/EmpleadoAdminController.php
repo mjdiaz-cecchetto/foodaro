@@ -31,7 +31,8 @@ class EmpleadoAdminController extends Controller
             ->with('empleado');
 
         $periodo = $request->input('periodo', 'hoy');
-        $ahora = Carbon::now();
+        // El día comercial corta a las 06:00 AM para no partir los turnos nocturnos (ej. 21:00 a 02:00)
+        $ahora = Carbon::now()->subHours(6);
 
         match ($periodo) {
             'hoy' => $queryAsistencias->whereDate('fecha', $ahora->toDateString()),
@@ -157,7 +158,7 @@ class EmpleadoAdminController extends Controller
         $local = $request->user()->local;
         $empleado = Empleado::where('local_id', $local->id)->findOrFail($datos['empleadoId']);
 
-        $fecha = $datos['fecha'] ?? Carbon::now()->toDateString();
+        $fecha = $datos['fecha'] ?? Carbon::now()->subHours(6)->toDateString();
         $horaEntrada = $datos['horaEntrada'] ?? Carbon::now()->format('H:i');
         $horaSalida = ! empty($datos['horaSalida']) ? $datos['horaSalida'] : null;
         $valorHora = isset($datos['valorHora']) ? (float) $datos['valorHora'] : (float) $empleado->sueldo_hora;
