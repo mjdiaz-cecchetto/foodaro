@@ -550,7 +550,7 @@
                           "precio":  14500,
                           "etiqueta":  "Favorita",
                           "disponible":  true,
-                          "imagen":  "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format\u0026fit=crop\u0026w=700\u0026q=80",
+                          "imagen":  "",
                           "descripcion":  "Muzzarella, rodajas de tomate fresco, ajo, perejil y un hilo de aceite de oliva.",
                           "gruposOpciones":  [
                                                  {

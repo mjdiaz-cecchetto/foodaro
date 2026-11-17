@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
 import { Producto } from '../../../shared/models';
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
@@ -17,6 +17,17 @@ export class TarjetaProductoComponente {
 
   readonly producto = input.required<Producto>();
   readonly seleccionado = output<number>();
+
+  readonly imagenRota = signal(false);
+  readonly mostrarImagen = computed(() => Boolean(this.producto().imagen?.trim()) && !this.imagenRota());
+
+  constructor() {
+    effect(() => {
+      // Si cambia la URL de la imagen, resetea el estado de error
+      this.producto().imagen;
+      this.imagenRota.set(false);
+    });
+  }
 
   abrir(): void {
     this.seleccionado.emit(this.producto().id);

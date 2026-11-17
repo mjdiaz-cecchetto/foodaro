@@ -35,6 +35,8 @@ export class ModalDetalleProductoComponente {
 
   /** Último producto mostrado: se conserva durante la animación de cierre. */
   readonly producto = signal<Producto | null>(null);
+  readonly imagenRota = signal(false);
+  readonly mostrarImagen = computed(() => Boolean(this.producto()?.imagen?.trim()) && !this.imagenRota());
   readonly cantidad = signal(1);
   readonly notas = signal('');
   /** Opciones elegidas por grupo: grupoId → ids de opciones. */
@@ -102,6 +104,7 @@ export class ModalDetalleProductoComponente {
       if (id === null) return;
       const producto = this.carta.obtenerProducto(id) ?? null;
       this.producto.set(producto);
+      this.imagenRota.set(false);
       this.cantidad.set(1);
       this.notas.set('');
       this.seleccion.set(this.seleccionInicial(producto));

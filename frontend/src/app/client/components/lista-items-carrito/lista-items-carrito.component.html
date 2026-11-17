@@ -2,7 +2,15 @@
 <ul class="divide-y divide-gray-100 dark:divide-dark-border">
   @for (item of items(); track item.clave) {
     <li class="flex gap-3" [class]="compacto ? 'py-2.5' : 'py-3.5'">
-      <img [src]="item.imagen" [alt]="item.nombre" class="rounded-xl object-cover shrink-0 bg-gray-100 dark:bg-dark-card" [class]="compacto ? 'w-12 h-12' : 'w-16 h-16'" />
+      @if (mostrarImagen(item)) {
+        <img
+          [src]="item.imagen"
+          [alt]="item.nombre"
+          (error)="marcarRota(item.clave)"
+          class="rounded-xl object-cover shrink-0 bg-gray-100 dark:bg-dark-card"
+          [class]="compacto ? 'w-12 h-12' : 'w-16 h-16'"
+        />
+      }
 
       <div class="flex-1 min-w-0">
         <div class="flex items-start justify-between gap-2">

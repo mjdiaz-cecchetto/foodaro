@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 
 import { PrecioPipe } from '../../../shared/pipes/precio.pipe';
 import { CarritoServicio } from '../../services/carrito.service';
@@ -19,6 +19,15 @@ export class ListaItemsCarritoComponente {
   readonly densidad = input<'normal' | 'compacto'>('normal');
 
   readonly items = this.carrito.items;
+  private readonly clavesRotas = signal<Record<string, boolean>>({});
+
+  mostrarImagen(item: ItemCarrito): boolean {
+    return Boolean(item.imagen?.trim()) && !this.clavesRotas()[item.clave];
+  }
+
+  marcarRota(clave: string): void {
+    this.clavesRotas.update((actual) => ({ ...actual, [clave]: true }));
+  }
 
   describirOpciones(item: ItemCarrito): string {
     return item.opciones.map((o) => o.etiqueta).join(' · ');
