@@ -74,17 +74,22 @@ class PedidoAdminController extends Controller
 
         $hoyJornada = $this->fechaJornadaActual();
         $lunesJornada = Carbon::parse($hoyJornada)->startOfWeek(Carbon::MONDAY)->toDateString();
+        $domingoJornada = Carbon::parse($hoyJornada)->endOfWeek(Carbon::SUNDAY)->toDateString();
         $primeroMesJornada = Carbon::parse($hoyJornada)->startOfMonth()->toDateString();
+        $ultimoMesJornada = Carbon::parse($hoyJornada)->endOfMonth()->toDateString();
 
         $inicioHoy = $this->inicioJornada($hoyJornada);
+        $finHoy = $this->finJornada($hoyJornada);
         $inicioSemana = $this->inicioJornada($lunesJornada);
+        $finSemana = $this->finJornada($domingoJornada);
         $inicioMes = $this->inicioJornada($primeroMesJornada);
+        $finMes = $this->finJornada($ultimoMesJornada);
 
-        // 1. Comparativa fija: Hoy comercial, Semana actual y Mes actual (SOLO pedidos cobrados/pagados)
-        $resumenRapido = function (Carbon $desde) use ($localId): array {
+        // 1. Comparativa fija según calendario presente: Hoy, Semana calendario (Lun-Dom) y Mes calendario
+        $resumenRapido = function (Carbon $desde, Carbon $hasta) use ($localId): array {
             $base = Pedido::query()
                 ->where('local_id', $localId)
-                ->where('created_at', '>=', $desde);
+                ->whereBetween('created_at', [$desde, $hasta]);
 
             $validos = (clone $base)->where('estado', '!=', EstadoPedido::Cancelado->value);
             $cobrados = (clone $validos)->where('pagado', true);
@@ -244,9 +249,9 @@ class PedidoAdminController extends Controller
         return response()->json([
             'data' => [
                 'comparativa' => [
-                    'hoy' => $resumenRapido($inicioHoy),
-                    'semana' => $resumenRapido($inicioSemana),
-                    'mes' => $resumenRapido($inicioMes),
+                    'hoy' => $resumenRapido($inicioHoy, $finHoy),
+                    'semana' => $resumenRapido($inicioSemana, $finSemana),
+                    'mes' => $resumenRapido($inicioMes, $finMes),
                 ],
                 'arqueo' => [
                     'totalVendido' => $totalVendido,
@@ -587,7 +592,9 @@ class PedidoAdminController extends Controller
         $hoyJornada = $this->fechaJornadaActual();
         $ayerJornada = Carbon::parse($hoyJornada)->subDay()->toDateString();
         $lunesJornada = Carbon::parse($hoyJornada)->startOfWeek(Carbon::MONDAY)->toDateString();
+        $domingoJornada = Carbon::parse($hoyJornada)->endOfWeek(Carbon::SUNDAY)->toDateString();
         $primeroMesJornada = Carbon::parse($hoyJornada)->startOfMonth()->toDateString();
+        $ultimoMesJornada = Carbon::parse($hoyJornada)->endOfMonth()->toDateString();
 
         $desdeFecha = null;
         $hastaFecha = null;
@@ -606,12 +613,12 @@ class PedidoAdminController extends Controller
                 break;
             case 'semana':
                 $desdeFecha = $lunesJornada;
-                $hastaFecha = $hoyJornada;
+                $hastaFecha = $domingoJornada;
                 $fechaObjetivo = $hoyJornada;
                 break;
             case 'mes':
                 $desdeFecha = $primeroMesJornada;
-                $hastaFecha = $hoyJornada;
+                $hastaFecha = $ultimoMesJornada;
                 $fechaObjetivo = $hoyJornada;
                 break;
             case 'personalizado':

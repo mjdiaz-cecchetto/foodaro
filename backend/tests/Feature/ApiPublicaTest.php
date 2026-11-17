@@ -48,8 +48,8 @@ class ApiPublicaTest extends TestCase
         $local = Local::where('slug', 'demolocal')->firstOrFail();
         $pizza = $local->productos()->where('nombre', 'Muzzarella')->with('gruposOpciones.opciones')->firstOrFail();
         $tamanio = $pizza->gruposOpciones->firstWhere('nombre', 'Tamaño');
-        $doce = $tamanio->opciones->firstWhere('etiqueta', '12 porciones');
-        $extras = $pizza->gruposOpciones->firstWhere('nombre', 'Extras');
+        $ocho = $tamanio->opciones->firstWhere('etiqueta', '8 porciones');
+        $extras = $pizza->gruposOpciones->firstWhere('nombre', 'Adicionales');
         $borde = $extras->opciones->firstWhere('etiqueta', 'Borde relleno');
 
         $respuesta = $this->postJson('/api/locales/demolocal/pedidos', [
@@ -57,7 +57,7 @@ class ApiPublicaTest extends TestCase
                 'productoId' => $pizza->id,
                 'cantidad' => 2,
                 'notas' => 'Bien cocida',
-                'opciones' => [['opcionId' => $doce->id], ['opcionId' => $borde->id]],
+                'opciones' => [['opcionId' => $ocho->id], ['opcionId' => $borde->id]],
             ]],
             'codigoPromo' => 'DEMO20',
             'modoEntrega' => 'envio',
@@ -68,15 +68,15 @@ class ApiPublicaTest extends TestCase
             'comentarios' => '',
         ]);
 
-        // (12.500 + 4.500 + 3.000) x 2 = 40.000 ; -20% = 32.000 ; sin cargo de servicio
+        // (12.500 + 3.000) x 2 = 31.000 ; -20% = 24.800 ; sin cargo de servicio
         $respuesta->assertCreated()
             ->assertJsonPath('data.numero', 1)
             ->assertJsonPath('data.estado', 'pendiente')
-            ->assertJsonPath('data.totales.subtotal', fn ($v) => (float) $v === 40000.0)
-            ->assertJsonPath('data.totales.descuento', fn ($v) => (float) $v === 8000.0)
+            ->assertJsonPath('data.totales.subtotal', fn ($v) => (float) $v === 31000.0)
+            ->assertJsonPath('data.totales.descuento', fn ($v) => (float) $v === 6200.0)
             ->assertJsonPath('data.totales.cargoServicio', fn ($v) => (float) $v === 0.0)
-            ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 32000.0)
-            ->assertJsonPath('data.items.0.opciones.0.etiqueta', '12 porciones')
+            ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 24800.0)
+            ->assertJsonPath('data.items.0.opciones.0.etiqueta', '8 porciones')
             ->assertJsonPath('data.direccion.calle', 'Av. Corrientes 1234');
 
         $this->assertDatabaseCount('pedidos', 1);
@@ -88,11 +88,9 @@ class ApiPublicaTest extends TestCase
         $local = Local::where('slug', 'demolocal')->firstOrFail();
         $pizza = $local->productos()->where('nombre', 'Muzzarella')->with('gruposOpciones.opciones')->firstOrFail();
         $tamanio = $pizza->gruposOpciones->firstWhere('nombre', 'Tamaño');
-        $tamanio->update(['modo_precio' => 'variante']);
-        $mediaPizza = $tamanio->opciones->firstWhere('etiqueta', '6 porciones');
-        $mediaPizza->update(['etiqueta' => '4 porciones (Media pizza)', 'precio_adicional' => 7000]);
+        $mediaPizza = $tamanio->opciones->firstWhere('etiqueta', '4 porciones');
 
-        $extras = $pizza->gruposOpciones->firstWhere('nombre', 'Extras');
+        $extras = $pizza->gruposOpciones->firstWhere('nombre', 'Adicionales');
         $borde = $extras->opciones->firstWhere('etiqueta', 'Borde relleno'); // +$3.000
 
         $respuesta = $this->postJson('/api/locales/demolocal/pedidos', [
@@ -107,10 +105,10 @@ class ApiPublicaTest extends TestCase
             'medioPago' => 'transferencia',
         ]);
 
-        // Media pizza ($7.000 reemplaza $12.500) + Borde relleno (+$3.000) = $10.000
+        // Media pizza ($6.250 reemplaza $12.500) + Borde relleno (+$3.000) = $9.250
         $respuesta->assertCreated()
-            ->assertJsonPath('data.totales.subtotal', fn ($v) => (float) $v === 10000.0)
-            ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 10000.0);
+            ->assertJsonPath('data.totales.subtotal', fn ($v) => (float) $v === 9250.0)
+            ->assertJsonPath('data.totales.total', fn ($v) => (float) $v === 9250.0);
     }
 
     public function test_rechaza_un_pedido_sin_la_opcion_obligatoria(): void

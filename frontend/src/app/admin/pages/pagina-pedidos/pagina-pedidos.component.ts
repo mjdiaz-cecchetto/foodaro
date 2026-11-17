@@ -361,7 +361,6 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     { valor: 'semana', etiqueta: 'Esta semana' },
     { valor: 'mes', etiqueta: 'Este mes' },
     { valor: 'personalizado', etiqueta: 'Elegir fechas' },
-    { valor: 'todos', etiqueta: 'Todo el historial' },
   ];
 
   readonly conteoPagos = computed(() => {
@@ -691,7 +690,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       case 'configuracion':
         return 'Configuración de WhatsApp, Envíos y Pagos';
       default:
-        return 'Gestión de Ventas · Pedidos de Hoy';
+        return `Gestión de Ventas · ${this.fechaJornadaHoyTexto()}`;
     }
   }
 
@@ -705,8 +704,12 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
         return 'Consultá cuántas unidades se vendieron de cada plato por día, semana, mes o fecha.';
       case 'configuracion':
         return 'Definí el número de WhatsApp que recibe los pedidos, costos de envío y alias de cobro.';
-      default:
-        return 'Consola operativa de pedidos del día en tiempo real.';
+      default: {
+        const rango = this.metricas().arqueo.caja?.rangoHorarioTexto;
+        return rango
+          ? `Consola operativa en tiempo real · Jornada activa: ${rango} (corte 06:00 AM).`
+          : 'Consola operativa de pedidos del día en tiempo real.';
+      }
     }
   }
 
@@ -2065,6 +2068,51 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       day: '2-digit',
       month: 'short',
     });
+  }
+
+  /** Devuelve la fecha de la jornada comercial actual formateada (ej: "Martes 17/11/2026"). */
+  fechaJornadaHoyTexto(): string {
+    const fecha = this.fechaBaseCalendario();
+    const diaSemana = fecha.toLocaleDateString('es-AR', { weekday: 'long' });
+    const diaSemanaCap = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+    const dd = String(fecha.getDate()).padStart(2, '0');
+    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+    const yyyy = fecha.getFullYear();
+    return `${diaSemanaCap} ${dd}/${mm}/${yyyy}`;
+  }
+
+  /** Devuelve el rango de la semana calendario presente (Lunes a Domingo), ej: "Lun 16/11 al Dom 22/11". */
+  rangoSemanaCalendarioTexto(): string {
+    const base = this.fechaBaseCalendario();
+    const dia = base.getDay(); // 0 = Dom, 1 = Lun...
+    const diffLunes = dia === 0 ? -6 : 1 - dia;
+    const lunes = new Date(base.getFullYear(), base.getMonth(), base.getDate() + diffLunes);
+    const domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
+    const fmt = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return `Lun ${fmt(lunes)} al Dom ${fmt(domingo)}`;
+  }
+
+  /** Devuelve el mes calendario presente completo, ej: "Noviembre 2026 (01/11 al 30/11)". */
+  rangoMesCalendarioTexto(): string {
+    const base = this.fechaBaseCalendario();
+    const mesNombre = base.toLocaleDateString('es-AR', { month: 'long' });
+    const mesCap = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
+    const anio = base.getFullYear();
+    const mm = String(base.getMonth() + 1).padStart(2, '0');
+    const ultimoDia = new Date(anio, base.getMonth() + 1, 0).getDate();
+    return `${mesCap} ${anio} (01/${mm} al ${String(ultimoDia).padStart(2, '0')}/${mm})`;
+  }
+
+  /** Abre la información completa de un día específico al hacer clic en una fila del Desglose Día por Día. */
+  verDiaEspecifico(fechaYmd: string): void {
+    this.periodoActivo.set('personalizado');
+    this.fechaDesde.set(fechaYmd);
+    this.fechaHasta.set(fechaYmd);
+    this.cargarPedidos(false);
+  }
+
+  private fechaBaseCalendario(): Date {
+    return new Date(Date.now() - 6 * 60 * 60 * 1000);
   }
 
   etiquetaPeriodoActivo(): string {

@@ -21,6 +21,24 @@
       <div class="bg-white dark:bg-surface-dark rounded-2xl px-4 py-3 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-2.5 text-xs">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3 flex-wrap">
+            <!-- Fecha de la jornada comercial activa -->
+            <div
+              class="flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-surface-borderDark"
+              [title]="a.caja?.rangoHorarioTexto ? 'Jornada comercial activa: ' + a.caja?.rangoHorarioTexto : 'Fecha de la jornada actual'"
+            >
+              <span class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-500/15 text-brand-600 flex items-center justify-center text-xs font-black">
+                <i class="fa-regular fa-calendar-check"></i>
+              </span>
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 block leading-none">
+                  Jornada de hoy
+                </span>
+                <span class="text-xs sm:text-sm font-black text-zinc-900 dark:text-white leading-tight">
+                  {{ fechaJornadaHoyTexto() }}
+                </span>
+              </div>
+            </div>
+
             <!-- Total cobrado hoy (solo suma pedidos marcados como Pagados) -->
             <div
               class="flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-surface-borderDark"
@@ -57,7 +75,7 @@
 
             <!-- Dinero esperado en Transferencia / Débito (solo suma pedidos marcados como Pagado) -->
             <div
-              class="flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-surface-borderDark"
+              class="flex items-center gap-2"
               [title]="'En cuenta digital = Transferencias cobradas (' + (a.porMedioPago.transferencia.monto | precio) + ') + Débito cobrado (' + (a.porMedioPago.debito.monto | precio) + ')' + ((a.caja?.egresosTransferencia ?? 0) > 0 ? ' - Gastos por transf. (' + ((a.caja?.egresosTransferencia ?? 0) | precio) + ')' : '')"
             >
               <span class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center text-xs font-black">
@@ -71,38 +89,6 @@
                   {{ (a.caja?.digitalEnCuenta ?? (a.porMedioPago.transferencia.monto + a.porMedioPago.debito.monto)) | precio }}
                 </span>
               </div>
-            </div>
-
-            <button
-              type="button"
-              (click)="filtroPago.set(filtroPago() === 'pagados' ? 'todos' : 'pagados')"
-              class="px-2.5 py-1 rounded-xl border font-extrabold flex items-center gap-1.5 transition cursor-pointer"
-              [class]="filtroPago() === 'pagados'
-                ? 'border-emerald-600 bg-emerald-600 text-white'
-                : 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'"
-              title="Filtrar pedidos pagados de hoy"
-            >
-              <i class="fa-solid fa-circle-check text-[11px]"></i>
-              <span>Pagados ({{ cp.pagados }}): <strong>{{ cp.montoPagados | precio }}</strong></span>
-            </button>
-
-            <button
-              type="button"
-              (click)="filtroPago.set(filtroPago() === 'sin_pagar' ? 'todos' : 'sin_pagar')"
-              class="px-2.5 py-1 rounded-xl border font-extrabold flex items-center gap-1.5 transition cursor-pointer"
-              [class]="filtroPago() === 'sin_pagar'
-                ? 'border-amber-500 bg-amber-500 text-white'
-                : 'border-amber-300 dark:border-amber-500/40 bg-amber-50/80 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300'"
-              title="Filtrar pedidos pendientes de cobro de hoy"
-            >
-              <i class="fa-solid fa-clock text-[11px]"></i>
-              <span>Sin pagar ({{ cp.sinPagar }}): <strong>{{ cp.montoSinPagar | precio }}</strong></span>
-            </button>
-
-            <div class="hidden 2xl:flex items-center gap-3 pl-2 border-l border-zinc-200 dark:border-surface-borderDark text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
-              <span><i class="fa-solid fa-money-bill-wave text-emerald-600 mr-1"></i>Efec: <strong class="text-zinc-800 dark:text-zinc-200">{{ a.porMedioPago.efectivo.monto | precio }}</strong></span>
-              <span><i class="fa-solid fa-building-columns text-sky-600 mr-1"></i>Transf: <strong class="text-zinc-800 dark:text-zinc-200">{{ a.porMedioPago.transferencia.monto | precio }}</strong></span>
-              <span><i class="fa-solid fa-credit-card text-violet-600 mr-1"></i>Déb: <strong class="text-zinc-800 dark:text-zinc-200">{{ a.porMedioPago.debito.monto | precio }}</strong></span>
             </div>
           </div>
 
@@ -854,43 +840,44 @@
   }
 
   <!-- =========================================================================
-       APARTADO 2: REPORTES DE VENTAS, HISTORIAL Y ARQUEOS DE CAJA
+       APARTADO 2: REPORTES DE VENTAS, HISTORIAL Y ARQUEOS DE CAJA (SOLO INFORMATIVO + EXCEL)
        ========================================================================= -->
   @if (pestania() === 'reportes') {
-    <div class="space-y-3.5">
-      <!-- Comparativa fija: Hoy / Esta semana / Este mes -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div class="space-y-3">
+      <!-- 3 Cards compactas con fechas del calendario presente: Hoy / Esta semana / Este mes -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         @for (c of [
-          { titulo: 'Ventas de hoy', icono: 'fa-sun', color: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600', datos: m.comparativa.hoy, periodo: 'hoy' },
-          { titulo: 'Esta semana', icono: 'fa-calendar-week', color: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600', datos: m.comparativa.semana, periodo: 'semana' },
-          { titulo: 'Este mes', icono: 'fa-calendar', color: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600', datos: m.comparativa.mes, periodo: 'mes' }
+          { titulo: 'Ventas de hoy', fecha: fechaJornadaHoyTexto(), icono: 'fa-sun', color: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600', datos: m.comparativa.hoy, periodo: 'hoy' },
+          { titulo: 'Esta semana', fecha: rangoSemanaCalendarioTexto(), icono: 'fa-calendar-week', color: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600', datos: m.comparativa.semana, periodo: 'semana' },
+          { titulo: 'Este mes', fecha: rangoMesCalendarioTexto(), icono: 'fa-calendar', color: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600', datos: m.comparativa.mes, periodo: 'mes' }
         ]; track c.titulo) {
           <button
             type="button"
             (click)="seleccionarPeriodo($any(c.periodo))"
-            class="text-left bg-white dark:bg-surface-dark rounded-2xl p-3.5 shadow-soft border flex items-center gap-3 transition cursor-pointer hover:border-brand-400"
+            class="text-left bg-white dark:bg-surface-dark rounded-2xl px-3.5 py-2.5 shadow-soft border flex items-center justify-between gap-2.5 transition cursor-pointer hover:border-brand-400"
             [class]="periodoActivo() === c.periodo ? 'border-brand-500 ring-2 ring-brand-500/15' : 'border-zinc-200/70 dark:border-surface-borderDark'"
           >
-            <span class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0" [class]="c.color">
-              <i class="fa-solid" [class]="c.icono"></i>
-            </span>
-            <div class="min-w-0">
-              <p class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{{ c.titulo }}</p>
-              <p class="text-lg font-black text-zinc-900 dark:text-white leading-tight">{{ c.datos.monto | precio }}</p>
-              <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
-                {{ c.datos.pedidos }} pedidos
-                @if (c.datos.cancelados > 0) {
-                  <span class="text-red-500">· {{ c.datos.cancelados }} cancelados</span>
-                }
-              </p>
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="w-8 h-8 rounded-xl flex items-center justify-center text-xs shrink-0" [class]="c.color">
+                <i class="fa-solid" [class]="c.icono"></i>
+              </span>
+              <div class="min-w-0">
+                <p class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 leading-none">{{ c.titulo }}</p>
+                <p class="text-[11px] font-bold text-brand-600 dark:text-brand-400 truncate mt-0.5">{{ c.fecha }}</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-base font-black text-zinc-900 dark:text-white leading-tight">{{ c.datos.monto | precio }}</p>
+              <p class="text-[10px] font-bold text-zinc-400">{{ c.datos.pedidos }} cobrados</p>
             </div>
           </button>
         }
       </div>
 
-      <!-- Selector de período + Arqueo de caja completo -->
-      <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3.5">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+      <!-- Panel principal de Información del Día / Período + Descarga de Excel -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl p-3.5 sm:p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3">
+        <!-- Barra superior: Hoy, Ayer, Esta semana, Este mes, Elegir fechas + Exportar Excel -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pb-2.5 border-b border-zinc-100 dark:border-surface-borderDark">
           <div class="flex items-center gap-1.5 flex-wrap text-xs font-bold">
             @for (per of periodosDisponibles; track per.valor) {
               <button
@@ -902,224 +889,122 @@
                 {{ per.etiqueta }}
               </button>
             }
-          </div>
 
-          @if (periodoActivo() === 'personalizado') {
-            <div class="flex items-center gap-2 text-xs">
-              <input type="date" [ngModel]="fechaDesde()" (ngModelChange)="fechaDesde.set($event)" [class]="claseCampo + ' !w-auto !py-1.5'" />
-              <span class="text-zinc-400">a</span>
-              <input type="date" [ngModel]="fechaHasta()" (ngModelChange)="fechaHasta.set($event)" [class]="claseCampo + ' !w-auto !py-1.5'" />
-              <button
-                type="button"
-                (click)="aplicarRangoFechas()"
-                class="h-8 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold cursor-pointer"
-              >
-                Ver
-              </button>
-            </div>
-          }
+            @if (periodoActivo() === 'personalizado') {
+              <div class="flex items-center gap-1.5 text-xs ml-1">
+                <input type="date" [ngModel]="fechaDesde()" (ngModelChange)="fechaDesde.set($event)" [class]="claseCampo + ' !w-auto !py-1'" />
+                <span class="text-zinc-400">a</span>
+                <input type="date" [ngModel]="fechaHasta()" (ngModelChange)="fechaHasta.set($event)" [class]="claseCampo + ' !w-auto !py-1'" />
+                <button
+                  type="button"
+                  (click)="aplicarRangoFechas()"
+                  class="h-7 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold cursor-pointer"
+                >
+                  Ver fecha
+                </button>
+              </div>
+            }
+          </div>
 
           <div class="flex items-center gap-2 text-xs shrink-0 flex-wrap">
             @if (a.caja?.rangoHorarioTexto) {
-              <span class="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 text-[11px] font-bold" title="El día comercial corta a las 06:00 AM para incluir todo el turno nocturno en la misma fecha">
-                <i class="fa-regular fa-clock mr-1 text-brand-600"></i>Corte 06:00 AM · {{ a.caja?.rangoHorarioTexto }}
+              <span class="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 text-[11px] font-bold">
+                <i class="fa-regular fa-calendar mr-1 text-brand-600"></i>{{ a.caja?.rangoHorarioTexto }}
               </span>
             }
-            <button type="button" (click)="exportarCierreCsv()" class="h-8 px-3 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-extrabold flex items-center gap-1.5 transition cursor-pointer">
-              <i class="fa-solid fa-file-csv"></i><span>Exportar Excel</span>
-            </button>
-            <button type="button" (click)="imprimirCierreCaja()" class="h-8 px-3 rounded-xl border border-zinc-300 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark hover:border-zinc-900 dark:hover:border-white text-zinc-800 dark:text-zinc-100 font-extrabold flex items-center gap-1.5 transition cursor-pointer">
-              <i class="fa-solid fa-print"></i><span>Imprimir cierre</span>
+            <button
+              type="button"
+              (click)="exportarCierreCsv()"
+              class="h-8 px-3.5 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <i class="fa-solid fa-file-csv"></i>
+              <span>Exportar Excel</span>
             </button>
           </div>
         </div>
 
-        <!-- 5 Tarjetas de Arqueo del Período -->
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
-          <div class="rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 p-3">
-            <p class="text-[10px] font-bold uppercase tracking-wider opacity-70">Vendido · {{ etiquetaPeriodoActivo() }}</p>
-            <p class="text-lg font-black leading-tight mt-0.5">{{ a.totalVendido | precio }}</p>
-            <p class="text-[10px] opacity-75 mt-0.5">{{ a.pedidosValidos }} pedidos válidos</p>
-          </div>
-          <div class="rounded-xl bg-emerald-50/80 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-3">
-            <p class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-              <i class="fa-solid fa-circle-check mr-1"></i>Pagados ({{ a.cobrado?.cantidad ?? cp.pagados }})
-            </p>
-            <p class="text-lg font-black text-emerald-800 dark:text-emerald-200 leading-tight mt-0.5">
-              {{ (a.cobrado?.monto ?? cp.montoPagados) | precio }}
-            </p>
-          </div>
-          <div class="rounded-xl bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 p-3">
-            <p class="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-              <i class="fa-solid fa-clock mr-1"></i>Sin pagar ({{ a.pendienteCobro?.cantidad ?? cp.sinPagar }})
-            </p>
-            <p class="text-lg font-black text-amber-800 dark:text-amber-200 leading-tight mt-0.5">
-              {{ (a.pendienteCobro?.monto ?? cp.montoSinPagar) | precio }}
-            </p>
-          </div>
-          <div class="rounded-xl bg-zinc-50 dark:bg-surface-cardDark p-3">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Ticket promedio</p>
-            <p class="text-lg font-black text-zinc-900 dark:text-white leading-tight mt-0.5">{{ a.ticketPromedio | precio }}</p>
-          </div>
-          <div class="rounded-xl bg-zinc-50 dark:bg-surface-cardDark p-3">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">En curso / Cancelados</p>
-            <p class="text-lg font-black leading-tight mt-0.5">
-              <span class="text-amber-600">{{ a.pedidosEnCurso }}</span>
-              <span class="text-zinc-300 mx-1">/</span>
-              <span class="text-red-500">{{ a.pedidosCancelados }}</span>
-            </p>
-          </div>
-        </div>
+        <!-- Cinta compacta unificada de Arqueo y Caja del Período (reemplaza las tarjetas grandes) -->
+        <div class="rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50/70 dark:bg-surface-cardDark/50 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-4 flex-wrap">
+            <div>
+              <span class="text-[10px] font-bold uppercase text-zinc-400 block leading-none">Total cobrado ({{ a.cobrado?.cantidad ?? 0 }} ped.)</span>
+              <span class="text-sm font-black text-zinc-900 dark:text-white">{{ a.totalVendido | precio }}</span>
+            </div>
 
-        <!-- ===================================================================
-             RESUMEN INFORMATIVO DE CAJA FÍSICA (SOLO LECTURA EN REPORTES)
-             =================================================================== -->
-        <div class="rounded-2xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50/60 dark:bg-surface-cardDark/40 p-3.5 space-y-3">
-          <div class="flex items-center justify-between gap-2 flex-wrap">
-            <p class="text-xs font-extrabold uppercase tracking-wider text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-vault text-emerald-600"></i>
-              <span>Resumen de Caja Física del Período (Solo lectura)</span>
-            </p>
-            <span class="text-[11px] text-zinc-400">
-              Para cargar caja inicial o restar retiros usá <strong class="text-zinc-600 dark:text-zinc-300">Gestión de Ventas (Hoy)</strong>
-            </span>
-          </div>
-
-          <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
-            <div class="rounded-xl bg-white dark:bg-surface-dark border border-zinc-200/80 dark:border-surface-borderDark p-2.5">
-              <p class="text-[10px] font-bold uppercase text-zinc-500">(+) Fondo inicial de caja</p>
-              <p class="text-base font-black text-zinc-900 dark:text-white mt-0.5">{{ (a.caja?.montoInicial ?? 0) | precio }}</p>
-            </div>
-            <div class="rounded-xl bg-white dark:bg-surface-dark border border-zinc-200/80 dark:border-surface-borderDark p-2.5">
-              <p class="text-[10px] font-bold uppercase text-zinc-500">(+) Ventas en efectivo</p>
-              <p class="text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{{ a.porMedioPago.efectivo.monto | precio }}</p>
-            </div>
-            <div class="rounded-xl bg-white dark:bg-surface-dark border border-zinc-200/80 dark:border-surface-borderDark p-2.5">
-              <p class="text-[10px] font-bold uppercase text-zinc-500">(-) Retiros / compras efectivo</p>
-              <p class="text-base font-black text-red-600 dark:text-red-400 mt-0.5">-{{ (a.caja?.egresosEfectivo ?? 0) | precio }}</p>
-            </div>
-            <div class="rounded-xl bg-emerald-600 text-white p-2.5 shadow-sm">
-              <p class="text-[10px] font-extrabold uppercase tracking-wider opacity-90">(=) Efectivo en cajón</p>
-              <p class="text-lg font-black leading-tight mt-0.5">
+            <div class="pl-3 border-l border-zinc-200 dark:border-surface-borderDark">
+              <span class="text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400 block leading-none">Efectivo en cajón</span>
+              <span class="text-sm font-black text-emerald-700 dark:text-emerald-300">
                 {{ (a.caja?.efectivoEnCaja ?? a.porMedioPago.efectivo.monto) | precio }}
-              </p>
+              </span>
+              <span class="text-[10px] text-zinc-400 ml-1">
+                (Inicial {{ (a.caja?.montoInicial ?? 0) | precio }} + Efec. {{ a.porMedioPago.efectivo.monto | precio }} - Retiros {{ (a.caja?.egresosEfectivo ?? 0) | precio }})
+              </span>
             </div>
-            <div class="rounded-xl bg-sky-600 text-white p-2.5 shadow-sm">
-              <p class="text-[10px] font-extrabold uppercase tracking-wider opacity-90">(=) En Transf. / Débito</p>
-              <p class="text-lg font-black leading-tight mt-0.5">
+
+            <div class="pl-3 border-l border-zinc-200 dark:border-surface-borderDark">
+              <span class="text-[10px] font-extrabold uppercase text-sky-600 dark:text-sky-400 block leading-none">En Transf. / Débito</span>
+              <span class="text-sm font-black text-sky-700 dark:text-sky-300">
                 {{ (a.caja?.digitalEnCuenta ?? (a.porMedioPago.transferencia.monto + a.porMedioPago.debito.monto)) | precio }}
-              </p>
+              </span>
+              <span class="text-[10px] text-zinc-400 ml-1">
+                (Transf. {{ a.porMedioPago.transferencia.monto | precio }} · Déb. {{ a.porMedioPago.debito.monto | precio }})
+              </span>
             </div>
+
+            @if ((a.pendienteCobro?.cantidad ?? 0) > 0) {
+              <div class="pl-3 border-l border-zinc-200 dark:border-surface-borderDark">
+                <span class="text-[10px] font-extrabold uppercase text-amber-600 block leading-none">Sin pagar ({{ a.pendienteCobro?.cantidad }})</span>
+                <span class="text-sm font-black text-amber-700 dark:text-amber-300">{{ (a.pendienteCobro?.monto ?? 0) | precio }}</span>
+              </div>
+            }
           </div>
 
-          @if ((a.caja?.movimientos?.length ?? 0) > 0) {
-            <div class="space-y-1.5 pt-1">
-              <p class="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500">
-                Detalle de retiros y compras urgentes del período ({{ a.caja?.movimientos?.length }})
-              </p>
-              <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark">
-                <table class="w-full text-xs">
-                  <thead class="bg-zinc-50 dark:bg-surface-cardDark text-[10px] uppercase tracking-wider text-zinc-500">
-                    <tr>
-                      <th class="text-left px-3 py-1.5">Fecha y Hora</th>
-                      <th class="text-left px-3 py-1.5">Motivo / Concepto</th>
-                      <th class="text-center px-3 py-1.5">Medio</th>
-                      <th class="text-right px-3 py-1.5">Monto</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
-                    @for (mov of a.caja?.movimientos ?? []; track mov.id) {
-                      <tr class="text-zinc-700 dark:text-zinc-200">
-                        <td class="px-3 py-1.5 whitespace-nowrap text-zinc-500">{{ formatearFecha(mov.creadoEn) }}</td>
-                        <td class="px-3 py-1.5 font-bold">{{ mov.concepto }}</td>
-                        <td class="px-3 py-1.5 text-center uppercase text-[10px] font-extrabold text-zinc-500">{{ mov.medioPago }}</td>
-                        <td class="px-3 py-1.5 text-right font-black text-red-600 dark:text-red-400 whitespace-nowrap">-{{ mov.monto | precio }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          }
-        </div>
-
-        <!-- Arqueo: medios de pago y modalidad -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-          <div class="rounded-xl border border-zinc-200 dark:border-surface-borderDark p-3">
-            <p class="text-[11px] font-extrabold uppercase tracking-wider text-brand-600 mb-2">
-              <i class="fa-solid fa-cash-register mr-1"></i>Arqueo por medio de pago
-            </p>
-            <div class="space-y-1.5 text-xs">
-              @for (mp of [
-                { etiqueta: 'Efectivo', icono: 'fa-money-bill-wave text-emerald-600', d: a.porMedioPago.efectivo },
-                { etiqueta: 'Transferencia', icono: 'fa-building-columns text-sky-600', d: a.porMedioPago.transferencia },
-                { etiqueta: 'Débito', icono: 'fa-credit-card text-violet-600', d: a.porMedioPago.debito }
-              ]; track mp.etiqueta) {
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-zinc-700 dark:text-zinc-200">
-                    <i class="fa-solid w-4 mr-1" [class]="mp.icono"></i>{{ mp.etiqueta }}
-                    <span class="text-zinc-400 font-medium">({{ mp.d.cantidad }})</span>
-                  </span>
-                  <span class="font-black text-zinc-900 dark:text-white">{{ mp.d.monto | precio }}</span>
-                </div>
-              }
-            </div>
-          </div>
-
-          <div class="rounded-xl border border-zinc-200 dark:border-surface-borderDark p-3">
-            <p class="text-[11px] font-extrabold uppercase tracking-wider text-brand-600 mb-2">
-              <i class="fa-solid fa-truck-fast mr-1"></i>Por modalidad de entrega
-            </p>
-            <div class="space-y-1.5 text-xs">
-              <div class="flex items-center justify-between">
-                <span class="font-bold text-zinc-700 dark:text-zinc-200">
-                  <i class="fa-solid fa-motorcycle w-4 mr-1 text-brand-600"></i>Envío a domicilio
-                  <span class="text-zinc-400 font-medium">({{ a.porModoEntrega.envio.cantidad }})</span>
-                </span>
-                <span class="font-black text-zinc-900 dark:text-white">{{ a.porModoEntrega.envio.monto | precio }}</span>
-              </div>
-              <div class="flex items-center justify-between pl-5 text-[11px] text-zinc-500">
-                <span>Incluye costo de envíos cobrado</span>
-                <span class="font-bold">{{ a.porModoEntrega.envio.costoEnviosCobrado | precio }}</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="font-bold text-zinc-700 dark:text-zinc-200">
-                  <i class="fa-solid fa-store w-4 mr-1 text-zinc-500"></i>Retiro en local
-                  <span class="text-zinc-400 font-medium">({{ a.porModoEntrega.retiro.cantidad }})</span>
-                </span>
-                <span class="font-black text-zinc-900 dark:text-white">{{ a.porModoEntrega.retiro.monto | precio }}</span>
-              </div>
-            </div>
+          <div class="flex items-center gap-3 text-[11px] font-bold text-zinc-500">
+            <span><i class="fa-solid fa-motorcycle text-brand-600 mr-1"></i>Envíos ({{ a.porModoEntrega.envio.cantidad }}): <strong class="text-zinc-800 dark:text-zinc-200">{{ a.porModoEntrega.envio.monto | precio }}</strong></span>
+            <span><i class="fa-solid fa-store text-zinc-400 mr-1"></i>Retiros ({{ a.porModoEntrega.retiro.cantidad }}): <strong class="text-zinc-800 dark:text-zinc-200">{{ a.porModoEntrega.retiro.monto | precio }}</strong></span>
           </div>
         </div>
 
-        <!-- Desglose día por día -->
+        <!-- PROTAGONISTA 1: Desglose Día por Día (clic en cualquier día para ver el detalle de esa fecha) -->
         @if (a.ventasPorDia.length > 0) {
-          <div class="space-y-2">
-            <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
-              Desglose Día por Día ({{ a.ventasPorDia.length }} {{ a.ventasPorDia.length === 1 ? 'día' : 'días' }})
-            </h4>
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+                <i class="fa-regular fa-calendar-days text-brand-600 mr-1"></i>Resumen Día por Día ({{ a.ventasPorDia.length }} {{ a.ventasPorDia.length === 1 ? 'jornada' : 'jornadas con ventas' }})
+              </h4>
+              <span class="text-[11px] text-zinc-400">Tocá cualquier día para ver todos los pedidos y movimientos de esa fecha</span>
+            </div>
             <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark">
               <table class="w-full text-xs">
                 <thead class="bg-zinc-50 dark:bg-surface-cardDark text-[10px] uppercase tracking-wider text-zinc-500">
                   <tr>
-                    <th class="text-left px-3 py-2">Día</th>
-                    <th class="text-right px-3 py-2">Pedidos</th>
+                    <th class="text-left px-3 py-2">Fecha Jornada</th>
+                    <th class="text-right px-3 py-2">Pedidos Cobrados</th>
                     <th class="text-right px-3 py-2">Efectivo</th>
-                    <th class="text-right px-3 py-2">Transf.</th>
+                    <th class="text-right px-3 py-2">Transferencia</th>
                     <th class="text-right px-3 py-2">Débito</th>
-                    <th class="text-right px-3 py-2">Total</th>
+                    <th class="text-right px-3 py-2">Total Día</th>
+                    <th class="text-right px-3 py-2">Detalle</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
                   @for (d of a.ventasPorDia; track d.fecha) {
-                    <tr class="text-zinc-700 dark:text-zinc-200">
-                      <td class="px-3 py-1.5 font-bold capitalize">{{ formatearFechaDia(d.fecha) }}</td>
-                      <td class="px-3 py-1.5 text-right">{{ d.pedidos }}</td>
-                      <td class="px-3 py-1.5 text-right">{{ d.efectivo | precio }}</td>
-                      <td class="px-3 py-1.5 text-right">{{ d.transferencia | precio }}</td>
-                      <td class="px-3 py-1.5 text-right">{{ d.debito | precio }}</td>
-                      <td class="px-3 py-1.5 text-right font-black text-zinc-900 dark:text-white">{{ d.total | precio }}</td>
+                    <tr class="text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50/80 dark:hover:bg-surface-cardDark/40 transition">
+                      <td class="px-3 py-2 font-extrabold capitalize">{{ formatearFechaDia(d.fecha) }} ({{ d.fecha }})</td>
+                      <td class="px-3 py-2 text-right font-bold">{{ d.pedidos }}</td>
+                      <td class="px-3 py-2 text-right text-emerald-700 dark:text-emerald-300 font-bold">{{ d.efectivo | precio }}</td>
+                      <td class="px-3 py-2 text-right text-sky-700 dark:text-sky-300 font-bold">{{ d.transferencia | precio }}</td>
+                      <td class="px-3 py-2 text-right font-bold">{{ d.debito | precio }}</td>
+                      <td class="px-3 py-2 text-right font-black text-zinc-900 dark:text-white">{{ d.total | precio }}</td>
+                      <td class="px-3 py-2 text-right">
+                        <button
+                          type="button"
+                          (click)="verDiaEspecifico(d.fecha)"
+                          class="px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-500/30 bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-300 hover:bg-brand-600 hover:text-white text-[11px] font-extrabold cursor-pointer transition"
+                        >
+                          Ver este día
+                        </button>
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -1128,19 +1013,51 @@
           </div>
         }
 
-        <!-- Listado informativo (solo lectura) de pedidos del período consultado -->
-        <div class="space-y-2 pt-2 border-t border-zinc-100 dark:border-surface-borderDark">
-          <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
-            Pedidos del período seleccionado ({{ pedidos().length }})
+        <!-- PROTAGONISTA 2: Retiros / Compras Urgentes registradas en el día o período (si hubo) -->
+        @if ((a.caja?.movimientos?.length ?? 0) > 0) {
+          <div class="space-y-1.5">
+            <h4 class="text-xs font-extrabold uppercase tracking-wider text-red-600 dark:text-red-400">
+              <i class="fa-solid fa-receipt mr-1"></i>Retiros y Compras Urgentes de Caja en este período ({{ a.caja?.movimientos?.length }}) · Total: -{{ (a.caja?.totalEgresos ?? 0) | precio }}
+            </h4>
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark">
+              <table class="w-full text-xs">
+                <thead class="bg-zinc-50 dark:bg-surface-cardDark text-[10px] uppercase tracking-wider text-zinc-500">
+                  <tr>
+                    <th class="text-left px-3 py-1.5">Fecha y Hora</th>
+                    <th class="text-left px-3 py-1.5">Motivo / Concepto</th>
+                    <th class="text-center px-3 py-1.5">Medio</th>
+                    <th class="text-right px-3 py-1.5">Monto</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+                  @for (mov of a.caja?.movimientos ?? []; track mov.id) {
+                    <tr class="text-zinc-700 dark:text-zinc-200">
+                      <td class="px-3 py-1.5 whitespace-nowrap text-zinc-500">{{ formatearFecha(mov.creadoEn) }}</td>
+                      <td class="px-3 py-1.5 font-bold">{{ mov.concepto }}</td>
+                      <td class="px-3 py-1.5 text-center uppercase text-[10px] font-extrabold text-zinc-500">{{ mov.medioPago }}</td>
+                      <td class="px-3 py-1.5 text-right font-black text-red-600 dark:text-red-400 whitespace-nowrap">-{{ mov.monto | precio }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        <!-- PROTAGONISTA 3: Tabla completa de Pedidos del Día / Período seleccionado -->
+        <div class="space-y-1.5">
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            <i class="fa-solid fa-list-check text-brand-600 mr-1"></i>Pedidos del día / período seleccionado ({{ pedidos().length }})
           </h4>
           <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark">
             <table class="w-full text-xs">
               <thead class="bg-zinc-50 dark:bg-surface-cardDark text-[10px] uppercase tracking-wider text-zinc-500">
                 <tr>
                   <th class="text-left px-3 py-2">Orden</th>
-                  <th class="text-left px-3 py-2">Fecha</th>
+                  <th class="text-left px-3 py-2">Fecha y Hora</th>
                   <th class="text-left px-3 py-2">Cliente</th>
-                  <th class="text-left px-3 py-2">Resumen</th>
+                  <th class="text-left px-3 py-2">Detalle de Productos</th>
+                  <th class="text-center px-3 py-2">Modalidad</th>
                   <th class="text-center px-3 py-2">Medio</th>
                   <th class="text-center px-3 py-2">Cobro</th>
                   <th class="text-center px-3 py-2">Estado</th>
@@ -1153,11 +1070,14 @@
                     <td class="px-3 py-1.5 font-mono font-black whitespace-nowrap">#{{ formatearNumero(p.numero) }}</td>
                     <td class="px-3 py-1.5 text-zinc-500 whitespace-nowrap">{{ formatearFecha(p.creadoEn) }}</td>
                     <td class="px-3 py-1.5 font-bold whitespace-nowrap max-w-[160px] truncate">{{ p.cliente.nombre }}</td>
-                    <td class="px-3 py-1.5 text-zinc-600 dark:text-zinc-300 max-w-[260px]">
+                    <td class="px-3 py-1.5 text-zinc-600 dark:text-zinc-300 max-w-[300px]">
                       <div class="flex items-center gap-1.5 min-w-0">
                         <span class="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-surface-cardDark text-[10px] font-black shrink-0">{{ p.totales.cantidadTotal }} u.</span>
-                        <span class="font-bold truncate">{{ resumenItemsCorto(p) }}</span>
+                        <span class="font-bold truncate" [title]="resumenItemsCorto(p)">{{ resumenItemsCorto(p) }}</span>
                       </div>
+                    </td>
+                    <td class="px-3 py-1.5 text-center text-[10px] font-bold text-zinc-500 whitespace-nowrap">
+                      {{ p.modoEntrega === 'envio' ? 'Envío' : 'Retiro' }}
                     </td>
                     <td class="px-3 py-1.5 text-center uppercase text-[10px] font-bold text-zinc-500 whitespace-nowrap">{{ p.medioPago }}</td>
                     <td class="px-3 py-1.5 text-center whitespace-nowrap">
@@ -1177,7 +1097,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="8" class="py-8 text-center text-zinc-400">Sin pedidos en este período.</td>
+                    <td colspan="9" class="py-8 text-center text-zinc-400">Sin pedidos registrados en esta fecha / período.</td>
                   </tr>
                 }
               </tbody>

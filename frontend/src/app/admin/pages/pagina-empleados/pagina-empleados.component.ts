@@ -129,6 +129,7 @@ export class PaginaEmpleadosComponente implements OnInit {
   });
 
   /* ------------------------ Modal / Formulario de Empleado ------------------------ */
+  readonly mostrarEquipo = signal(false);
   readonly modalEmpleadoAbierto = signal(false);
   readonly editandoEmpleadoId = signal<number | null>(null);
   readonly empNombre = signal('');
@@ -433,7 +434,8 @@ export class PaginaEmpleadosComponente implements OnInit {
   }
 
   private hoyIso(): string {
-    const d = new Date();
+    // Respeta el corte comercial de las 06:00 AM para turnos nocturnos
+    const d = new Date(Date.now() - 6 * 60 * 60 * 1000);
     const mes = String(d.getMonth() + 1).padStart(2, '0');
     const dia = String(d.getDate()).padStart(2, '0');
     return `${d.getFullYear()}-${mes}-${dia}`;
