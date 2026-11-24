@@ -17,6 +17,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -55,6 +56,115 @@ class PedidoAdminController extends Controller
         $pedidos = $query->latest('id')->paginate(50);
 
         return PedidoResource::collection($pedidos);
+    }
+
+    /**
+     * POST /api/admin/pedidos — Toma rápida de pedido desde el mostrador / teléfono / WhatsApp por el encargado.
+     * No bloquea por horario público del local ni exige teléfono/dirección obligatoria en mostrador.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $datos = $request->validate([
+            'modoEntrega' => ['required', 'string', Rule::in(['retiro', 'envio'])],
+            'nombreCliente' => ['nullable', 'string', 'max:120'],
+            'telefonoCliente' => ['nullable', 'string', 'max:40'],
+            'calle' => ['nullable', 'string', 'max:180'],
+            'referencia' => ['nullable', 'string', 'max:180'],
+            'medioPago' => ['required', 'string', Rule::in(['efectivo', 'transferencia', 'debito'])],
+            'pagado' => ['sometimes', 'boolean'],
+            'prioritario' => ['sometimes', 'boolean'],
+            'estado' => ['sometimes', 'string', Rule::in(['pendiente', 'confirmado', 'en_preparacion', 'listo', 'entregado'])],
+            'incluirCostoEnvio' => ['sometimes', 'boolean'],
+            'comentarios' => ['nullable', 'string', 'max:500'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.productoId' => ['nullable', 'integer'],
+            'items.*.nombre' => ['required', 'string', 'max:150'],
+            'items.*.precioUnitario' => ['required', 'numeric', 'min:0'],
+            'items.*.cantidad' => ['required', 'integer', 'min:1'],
+            'items.*.notas' => ['nullable', 'string', 'max:255'],
+            'items.*.opciones' => ['nullable', 'array'],
+            'items.*.opciones.*.grupoNombre' => ['required_with:items.*.opciones', 'string', 'max:100'],
+            'items.*.opciones.*.etiqueta' => ['required_with:items.*.opciones', 'string', 'max:120'],
+            'items.*.opciones.*.precioAdicional' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $local = $request->user()->local;
+
+        $pedido = DB::transaction(function () use ($local, $datos) {
+            $ultimoNumero = (int) $local->pedidos()->lockForUpdate()->max('numero');
+            $esEnvio = $datos['modoEntrega'] === 'envio';
+            $incluirEnvio = $esEnvio && ($datos['incluirCostoEnvio'] ?? true);
+
+            $subtotal = 0.0;
+            $lineasPreparadas = [];
+
+            foreach ($datos['items'] as $it) {
+                $cant = (int) $it['cantidad'];
+                $precioUnit = round((float) $it['precioUnitario'], 2);
+                $totalLinea = round($precioUnit * $cant, 2);
+                $subtotal += $totalLinea;
+
+                $lineasPreparadas[] = [
+                    'item' => [
+                        'producto_id' => ! empty($it['productoId']) ? (int) $it['productoId'] : null,
+                        'nombre' => trim($it['nombre']),
+                        'precio_unitario' => $precioUnit,
+                        'cantidad' => $cant,
+                        'total' => $totalLinea,
+                        'notas' => ! empty($it['notas']) ? trim($it['notas']) : null,
+                    ],
+                    'opciones' => collect($it['opciones'] ?? [])->map(fn ($op) => [
+                        'grupo_nombre' => trim($op['grupoNombre']),
+                        'etiqueta' => trim($op['etiqueta']),
+                        'precio_adicional' => round((float) ($op['precioAdicional'] ?? 0), 2),
+                    ])->all(),
+                ];
+            }
+
+            $costoEnvio = $incluirEnvio ? (float) ($local->costo_envio ?? 0) : 0.0;
+            $cargoServicio = (float) ($local->cargo_servicio ?? 0);
+            $total = max(0, round($subtotal + $costoEnvio + $cargoServicio, 2));
+            $estaPagado = (bool) ($datos['pagado'] ?? false);
+
+            $nombreCliente = ! empty(trim($datos['nombreCliente'] ?? ''))
+                ? trim($datos['nombreCliente'])
+                : ($esEnvio ? 'Cliente Delivery' : 'Mostrador');
+            $telefonoCliente = ! empty(trim($datos['telefonoCliente'] ?? ''))
+                ? trim($datos['telefonoCliente'])
+                : '-';
+
+            $nuevoPedido = $local->pedidos()->create([
+                'numero' => $ultimoNumero + 1,
+                'estado' => $datos['estado'] ?? 'en_preparacion',
+                'prioritario' => (bool) ($datos['prioritario'] ?? false),
+                'modo_entrega' => $datos['modoEntrega'],
+                'nombre_cliente' => $nombreCliente,
+                'telefono_cliente' => $telefonoCliente,
+                'calle' => $esEnvio ? (trim($datos['calle'] ?? '') ?: 'Sin dirección especificada') : null,
+                'piso_depto' => null,
+                'referencia' => $esEnvio && ! empty($datos['referencia']) ? trim($datos['referencia']) : null,
+                'medio_pago' => $datos['medioPago'],
+                'pagado' => $estaPagado,
+                'pagado_en' => $estaPagado ? now() : null,
+                'comentarios' => ! empty($datos['comentarios']) ? trim($datos['comentarios']) : null,
+                'subtotal' => $subtotal,
+                'descuento' => 0,
+                'cargo_servicio' => $cargoServicio,
+                'costo_envio' => $costoEnvio,
+                'total' => $total,
+            ]);
+
+            foreach ($lineasPreparadas as $linea) {
+                $itemCreado = $nuevoPedido->items()->create($linea['item']);
+                if (! empty($linea['opciones'])) {
+                    $itemCreado->opciones()->createMany($linea['opciones']);
+                }
+            }
+
+            return $nuevoPedido->load('items.opciones');
+        });
+
+        return (new PedidoResource($pedido))->response()->setStatusCode(201);
     }
 
     /**

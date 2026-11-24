@@ -35,6 +35,17 @@ export interface ItemPedidoAdmin {
   opciones: { grupoNombre: string; etiqueta: string; precioAdicional: number }[];
 }
 
+export interface ItemBorradorNuevoPedido {
+  uid: string;
+  productoId: number | null;
+  nombre: string;
+  precioUnitario: number;
+  cantidad: number;
+  total: number;
+  notas: string;
+  opciones: { grupoNombre: string; etiqueta: string; precioAdicional: number }[];
+}
+
 export interface PedidoAdmin {
   id: number;
   numero: number;
@@ -224,6 +235,30 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   });
 
   readonly pedidoComandaSelector = signal<PedidoAdmin | null>(null);
+
+  /* ------------------------ Toma Rápida de Nuevo Pedido (Mostrador / Teléfono / WhatsApp) ------------------------ */
+  readonly modalNuevoPedidoAbierto = signal(false);
+  readonly nuevoItems = signal<ItemBorradorNuevoPedido[]>([]);
+  readonly nuevoModoEntrega = signal<'retiro' | 'envio'>('retiro');
+  readonly nuevoNombreCliente = signal('');
+  readonly nuevoTelefonoCliente = signal('');
+  readonly nuevoCalle = signal('');
+  readonly nuevoReferencia = signal('');
+  readonly nuevoMedioPago = signal<'efectivo' | 'transferencia' | 'debito'>('efectivo');
+  readonly nuevoPagado = signal(false);
+  readonly nuevoPrioritario = signal(false);
+  readonly nuevoIncluirEnvio = signal(true);
+  readonly nuevoComentarios = signal('');
+  readonly guardandoNuevoPedido = signal(false);
+
+  readonly nuevoSubtotal = computed(() => this.nuevoItems().reduce((acc, i) => acc + i.total, 0));
+  readonly nuevoCostoEnvio = computed(() =>
+    this.nuevoModoEntrega() === 'envio' && this.nuevoIncluirEnvio()
+      ? Number(this.localAdmin.configuracion().costoEnvio || 0)
+      : 0,
+  );
+  readonly nuevoTotal = computed(() => this.nuevoSubtotal() + this.nuevoCostoEnvio());
+  readonly nuevoCantidadUnidades = computed(() => this.nuevoItems().reduce((acc, i) => acc + i.cantidad, 0));
 
   /* ------------------------ Pedidos en Vivo y Alerta Sonora ------------------------ */
   readonly enVivo = signal(true);
@@ -1079,6 +1114,203 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   cerrarDetallePedido(): void {
     this.pedidoDetalleId.set(null);
     this.mostrandoSelectorProductos.set(false);
+  }
+
+  /* ------------------------ Métodos de Toma Rápida de Nuevo Pedido ------------------------ */
+  abrirModalNuevoPedido(): void {
+    this.nuevoItems.set([]);
+    this.nuevoModoEntrega.set('retiro');
+    this.nuevoNombreCliente.set('');
+    this.nuevoTelefonoCliente.set('');
+    this.nuevoCalle.set('');
+    this.nuevoReferencia.set('');
+    this.nuevoMedioPago.set('efectivo');
+    this.nuevoPagado.set(false);
+    this.nuevoPrioritario.set(false);
+    this.nuevoIncluirEnvio.set(true);
+    this.nuevoComentarios.set('');
+    this.categoriaAgregarId.set('todas');
+    this.busquedaProductoAgregar.set('');
+    const primerProd = this.catalogo.productos().find((p) => p.disponible) ?? this.catalogo.productos()[0] ?? null;
+    if (primerProd) {
+      this.seleccionarProductoParaAgregar(primerProd);
+    } else {
+      this.productoConfigurando.set(null);
+      this.opcionesSeleccionadas.set({});
+    }
+    this.modalNuevoPedidoAbierto.set(true);
+  }
+
+  cerrarModalNuevoPedido(): void {
+    this.modalNuevoPedidoAbierto.set(false);
+  }
+
+  /**
+   * Suma un producto al borrador del nuevo pedido:
+   * - Si se pasa `productoRapido` (botón "+1" en la lista), usa sus opciones por defecto en 1 solo clic.
+   * - Si no se pasa, toma las variantes/adicionales elegidas en el configurador.
+   */
+  sumarProductoABorrador(productoRapido?: Producto): void {
+    const prod = productoRapido ?? this.productoConfigurando();
+    if (!prod) {
+      this.notificaciones.mostrar('Seleccioná un producto de la lista');
+      return;
+    }
+
+    const cantidad = productoRapido ? 1 : Math.max(1, Number(this.cantidadAgregar()) || 1);
+    const notas = productoRapido ? '' : this.notasAgregar().trim();
+    const opcionesPayload: { grupoNombre: string; etiqueta: string; precioAdicional: number }[] = [];
+    let base = prod.precio;
+    let adicionales = 0;
+
+    if (productoRapido) {
+      for (const grupo of prod.gruposOpciones ?? []) {
+        if (!grupo.obligatorio || !grupo.opciones?.length) continue;
+        const opDef = grupo.opciones.find((o) => o.porDefecto) ?? grupo.opciones[0];
+        const modo = grupo.modoPrecio ?? 'adicional';
+        if (modo === 'variante') {
+          base = opDef.precioAdicional > 0 ? opDef.precioAdicional : prod.precio;
+        } else if (modo === 'adicional') {
+          adicionales += opDef.precioAdicional || 0;
+        }
+        opcionesPayload.push({
+          grupoNombre: grupo.nombre,
+          etiqueta: opDef.etiqueta,
+          precioAdicional: modo === 'informativo' ? 0 : opDef.precioAdicional || 0,
+        });
+      }
+    } else {
+      const sel = this.opcionesSeleccionadas();
+      for (const grupo of prod.gruposOpciones ?? []) {
+        const ids = sel[grupo.id] ?? [];
+        if (grupo.obligatorio && ids.length === 0) {
+          this.notificaciones.mostrar(`Elegí una opción en "${grupo.nombre}"`);
+          return;
+        }
+        const modo = grupo.modoPrecio ?? 'adicional';
+        for (const op of grupo.opciones ?? []) {
+          if (ids.includes(op.id)) {
+            if (modo === 'variante') {
+              base = op.precioAdicional > 0 ? op.precioAdicional : prod.precio;
+            } else if (modo === 'adicional') {
+              adicionales += op.precioAdicional || 0;
+            }
+            opcionesPayload.push({
+              grupoNombre: grupo.nombre,
+              etiqueta: op.etiqueta,
+              precioAdicional: modo === 'informativo' ? 0 : op.precioAdicional || 0,
+            });
+          }
+        }
+      }
+    }
+
+    const precioUnitario = base + adicionales;
+    const claveFirma = `${prod.id}__${opcionesPayload.map((o) => `${o.grupoNombre}:${o.etiqueta}`).join('|')}__${notas}`;
+
+    this.nuevoItems.update((actuales) => {
+      const idx = actuales.findIndex((x) => x.uid === claveFirma);
+      if (idx >= 0) {
+        const copia = [...actuales];
+        const nuevaCant = copia[idx].cantidad + cantidad;
+        copia[idx] = {
+          ...copia[idx],
+          cantidad: nuevaCant,
+          total: Math.round(precioUnitario * nuevaCant),
+        };
+        return copia;
+      }
+      return [
+        ...actuales,
+        {
+          uid: claveFirma,
+          productoId: prod.id,
+          nombre: prod.nombre,
+          precioUnitario,
+          cantidad,
+          total: Math.round(precioUnitario * cantidad),
+          notas,
+          opciones: opcionesPayload,
+        },
+      ];
+    });
+
+    if (!productoRapido) {
+      this.cantidadAgregar.set(1);
+      this.notasAgregar.set('');
+    }
+  }
+
+  cambiarCantidadBorrador(uid: string, delta: number): void {
+    this.nuevoItems.update((actuales) => {
+      return actuales
+        .map((item) => {
+          if (item.uid !== uid) return item;
+          const nuevaCant = item.cantidad + delta;
+          return {
+            ...item,
+            cantidad: nuevaCant,
+            total: Math.round(item.precioUnitario * nuevaCant),
+          };
+        })
+        .filter((item) => item.cantidad > 0);
+    });
+  }
+
+  quitarItemBorrador(uid: string): void {
+    this.nuevoItems.update((actuales) => actuales.filter((item) => item.uid !== uid));
+  }
+
+  confirmarNuevoPedido(imprimirCocina = false): void {
+    if (this.guardandoNuevoPedido()) return;
+    const items = this.nuevoItems();
+    if (items.length === 0) {
+      this.notificaciones.mostrar('Agregá al menos un producto al pedido');
+      return;
+    }
+
+    this.guardandoNuevoPedido.set(true);
+    this.http
+      .post<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos`, {
+        modoEntrega: this.nuevoModoEntrega(),
+        nombreCliente: this.nuevoNombreCliente().trim() || null,
+        telefonoCliente: this.nuevoTelefonoCliente().trim() || null,
+        calle: this.nuevoModoEntrega() === 'envio' ? this.nuevoCalle().trim() || null : null,
+        referencia: this.nuevoModoEntrega() === 'envio' ? this.nuevoReferencia().trim() || null : null,
+        medioPago: this.nuevoMedioPago(),
+        pagado: this.nuevoPagado(),
+        prioritario: this.nuevoPrioritario(),
+        estado: 'en_preparacion',
+        incluirCostoEnvio: this.nuevoModoEntrega() === 'envio' && this.nuevoIncluirEnvio(),
+        comentarios: this.nuevoComentarios().trim() || null,
+        items: items.map((i) => ({
+          productoId: i.productoId,
+          nombre: i.nombre,
+          precioUnitario: i.precioUnitario,
+          cantidad: i.cantidad,
+          notas: i.notas || null,
+          opciones: i.opciones,
+        })),
+      })
+      .subscribe({
+        next: ({ data }) => {
+          this.guardandoNuevoPedido.set(false);
+          this.modalNuevoPedidoAbierto.set(false);
+          this.pedidos.update((lista) => [data, ...lista]);
+          this.maxPedidoIdConocido = Math.max(this.maxPedidoIdConocido ?? 0, data.id);
+          this.notificaciones.mostrar(
+            `✅ Pedido #${this.formatearNumero(data.numero)} creado (${data.pagado ? 'PAGADO' : 'SIN PAGAR'})`,
+          );
+          this.cargarPedidos(true);
+          if (imprimirCocina) {
+            this.imprimirComandaCocina(data);
+          }
+        },
+        error: (err: unknown) => {
+          this.guardandoNuevoPedido.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo crear el pedido'));
+        },
+      });
   }
 
   abrirSelectorComanda(p: PedidoAdmin): void {

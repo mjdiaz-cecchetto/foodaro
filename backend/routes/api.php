@@ -79,6 +79,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'solo.admin'])->group(functi
         Route::post('pedidos/caja/movimientos', [PedidoAdminController::class, 'registrarMovimientoCaja']);
         Route::delete('pedidos/caja/movimientos/{movimiento}', [PedidoAdminController::class, 'eliminarMovimientoCaja']);
         Route::get('pedidos', [PedidoAdminController::class, 'index']);
+        Route::post('pedidos', [PedidoAdminController::class, 'store']);
         Route::get('pedidos/{pedido}', [PedidoAdminController::class, 'show']);
         Route::patch('pedidos/{pedido}/estado', [PedidoAdminController::class, 'cambiarEstado']);
         Route::patch('pedidos/{pedido}/pago', [PedidoAdminController::class, 'alternarPago']);
