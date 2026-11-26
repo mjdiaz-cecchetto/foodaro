@@ -26,13 +26,29 @@ export type ModoVistaPedidos = 'lista' | 'tablero';
 
 export interface ItemPedidoAdmin {
   id: number;
+  ronda?: number;
   productoId: number | null;
   nombre: string;
   precioUnitario: number;
   cantidad: number;
   total: number;
   notas: string;
+  entregado?: boolean;
+  entregadoEn?: string | null;
+  comandadoEn?: string | null;
+  creadoEn?: string | null;
   opciones: { grupoNombre: string; etiqueta: string; precioAdicional: number }[];
+}
+
+export interface GrupoRondaPedido {
+  numero: number;
+  items: ItemPedidoAdmin[];
+  unidades: number;
+  subtotal: number;
+  todosEntregados: boolean;
+  pendientesCount: number;
+  comandada: boolean;
+  horaTexto: string;
 }
 
 export interface ItemBorradorNuevoPedido {
@@ -197,6 +213,24 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   readonly cantidadAgregar = signal<number>(1);
   readonly notasAgregar = signal<string>('');
   readonly guardandoItemPedido = signal(false);
+
+  /* ------------------------ Borrador de Nueva Ronda (Agregados sobre pedido abierto) ------------------------ */
+  readonly borradorRondaItems = signal<ItemBorradorNuevoPedido[]>([]);
+  readonly borradorRondaYaEntregada = signal(false);
+
+  readonly proximaRondaNumero = computed(() => {
+    const pd = this.pedidoDetalle();
+    if (!pd) return 2;
+    return this.numeroUltimaRonda(pd) + 1;
+  });
+
+  readonly borradorRondaUnidades = computed(() =>
+    this.borradorRondaItems().reduce((acc, it) => acc + it.cantidad, 0),
+  );
+
+  readonly borradorRondaTotal = computed(() =>
+    this.borradorRondaItems().reduce((acc, it) => acc + it.total, 0),
+  );
 
   readonly productosCatalogoFiltrados = computed(() => {
     const q = this.busquedaProductoAgregar().trim().toLowerCase();
@@ -1039,11 +1073,13 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     this.marcarPedidoVisto(p.id);
     this.pedidoDetalleId.set(p.id);
     this.mostrandoSelectorProductos.set(abrirBuscadorProductos);
+    this.borradorRondaItems.set([]);
+    this.borradorRondaYaEntregada.set(false);
     this.categoriaAgregarId.set('todas');
     this.busquedaProductoAgregar.set('');
     this.cantidadAgregar.set(1);
     this.notasAgregar.set('');
-    const primerProd = this.catalogo.productos()[0] ?? null;
+    const primerProd = this.catalogo.productos().find((x) => x.disponible) ?? this.catalogo.productos()[0] ?? null;
     if (abrirBuscadorProductos && primerProd) {
       this.seleccionarProductoParaAgregar(primerProd);
     } else {
@@ -1054,9 +1090,11 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
 
   abrirBuscadorProductosPedido(): void {
     this.mostrandoSelectorProductos.set(true);
+    this.borradorRondaItems.set([]);
+    this.borradorRondaYaEntregada.set(false);
     this.categoriaAgregarId.set('todas');
     this.busquedaProductoAgregar.set('');
-    const actual = this.productoConfigurando() ?? this.catalogo.productos()[0] ?? null;
+    const actual = this.productoConfigurando() ?? this.catalogo.productos().find((x) => x.disponible) ?? this.catalogo.productos()[0] ?? null;
     if (actual) {
       this.seleccionarProductoParaAgregar(actual);
     }
@@ -1064,6 +1102,8 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
 
   cerrarBuscadorProductosPedido(): void {
     this.mostrandoSelectorProductos.set(false);
+    this.borradorRondaItems.set([]);
+    this.borradorRondaYaEntregada.set(false);
   }
 
   seleccionarProductoParaAgregar(prod: Producto): void {
@@ -1114,6 +1154,8 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   cerrarDetallePedido(): void {
     this.pedidoDetalleId.set(null);
     this.mostrandoSelectorProductos.set(false);
+    this.borradorRondaItems.set([]);
+    this.borradorRondaYaEntregada.set(false);
   }
 
   /* ------------------------ Métodos de Toma Rápida de Nuevo Pedido ------------------------ */
@@ -1322,15 +1364,296 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
     this.pedidoComandaSelector.set(null);
   }
 
-  elegirEImprimirComanda(tipo: 'cliente' | 'cocina'): void {
+  elegirEImprimirComanda(tipo: 'cliente' | 'cocina' | 'cocina_pendientes'): void {
     const p = this.pedidoComandaSelector();
     if (!p) return;
     this.pedidoComandaSelector.set(null);
     if (tipo === 'cliente') {
       this.imprimirComanda(p);
+    } else if (tipo === 'cocina_pendientes') {
+      this.imprimirComandaCocina(p, 'pendientes');
     } else {
       this.imprimirComandaCocina(p);
     }
+  }
+
+  /* ------------------------ Gestión de Rondas / Agregados sobre un Pedido Abierto ------------------------ */
+  numeroUltimaRonda(p: PedidoAdmin): number {
+    let max = 1;
+    for (const it of p.items) {
+      const r = it.ronda ?? 1;
+      if (r > max) max = r;
+    }
+    return max;
+  }
+
+  rondasDePedido(p: PedidoAdmin): GrupoRondaPedido[] {
+    const mapa = new Map<number, ItemPedidoAdmin[]>();
+    for (const item of p.items) {
+      const r = item.ronda ?? 1;
+      const lista = mapa.get(r);
+      if (lista) lista.push(item);
+      else mapa.set(r, [item]);
+    }
+
+    return Array.from(mapa.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([numero, items]) => {
+        const unidades = items.reduce((acc, it) => acc + it.cantidad, 0);
+        const subtotal = items.reduce((acc, it) => acc + it.total, 0);
+        const pendientesCount = items.filter((it) => !it.entregado).length;
+        const todosEntregados = items.length > 0 && pendientesCount === 0;
+        const comandada = items.some((it) => Boolean(it.comandadoEn));
+        const fechaRef = numero === 1 ? (items[0]?.creadoEn || p.creadoEn) : (items[0]?.creadoEn || p.creadoEn);
+        const horaTexto = fechaRef ? this.formatearHora(fechaRef) : '';
+        return {
+          numero,
+          items,
+          unidades,
+          subtotal,
+          todosEntregados,
+          pendientesCount,
+          comandada,
+          horaTexto,
+        };
+      });
+  }
+
+  rondasPendientesDePedido(p: PedidoAdmin): GrupoRondaPedido[] {
+    return this.rondasDePedido(p).filter((r) => !r.todosEntregados);
+  }
+
+  tieneRondaAgregadaPendiente(p: PedidoAdmin): boolean {
+    return this.numeroUltimaRonda(p) > 1 && this.rondasPendientesDePedido(p).length > 0;
+  }
+
+  /** Suma un producto al borrador local de la próxima Ronda (#2, #3...) antes de confirmar el lote. */
+  sumarProductoABorradorRonda(productoRapido?: Producto): void {
+    const prod = productoRapido ?? this.productoConfigurando();
+    if (!prod) {
+      this.notificaciones.mostrar('Seleccioná un producto de la lista');
+      return;
+    }
+
+    const cantidad = productoRapido ? 1 : Math.max(1, Number(this.cantidadAgregar()) || 1);
+    const notas = productoRapido ? '' : this.notasAgregar().trim();
+    const opcionesPayload: { grupoNombre: string; etiqueta: string; precioAdicional: number }[] = [];
+    let base = prod.precio;
+    let adicionales = 0;
+
+    if (productoRapido) {
+      for (const grupo of prod.gruposOpciones ?? []) {
+        if (!grupo.obligatorio || !grupo.opciones?.length) continue;
+        const opDef = grupo.opciones.find((o) => o.porDefecto) ?? grupo.opciones[0];
+        const modo = grupo.modoPrecio ?? 'adicional';
+        if (modo === 'variante') {
+          base = opDef.precioAdicional > 0 ? opDef.precioAdicional : prod.precio;
+        } else if (modo === 'adicional') {
+          adicionales += opDef.precioAdicional || 0;
+        }
+        opcionesPayload.push({
+          grupoNombre: grupo.nombre,
+          etiqueta: opDef.etiqueta,
+          precioAdicional: modo === 'informativo' ? 0 : opDef.precioAdicional || 0,
+        });
+      }
+    } else {
+      const sel = this.opcionesSeleccionadas();
+      for (const grupo of prod.gruposOpciones ?? []) {
+        const ids = sel[grupo.id] ?? [];
+        if (grupo.obligatorio && ids.length === 0) {
+          this.notificaciones.mostrar(`Elegí una opción en "${grupo.nombre}"`);
+          return;
+        }
+        const modo = grupo.modoPrecio ?? 'adicional';
+        for (const op of grupo.opciones ?? []) {
+          if (ids.includes(op.id)) {
+            if (modo === 'variante') {
+              base = op.precioAdicional > 0 ? op.precioAdicional : prod.precio;
+            } else if (modo === 'adicional') {
+              adicionales += op.precioAdicional || 0;
+            }
+            opcionesPayload.push({
+              grupoNombre: grupo.nombre,
+              etiqueta: op.etiqueta,
+              precioAdicional: modo === 'informativo' ? 0 : op.precioAdicional || 0,
+            });
+          }
+        }
+      }
+    }
+
+    const precioUnitario = base + adicionales;
+    const claveFirma = `${prod.id}__${opcionesPayload.map((o) => `${o.grupoNombre}:${o.etiqueta}`).join('|')}__${notas}`;
+
+    this.borradorRondaItems.update((actuales) => {
+      const idx = actuales.findIndex((x) => x.uid === claveFirma);
+      if (idx >= 0) {
+        const copia = [...actuales];
+        const nuevaCant = copia[idx].cantidad + cantidad;
+        copia[idx] = {
+          ...copia[idx],
+          cantidad: nuevaCant,
+          total: Math.round(precioUnitario * nuevaCant),
+        };
+        return copia;
+      }
+      return [
+        ...actuales,
+        {
+          uid: claveFirma,
+          productoId: prod.id,
+          nombre: prod.nombre,
+          precioUnitario,
+          cantidad,
+          total: Math.round(precioUnitario * cantidad),
+          notas,
+          opciones: opcionesPayload,
+        },
+      ];
+    });
+
+    if (!productoRapido) {
+      this.cantidadAgregar.set(1);
+      this.notasAgregar.set('');
+    }
+  }
+
+  cambiarCantidadBorradorRonda(uid: string, delta: number): void {
+    this.borradorRondaItems.update((actuales) =>
+      actuales
+        .map((it) => {
+          if (it.uid !== uid) return it;
+          const nuevaCant = it.cantidad + delta;
+          if (nuevaCant <= 0) return null;
+          return { ...it, cantidad: nuevaCant, total: Math.round(it.precioUnitario * nuevaCant) };
+        })
+        .filter((x): x is ItemBorradorNuevoPedido => x !== null),
+    );
+  }
+
+  /** Envía todos los ítems del borrador como una única Ronda nueva (Ronda #2, #3...) y opcionalmente comanda solo esa ronda. */
+  confirmarNuevaRonda(imprimirCocina: boolean): void {
+    const p = this.pedidoDetalle();
+    const items = this.borradorRondaItems();
+    if (!p || items.length === 0 || this.guardandoItemPedido()) return;
+
+    this.guardandoItemPedido.set(true);
+    this.http
+      .post<{ data: PedidoAdmin; meta?: { rondaCreada?: number } }>(
+        `${environment.apiUrl}/admin/pedidos/${p.id}/rondas`,
+        {
+          items: items.map((it) => ({
+            productoId: it.productoId,
+            nombre: it.nombre,
+            precioUnitario: it.precioUnitario,
+            cantidad: it.cantidad,
+            notas: it.notas || null,
+            opciones: it.opciones,
+          })),
+          marcarComandado: imprimirCocina,
+          marcarEntregado: this.borradorRondaYaEntregada(),
+        },
+      )
+      .subscribe({
+        next: (resp) => {
+          const data = resp.data;
+          const rondaCreada = resp.meta?.rondaCreada ?? this.numeroUltimaRonda(data);
+          this.guardandoItemPedido.set(false);
+          this.pedidos.update((lista) => lista.map((item) => (item.id === p.id ? data : item)));
+          this.borradorRondaItems.set([]);
+          this.borradorRondaYaEntregada.set(false);
+          this.mostrandoSelectorProductos.set(false);
+          this.notificaciones.mostrar(
+            `Ronda #${rondaCreada} sumada al pedido #${this.formatearNumero(p.numero)}`,
+          );
+          this.cargarPedidos(true);
+          if (imprimirCocina) {
+            this.imprimirComandaCocina(data, rondaCreada);
+          }
+        },
+        error: (err: unknown) => {
+          this.guardandoItemPedido.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo guardar la nueva ronda'));
+        },
+      });
+  }
+
+  /** Marca o desmarca toda una ronda completa como entregada en 1 clic. */
+  alternarEntregaRonda(p: PedidoAdmin, ronda: number): void {
+    if (this.guardandoItemPedido()) return;
+    this.guardandoItemPedido.set(true);
+    this.http
+      .patch<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${p.id}/rondas/${ronda}/entrega`, {})
+      .subscribe({
+        next: ({ data }) => {
+          this.guardandoItemPedido.set(false);
+          this.pedidos.update((lista) => lista.map((x) => (x.id === p.id ? data : x)));
+          this.cargarPedidos(true);
+        },
+        error: (err: unknown) => {
+          this.guardandoItemPedido.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo actualizar la entrega de la ronda'));
+        },
+      });
+  }
+
+  /** Marca o desmarca un ítem individual como entregado (ej: la gaseosa sale antes que la pizza). */
+  alternarEntregaItem(p: PedidoAdmin, item: ItemPedidoAdmin): void {
+    if (this.guardandoItemPedido()) return;
+    this.guardandoItemPedido.set(true);
+    this.http
+      .patch<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${p.id}/items/${item.id}/entrega`, {})
+      .subscribe({
+        next: ({ data }) => {
+          this.guardandoItemPedido.set(false);
+          this.pedidos.update((lista) => lista.map((x) => (x.id === p.id ? data : x)));
+          this.cargarPedidos(true);
+        },
+        error: (err: unknown) => {
+          this.guardandoItemPedido.set(false);
+          this.notificaciones.mostrar(mensajeDeError(err, 'No se pudo actualizar el estado del producto'));
+        },
+      });
+  }
+
+  private registrarComandaImpresa(p: PedidoAdmin, ronda?: number): void {
+    this.http
+      .patch<RespuestaApi<PedidoAdmin>>(`${environment.apiUrl}/admin/pedidos/${p.id}/comandar`, {
+        ronda: ronda ?? null,
+      })
+      .subscribe({
+        next: ({ data }) => {
+          this.pedidos.update((lista) => lista.map((x) => (x.id === p.id ? data : x)));
+        },
+        error: () => {
+          // Silencioso: la impresión térmica ya se disparó.
+        },
+      });
+  }
+
+  /** Consolida ítems idénticos entre distintas rondas para el Ticket del Cliente (Opción 1). */
+  private consolidarItemsParaTicket(items: ItemPedidoAdmin[]): ItemPedidoAdmin[] {
+    const mapa = new Map<string, ItemPedidoAdmin>();
+    for (const item of items) {
+      const claveOpciones = [...(item.opciones || [])]
+        .map((o) => `${o.grupoNombre}:${o.etiqueta}:${o.precioAdicional}`)
+        .sort()
+        .join('|');
+      const clave = `${item.nombre.trim().toLowerCase()}__${item.precioUnitario}__${claveOpciones}__${(item.notas || '').trim().toLowerCase()}`;
+
+      const existente = mapa.get(clave);
+      if (existente) {
+        existente.cantidad += item.cantidad;
+        existente.total = Math.round((existente.total + item.total) * 100) / 100;
+      } else {
+        mapa.set(clave, {
+          ...item,
+          opciones: [...(item.opciones || [])],
+        });
+      }
+    }
+    return Array.from(mapa.values());
   }
 
   /** Agrega el producto configurado (con sus variantes, adicionales y notas) al pedido actual. */
@@ -1452,9 +1775,9 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   /**
    * Imprime la COMANDA EXCLUSIVA DE COCINA (58/80mm):
    * Sin precios, sin datos bancarios ni importes; destaca cantidades grandes, platos, adicionales,
-   * notas de preparación y si es un pedido PRIORITARIO.
+   * notas de preparación, nombre/mesa y soporte para imprimir SOLO una ronda específica o pendientes.
    */
-  imprimirComandaCocina(p: PedidoAdmin): void {
+  imprimirComandaCocina(p: PedidoAdmin, alcance?: number | 'pendientes'): void {
     this.marcarPedidoVisto(p.id);
     const ventana = window.open('', '_blank', 'width=420,height=680');
     if (!ventana) {
@@ -1462,11 +1785,40 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       return;
     }
 
-    const numero = this.formatearNumero(p.numero);
-    const fecha = this.formatearFecha(p.creadoEn);
-    const modalidad = p.modoEntrega === 'envio' ? 'PARA ENVIO (DELIVERY)' : 'RETIRO EN MOSTRADOR';
+    let itemsAImprimir = p.items;
+    let tituloEncabezado = '=== COMANDA DE COCINA ===';
+    let rondaBanner = '';
 
-    const itemsHtml = p.items
+    if (typeof alcance === 'number') {
+      itemsAImprimir = p.items.filter((it) => (it.ronda ?? 1) === alcance);
+      if (itemsAImprimir.length === 0) itemsAImprimir = p.items;
+      tituloEncabezado = alcance > 1 ? `=== AGREGADO · RONDA #${alcance} ===` : '=== COMANDA DE COCINA ===';
+      if (alcance > 1) {
+        rondaBanner = `<div class="prioridad">➕ AGREGADO · RONDA #${alcance}</div>`;
+      }
+      this.registrarComandaImpresa(p, alcance);
+    } else if (alcance === 'pendientes') {
+      const pendientes = p.items.filter((it) => !it.entregado);
+      itemsAImprimir = pendientes.length > 0 ? pendientes : p.items;
+      const rondasUnicas = Array.from(new Set(itemsAImprimir.map((it) => it.ronda ?? 1))).sort((a, b) => a - b);
+      if (rondasUnicas.length === 1 && rondasUnicas[0] > 1) {
+        tituloEncabezado = `=== AGREGADO · RONDA #${rondasUnicas[0]} ===`;
+        rondaBanner = `<div class="prioridad">➕ AGREGADO · RONDA #${rondasUnicas[0]}</div>`;
+      } else if (pendientes.length > 0 && pendientes.length < p.items.length) {
+        tituloEncabezado = '=== PENDIENTES DE COCINA ===';
+        rondaBanner = `<div class="prioridad">➕ SOLO PENDIENTES (${rondasUnicas.map((r) => `R#${r}`).join(', ')})</div>`;
+      }
+      this.registrarComandaImpresa(p);
+    } else {
+      this.registrarComandaImpresa(p);
+    }
+
+    const numero = this.formatearNumero(p.numero);
+    const fecha = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    const modalidad = p.modoEntrega === 'envio' ? 'PARA ENVIO (DELIVERY)' : 'RETIRO / MESA';
+    const unidadesComanda = itemsAImprimir.reduce((acc, it) => acc + it.cantidad, 0);
+
+    const itemsHtml = itemsAImprimir
       .map((item) => {
         const opciones = (item.opciones || [])
           .map((op) => `<div class="sub">• ${this.escaparHtml(op.grupoNombre)}: <strong>${this.escaparHtml(op.etiqueta)}</strong></div>`)
@@ -1509,10 +1861,11 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       text-transform: uppercase;
     }
     .pedido-num { font-size: 28px; font-weight: 900; margin: 2px 0; }
+    .cliente { font-size: 15px; font-weight: 900; margin: 2px 0; }
     .prioridad {
       background: #000;
       color: #fff;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 900;
       padding: 5px 8px;
       margin: 6px 0;
@@ -1553,9 +1906,11 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
 </head>
 <body>
   <div class="centro">
-    <div class="etiqueta-cocina">=== COMANDA DE COCINA ===</div>
+    <div class="etiqueta-cocina">${tituloEncabezado}</div>
     <div class="pedido-num">ORDEN #${numero}</div>
+    <div class="cliente">${this.escaparHtml(p.cliente.nombre)}</div>
     <div>Hora: <strong>${fecha}</strong></div>
+    ${rondaBanner}
     ${p.prioritario ? `<div class="prioridad">*** PRIORIDAD / URGENTE ***</div>` : ''}
     <div class="badge-modo">${modalidad}</div>
   </div>
@@ -1572,7 +1927,7 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
       : ''
   }
 
-  <div class="pie">Total unidades: ${p.totales.cantidadTotal} · Cocina Foodaro</div>
+  <div class="pie">Unidades en esta comanda: ${unidadesComanda} · Cocina Foodaro</div>
   <script>
     window.onload = function() {
       window.focus();
@@ -1651,7 +2006,9 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
            </div>`
         : '';
 
-    const itemsHtml = p.items
+    // Opción 1: Consolidar ítems iguales entre rondas para que el Ticket del Cliente sea corto y claro.
+    const itemsConsolidados = this.consolidarItemsParaTicket(p.items);
+    const itemsHtml = itemsConsolidados
       .map((item) => {
         const opciones = (item.opciones || [])
           .map((op) => `<div class="sub">+ ${this.escaparHtml(op.grupoNombre)}: ${this.escaparHtml(op.etiqueta)}</div>`)
@@ -2373,6 +2730,24 @@ export class PaginaPedidosComponente implements OnInit, OnDestroy {
   enlaceWhatsAppCliente(telefono: string): string {
     const digitos = (telefono || '').replace(/\D/g, '');
     return `https://wa.me/${digitos}`;
+  }
+
+  tieneTelefonoValido(telefono: string | null | undefined): boolean {
+    return (telefono || '').replace(/\D/g, '').length >= 6;
+  }
+
+  /** Desplaza suavemente la tira horizontal de categorías en los modales POS/Detalle. */
+  desplazarCategorias(contenedor: HTMLElement, direccion: -1 | 1): void {
+    contenedor.scrollBy({ left: direccion * 240, behavior: 'smooth' });
+  }
+
+  /** Convierte la rueda vertical del mouse en desplazamiento horizontal sobre las categorías. */
+  alRuedaCategorias(evento: WheelEvent, contenedor: HTMLElement): void {
+    if (contenedor.scrollWidth <= contenedor.clientWidth) return;
+    if (Math.abs(evento.deltaY) > Math.abs(evento.deltaX)) {
+      evento.preventDefault();
+      contenedor.scrollLeft += evento.deltaY;
+    }
   }
 
   guardar(): void {

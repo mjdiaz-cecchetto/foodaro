@@ -40,12 +40,17 @@ class PedidoResource extends JsonResource
             ],
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => [
                 'id' => $item->id,
+                'ronda' => (int) ($item->ronda ?? 1),
                 'productoId' => $item->producto_id,
                 'nombre' => $item->nombre,
                 'precioUnitario' => (float) $item->precio_unitario,
                 'cantidad' => $item->cantidad,
                 'total' => (float) $item->total,
                 'notas' => $item->notas ?? '',
+                'entregado' => (bool) ($item->entregado ?? false),
+                'entregadoEn' => $item->entregado_en?->toIso8601String(),
+                'comandadoEn' => $item->comandado_en?->toIso8601String(),
+                'creadoEn' => $item->created_at?->toIso8601String(),
                 'opciones' => $item->opciones->map(fn ($o) => [
                     'grupoNombre' => $o->grupo_nombre,
                     'etiqueta' => $o->etiqueta,

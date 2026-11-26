@@ -84,7 +84,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'solo.admin'])->group(functi
         Route::patch('pedidos/{pedido}/estado', [PedidoAdminController::class, 'cambiarEstado']);
         Route::patch('pedidos/{pedido}/pago', [PedidoAdminController::class, 'alternarPago']);
         Route::patch('pedidos/{pedido}/prioridad', [PedidoAdminController::class, 'alternarPrioridad']);
+        Route::post('pedidos/{pedido}/rondas', [PedidoAdminController::class, 'agregarRonda']);
+        Route::patch('pedidos/{pedido}/rondas/{ronda}/entrega', [PedidoAdminController::class, 'alternarEntregaRonda']);
+        Route::patch('pedidos/{pedido}/comandar', [PedidoAdminController::class, 'marcarComandado']);
         Route::post('pedidos/{pedido}/items', [PedidoAdminController::class, 'agregarItem']);
+        Route::patch('pedidos/{pedido}/items/{item}/entrega', [PedidoAdminController::class, 'alternarEntregaItem']);
         Route::patch('pedidos/{pedido}/items/{item}', [PedidoAdminController::class, 'actualizarItem']);
         Route::delete('pedidos/{pedido}/items/{item}', [PedidoAdminController::class, 'eliminarItem']);
     });
