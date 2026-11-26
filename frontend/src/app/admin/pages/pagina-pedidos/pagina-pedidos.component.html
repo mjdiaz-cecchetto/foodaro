@@ -7,9 +7,9 @@
   <app-encabezado-pagina
     [titulo]="tituloPagina()"
     [subtitulo]="subtituloPagina()"
-    [etiquetaAccion]="pestania() === 'configuracion' ? (guardando() ? 'Guardando…' : 'Guardar cambios') : 'Actualizar'"
-    [iconoAccion]="pestania() === 'configuracion' ? 'fa-floppy-disk' : 'fa-rotate'"
-    (accion)="pestania() === 'configuracion' ? guardar() : cargarPedidos()"
+    [etiquetaAccion]="pestania() === 'configuracion' ? (guardando() ? 'Guardando…' : 'Guardar cambios') : (pestania() === 'recibidos' ? 'Nuevo pedido' : 'Actualizar')"
+    [iconoAccion]="pestania() === 'configuracion' ? 'fa-floppy-disk' : (pestania() === 'recibidos' ? 'fa-plus' : 'fa-rotate')"
+    (accion)="pestania() === 'configuracion' ? guardar() : (pestania() === 'recibidos' ? abrirModalNuevoPedido() : cargarPedidos())"
   />
 
   <!-- =========================================================================
@@ -17,57 +17,39 @@
        ========================================================================= -->
   @if (pestania() === 'recibidos') {
     <div class="space-y-3">
-      <!-- Cinta operativa de Caja del Día y Controles de Fondo Inicial / Retiros Urgentes -->
-      <div class="bg-white dark:bg-surface-dark rounded-2xl px-4 py-3 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-2.5 text-xs">
+      <!-- Cinta operativa de Caja del Día y Controles de Fondo Inicial / Retiros -->
+      <div class="bg-white dark:bg-surface-dark rounded-2xl px-3.5 py-2.5 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-2.5 text-xs">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3 flex-wrap">
-            <!-- Fecha de la jornada comercial activa -->
-            <div
-              class="flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-surface-borderDark"
-              [title]="a.caja?.rangoHorarioTexto ? 'Jornada comercial activa: ' + a.caja?.rangoHorarioTexto : 'Fecha de la jornada actual'"
-            >
-              <span class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-500/15 text-brand-600 flex items-center justify-center text-xs font-black">
-                <i class="fa-regular fa-calendar-check"></i>
-              </span>
-              <div>
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 block leading-none">
-                  Jornada de hoy
-                </span>
-                <span class="text-xs sm:text-sm font-black text-zinc-900 dark:text-white leading-tight">
-                  {{ fechaJornadaHoyTexto() }}
-                </span>
-              </div>
-            </div>
-
+          <div class="flex items-center gap-4 flex-wrap">
             <!-- Total cobrado hoy (solo suma pedidos marcados como Pagados) -->
             <div
-              class="flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-surface-borderDark"
+              class="flex items-center gap-2.5 pr-4 border-r border-zinc-200/80 dark:border-surface-borderDark"
               title="Suma únicamente los pedidos que ya fueron cobrados (marcados como Pagado)"
             >
-              <span class="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center text-xs font-black">
+              <span class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 flex items-center justify-center text-xs">
                 <i class="fa-solid fa-sun"></i>
               </span>
               <div>
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 block leading-none">
-                  Cobrado hoy ({{ cp.pagados }} ped.)
+                <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block leading-none">
+                  Cobrado hoy ({{ cp.pagados }})
                 </span>
-                <span class="text-sm sm:text-base font-black text-zinc-900 dark:text-white leading-tight">{{ a.totalVendido | precio }}</span>
+                <span class="text-sm sm:text-base font-black text-zinc-900 dark:text-white leading-tight tabular-nums">{{ a.totalVendido | precio }}</span>
               </div>
             </div>
 
             <!-- Efectivo real esperado en cajón (Fondo inicial + Ventas efectivo COBRADAS - Retiros) -->
             <div
-              class="flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-surface-borderDark"
+              class="flex items-center gap-2.5 pr-4 border-r border-zinc-200/80 dark:border-surface-borderDark"
               title="Efectivo en cajón = Caja inicial + Efectivo cobrado (pagado) - Retiros en efectivo"
             >
-              <span class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black">
+              <span class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">
                 <i class="fa-solid fa-vault"></i>
               </span>
               <div>
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block leading-none">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/90 dark:text-emerald-400 block leading-none">
                   Efectivo en cajón
                 </span>
-                <span class="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-300 leading-tight">
+                <span class="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-300 leading-tight tabular-nums">
                   {{ (a.caja?.efectivoEnCaja ?? a.porMedioPago.efectivo.monto) | precio }}
                 </span>
               </div>
@@ -75,58 +57,58 @@
 
             <!-- Dinero esperado en Transferencia / Débito (solo suma pedidos marcados como Pagado) -->
             <div
-              class="flex items-center gap-2"
+              class="flex items-center gap-2.5"
               [title]="'En cuenta digital = Transferencias cobradas (' + (a.porMedioPago.transferencia.monto | precio) + ') + Débito cobrado (' + (a.porMedioPago.debito.monto | precio) + ')' + ((a.caja?.egresosTransferencia ?? 0) > 0 ? ' - Gastos por transf. (' + ((a.caja?.egresosTransferencia ?? 0) | precio) + ')' : '')"
             >
-              <span class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center text-xs font-black">
+              <span class="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xs">
                 <i class="fa-solid fa-building-columns"></i>
               </span>
               <div>
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-sky-600 dark:text-sky-400 block leading-none">
-                  En Transf. / Débito
+                <span class="text-[10px] font-bold uppercase tracking-wider text-sky-600/90 dark:text-sky-400 block leading-none">
+                  Transf. / Débito
                 </span>
-                <span class="text-sm sm:text-base font-black text-sky-700 dark:text-sky-300 leading-tight">
+                <span class="text-sm sm:text-base font-black text-sky-700 dark:text-sky-300 leading-tight tabular-nums">
                   {{ (a.caja?.digitalEnCuenta ?? (a.porMedioPago.transferencia.monto + a.porMedioPago.debito.monto)) | precio }}
                 </span>
               </div>
             </div>
           </div>
 
-          <!-- Botonera operativa de Caja en Gestión de Ventas -->
+          <!-- Botonera operativa de Caja (secundaria respecto a "+ Nuevo pedido" del encabezado) -->
           <div class="flex items-center gap-1.5 flex-wrap shrink-0">
             <button
               type="button"
               (click)="abrirEditorFondoInicial()"
-              class="h-8 px-2.5 rounded-xl border border-amber-300 dark:border-amber-500/40 bg-amber-50/80 dark:bg-amber-500/10 hover:border-amber-500 text-amber-900 dark:text-amber-200 text-[11px] font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+              class="h-8 px-2.5 rounded-xl border border-amber-200 dark:border-amber-500/35 bg-amber-50/70 dark:bg-amber-500/10 hover:bg-amber-100/80 dark:hover:bg-amber-500/20 text-amber-900 dark:text-amber-200 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer"
               title="Definir con cuánto dinero en efectivo arranca la caja hoy"
             >
-              <i class="fa-solid fa-coins text-amber-600"></i>
-              <span>Caja inicial: <strong>{{ (a.caja?.montoInicialDiaObjetivo ?? 0) | precio }}</strong></span>
-              <i class="fa-solid fa-pen text-[9px] opacity-70"></i>
+              <i class="fa-solid fa-coins text-amber-600 dark:text-amber-400"></i>
+              <span>Caja inicial: <strong class="tabular-nums">{{ (a.caja?.montoInicialDiaObjetivo ?? 0) | precio }}</strong></span>
+              <i class="fa-solid fa-pen text-[9px] opacity-60"></i>
             </button>
 
             <button
               type="button"
               (click)="alternarFormularioGasto()"
-              class="h-8 px-2.5 rounded-xl text-[11px] font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              class="h-8 px-2.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer"
               [class]="formularioGastoAbierto()
-                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                : 'bg-red-600 hover:bg-red-700 text-white'"
+                ? 'border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                : 'border-red-200 dark:border-red-500/35 bg-red-50/70 dark:bg-red-500/10 hover:bg-red-100/80 dark:hover:bg-red-500/20 text-red-700 dark:text-red-300'"
               title="Restar dinero de la caja por una compra urgente o retiro"
             >
               <i class="fa-solid" [class]="formularioGastoAbierto() ? 'fa-xmark' : 'fa-minus-circle'"></i>
-              <span>{{ formularioGastoAbierto() ? 'Cerrar retiro' : 'Restar de caja / Gasto' }}</span>
+              <span>{{ formularioGastoAbierto() ? 'Cerrar retiro' : 'Gasto / Retiro' }}</span>
             </button>
 
             @if ((a.caja?.movimientos?.length ?? 0) > 0) {
               <button
                 type="button"
                 (click)="verGastosHoy.set(!verGastosHoy())"
-                class="h-8 px-2.5 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50/80 dark:bg-red-500/10 text-red-700 dark:text-red-300 text-[11px] font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+                class="h-8 px-2.5 rounded-xl border border-red-200 dark:border-red-500/30 bg-white dark:bg-surface-cardDark text-red-700 dark:text-red-300 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer"
                 title="Ver o quitar retiros/compras urgentes de hoy"
               >
                 <i class="fa-solid fa-receipt"></i>
-                <span>Retiros ({{ a.caja?.movimientos?.length }}): -{{ (a.caja?.totalEgresos ?? 0) | precio }}</span>
+                <span class="tabular-nums">Retiros ({{ a.caja?.movimientos?.length }}): -{{ (a.caja?.totalEgresos ?? 0) | precio }}</span>
                 <i class="fa-solid text-[10px]" [class]="verGastosHoy() ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
               </button>
             }
@@ -134,10 +116,10 @@
             <button
               type="button"
               (click)="imprimirCierreCaja()"
-              class="h-8 px-2.5 rounded-xl border border-zinc-200 dark:border-surface-borderDark hover:border-zinc-900 dark:hover:border-white text-[11px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1 transition cursor-pointer"
+              class="h-8 px-2.5 rounded-xl border border-zinc-200 dark:border-surface-borderDark hover:border-zinc-400 dark:hover:border-zinc-500 bg-white dark:bg-surface-cardDark text-[11px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 transition cursor-pointer"
               title="Imprimir cierre de caja de hoy"
             >
-              <i class="fa-solid fa-print"></i>
+              <i class="fa-solid fa-print text-zinc-500 dark:text-zinc-400"></i>
               <span class="hidden sm:inline">Cierre hoy</span>
             </button>
           </div>
@@ -280,16 +262,17 @@
 
       <!-- Consola Principal de Pedidos del Día (Aprovecha todo el alto de pantalla) -->
       <div class="bg-white dark:bg-surface-dark rounded-2xl p-3 sm:p-4 shadow-soft border border-zinc-200/80 dark:border-surface-borderDark space-y-3 @container/consola">
-        <!-- Barra de herramientas: En vivo, Timbre, Buscador rápido y Selector Lista / Tablero -->
-        <div class="flex flex-col @5xl:flex-row @5xl:items-center justify-between gap-2.5 pb-2.5 border-b border-zinc-100 dark:border-surface-borderDark">
-          <div class="flex items-center gap-2 flex-wrap">
+        <!-- Barra de herramientas: En vivo, Timbre (solo iconos), Modalidad, Buscador y Selector Lista / Tablero -->
+        <div class="flex flex-col @5xl:flex-row @5xl:items-center justify-between gap-2 pb-2.5 border-b border-zinc-100 dark:border-surface-borderDark">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <button
               type="button"
               (click)="alternarEnVivo()"
-              class="h-8 px-3 rounded-xl border text-xs font-extrabold flex items-center gap-2 transition cursor-pointer"
+              class="h-8 px-2.5 rounded-xl border text-[11px] font-extrabold flex items-center gap-1.5 transition cursor-pointer"
               [class]="enVivo()
-                ? 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                ? 'border-emerald-200 dark:border-emerald-500/35 bg-emerald-50/80 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
                 : 'border-zinc-200 dark:border-surface-borderDark bg-zinc-100 dark:bg-surface-cardDark text-zinc-500'"
+              [title]="enVivo() ? 'Actualización automática activa cada 15s (clic para pausar)' : 'Actualización automática pausada (clic para activar)'"
             >
               <span class="relative flex h-2 w-2">
                 @if (enVivo()) {
@@ -303,27 +286,33 @@
             <button
               type="button"
               (click)="alternarSonido()"
-              class="h-8 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+              class="w-8 h-8 rounded-xl border text-xs flex items-center justify-center transition cursor-pointer"
               [class]="sonidoActivo()
-                ? 'border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300'
-                : 'border-zinc-200 dark:border-surface-borderDark text-zinc-500'"
+                ? 'border-amber-200 dark:border-amber-500/40 bg-amber-50/80 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 hover:bg-amber-100/80'
+                : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-cardDark text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'"
+              [title]="sonidoActivo() ? 'Alerta sonora activada (clic para silenciar)' : 'Alerta sonora silenciada (clic para activar)'"
+              [attr.aria-label]="sonidoActivo() ? 'Silenciar alerta sonora' : 'Activar alerta sonora'"
             >
               <i class="fa-solid" [class]="sonidoActivo() ? 'fa-volume-high' : 'fa-volume-xmark'"></i>
-              <span>{{ sonidoActivo() ? 'Alerta sonora' : 'Silenciado' }}</span>
             </button>
 
             <button
               type="button"
               (click)="probarSonido()"
-              class="h-8 px-2.5 rounded-xl border border-zinc-200 dark:border-surface-borderDark hover:border-brand-400 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5 transition cursor-pointer"
+              class="w-8 h-8 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-cardDark hover:border-brand-400 hover:text-brand-600 text-xs text-zinc-500 dark:text-zinc-300 flex items-center justify-center transition cursor-pointer"
+              title="Probar timbre de nuevo pedido"
+              aria-label="Probar timbre de nuevo pedido"
             >
-              <i class="fa-regular fa-bell text-brand-600"></i>
-              <span>Probar timbre</span>
+              <i class="fa-regular fa-bell"></i>
             </button>
 
             @if (ultimaActualizacion()) {
-              <span class="text-[11px] text-zinc-400">
-                Actualizado {{ ultimaActualizacion() }}
+              <span
+                class="text-[11px] text-zinc-400 tabular-nums pl-1 hidden sm:inline-flex items-center gap-1"
+                [title]="'Última actualización: ' + ultimaActualizacion()"
+              >
+                <i class="fa-regular fa-clock text-[10px] opacity-70"></i>
+                <span>{{ ultimaActualizacion() }}</span>
               </span>
             }
           </div>
@@ -415,12 +404,12 @@
              =============================================================== -->
         @if (modoVista() === 'lista') {
           <div class="flex flex-col @3xl:flex-row @3xl:items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-visible no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 text-xs font-bold [&>button]:shrink-0 [&>button]:whitespace-nowrap">
+            <div class="flex items-center gap-1 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-visible no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 text-[11px] font-bold [&>button]:shrink-0 [&>button]:whitespace-nowrap">
               <button
                 type="button"
                 (click)="filtroEstado.set('todos')"
-                class="px-3 py-1 rounded-xl border transition cursor-pointer"
-                [class]="filtroEstado() === 'todos' ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+                class="h-7 px-2.5 rounded-lg border transition cursor-pointer"
+                [class]="filtroEstado() === 'todos' ? 'border-brand-200 dark:border-brand-500/40 bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-300 font-extrabold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-surface-cardDark hover:text-zinc-900 dark:hover:text-white'"
               >
                 Todos ({{ pedidos().length }})
               </button>
@@ -428,30 +417,30 @@
                 <button
                   type="button"
                   (click)="filtroEstado.set(est.valor)"
-                  class="px-3 py-1 rounded-xl border transition cursor-pointer"
-                  [class]="filtroEstado() === est.valor ? 'border-brand-600 bg-brand-50 dark:bg-brand-500/10 text-brand-600' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-600 dark:text-zinc-400'"
+                  class="h-7 px-2.5 rounded-lg border transition cursor-pointer"
+                  [class]="filtroEstado() === est.valor ? 'border-brand-200 dark:border-brand-500/40 bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-300 font-extrabold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-surface-cardDark hover:text-zinc-900 dark:hover:text-white'"
                 >
                   {{ est.etiqueta }}
                 </button>
               }
             </div>
 
-            <div class="flex items-center gap-1.5 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-visible no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 text-xs font-extrabold [&>button]:shrink-0 [&>button]:whitespace-nowrap">
+            <div class="inline-flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-surface-cardDark text-[11px] font-bold max-w-full overflow-x-auto no-scrollbar [&>button]:shrink-0 [&>button]:whitespace-nowrap self-start @3xl:self-auto">
               <button
                 type="button"
                 (click)="filtroPago.set('todos')"
-                class="px-2.5 py-1 rounded-xl border transition cursor-pointer"
-                [class]="filtroPago() === 'todos' ? 'border-zinc-800 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'border-zinc-200 dark:border-surface-borderDark text-zinc-500'"
+                class="px-2.5 py-1 rounded-lg transition cursor-pointer"
+                [class]="filtroPago() === 'todos' ? 'bg-white dark:bg-surface-dark text-zinc-900 dark:text-white shadow-xs font-extrabold' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'"
               >
-                Todos cobros
+                Todos
               </button>
               <button
                 type="button"
                 (click)="filtroPago.set('sin_pagar')"
-                class="px-2.5 py-1 rounded-xl border transition cursor-pointer flex items-center gap-1.5"
+                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
                 [class]="filtroPago() === 'sin_pagar'
-                  ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
-                  : 'border-amber-300 dark:border-amber-500/40 bg-amber-50/70 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300'"
+                  ? 'bg-amber-500 text-white shadow-xs font-extrabold'
+                  : 'text-amber-700 dark:text-amber-300 hover:bg-white/60 dark:hover:bg-surface-dark/60'"
               >
                 <i class="fa-solid fa-clock text-[10px]"></i>
                 <span>Sin pagar ({{ cp.sinPagar }})</span>
@@ -459,10 +448,10 @@
               <button
                 type="button"
                 (click)="filtroPago.set('pagados')"
-                class="px-2.5 py-1 rounded-xl border transition cursor-pointer flex items-center gap-1.5"
+                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
                 [class]="filtroPago() === 'pagados'
-                  ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                  : 'border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'"
+                  ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                  : 'text-emerald-700 dark:text-emerald-300 hover:bg-white/60 dark:hover:bg-surface-dark/60'"
               >
                 <i class="fa-solid fa-circle-check text-[10px]"></i>
                 <span>Pagados ({{ cp.pagados }})</span>
@@ -537,12 +526,29 @@
                       }
                     </td>
 
-                    <!-- Columna 3: Resumen compacto de 1 línea + clic para abrir modal de detalle / agregar productos -->
-                    <td class="px-3 py-2 max-w-[320px]">
-                      <div class="flex items-center gap-2 min-w-0">
-                        <span class="px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 font-black text-[10px] shrink-0">
+                    <!-- Columna 3: Resumen compacto de 1 línea + indicador de rondas + clic para abrir detalle -->
+                    <td class="px-3 py-2 max-w-[340px]">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 font-black text-[10px] shrink-0 tabular-nums">
                           {{ p.totales.cantidadTotal }} u.
                         </span>
+                        @if (numeroUltimaRonda(p) > 1) {
+                          <button
+                            type="button"
+                            (click)="abrirDetallePedido(p)"
+                            class="px-1.5 py-0.5 rounded-md text-[10px] font-black shrink-0 cursor-pointer transition"
+                            [class]="tieneRondaAgregadaPendiente(p)
+                              ? 'bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-500/30'
+                              : 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'"
+                            [title]="tieneRondaAgregadaPendiente(p) ? 'Hay agregados pendientes de entregar en este pedido' : 'Todas las rondas entregadas'"
+                          >
+                            @if (tieneRondaAgregadaPendiente(p)) {
+                              <i class="fa-solid fa-layer-group mr-0.5 text-[9px]"></i>R#{{ numeroUltimaRonda(p) }} pend.
+                            } @else {
+                              {{ numeroUltimaRonda(p) }} rondas
+                            }
+                          </button>
+                        }
                         <button
                           type="button"
                           (click)="abrirDetallePedido(p)"
@@ -1188,28 +1194,113 @@
                 </div>
               </div>
 
-              <!-- Platos en tamaño grande para lectura rápida en cocina -->
+              <!-- Platos agrupados por Ronda (las rondas ya entregadas quedan compactas para no confundir a cocina) -->
+              @let rondasCocina = rondasDePedido(p);
               <div class="space-y-2.5">
-                @for (item of p.items; track item.id) {
-                  <div class="p-2.5 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200/70 dark:border-surface-borderDark">
-                    <div class="text-base font-black text-zinc-900 dark:text-white leading-snug">
-                      <span class="text-brand-600 mr-1">{{ item.cantidad }}x</span>{{ item.nombre }}
-                    </div>
-                    @if (item.opciones.length > 0) {
-                      <div class="mt-1 space-y-0.5 pl-2 border-l-2 border-zinc-300 dark:border-zinc-600">
-                        @for (op of item.opciones; track op.etiqueta) {
-                          <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300">
-                            • {{ op.grupoNombre }}: <span class="text-zinc-900 dark:text-white">{{ op.etiqueta }}</span>
-                          </p>
+                @for (ronda of rondasCocina; track ronda.numero) {
+                  @if (!ronda.todosEntregados || rondasCocina.length === 1) {
+                    <div
+                      class="rounded-xl border p-2.5 space-y-2"
+                      [class]="ronda.numero > 1
+                        ? 'border-brand-300 dark:border-brand-500/40 bg-brand-50/40 dark:bg-brand-500/10'
+                        : 'border-zinc-200/80 dark:border-surface-borderDark bg-zinc-50/70 dark:bg-surface-cardDark'"
+                    >
+                      @if (rondasCocina.length > 1) {
+                        <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-zinc-200/70 dark:border-surface-borderDark">
+                          <div class="flex items-center gap-1.5">
+                            <span
+                              class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase"
+                              [class]="ronda.numero > 1 ? 'bg-brand-600 text-white' : 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'"
+                            >
+                              {{ ronda.numero > 1 ? 'Agregado · Ronda #' + ronda.numero : 'Ronda #1' }}
+                            </span>
+                            @if (ronda.horaTexto) {
+                              <span class="text-[11px] font-bold text-zinc-400 tabular-nums">{{ ronda.horaTexto }}</span>
+                            }
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <button
+                              type="button"
+                              (click)="imprimirComandaCocina(p, ronda.numero)"
+                              class="h-6 w-6 rounded-lg border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 hover:border-zinc-900 flex items-center justify-center cursor-pointer"
+                              [title]="'Imprimir solo Ronda #' + ronda.numero"
+                            >
+                              <i class="fa-solid fa-print text-[10px]"></i>
+                            </button>
+                            <button
+                              type="button"
+                              (click)="alternarEntregaRonda(p, ronda.numero)"
+                              class="h-6 px-2 rounded-lg text-[10px] font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 cursor-pointer"
+                            >
+                              <i class="fa-solid fa-check text-[9px]"></i>Entregar R#{{ ronda.numero }}
+                            </button>
+                          </div>
+                        </div>
+                      }
+
+                      <div class="space-y-2">
+                        @for (item of ronda.items; track item.id) {
+                          <div
+                            class="p-2 rounded-lg bg-white dark:bg-surface-dark border border-zinc-200/60 dark:border-surface-borderDark flex items-start justify-between gap-2"
+                            [class.opacity-50]="item.entregado"
+                          >
+                            <div class="min-w-0 flex-1">
+                              <div class="text-base font-black text-zinc-900 dark:text-white leading-snug" [class.line-through]="item.entregado">
+                                <span class="text-brand-600 mr-1">{{ item.cantidad }}x</span>{{ item.nombre }}
+                              </div>
+                              @if (item.opciones.length > 0) {
+                                <div class="mt-1 space-y-0.5 pl-2 border-l-2 border-zinc-300 dark:border-zinc-600">
+                                  @for (op of item.opciones; track op.etiqueta) {
+                                    <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300">
+                                      • {{ op.grupoNombre }}: <span class="text-zinc-900 dark:text-white">{{ op.etiqueta }}</span>
+                                    </p>
+                                  }
+                                </div>
+                              }
+                              @if (item.notas) {
+                                <div class="mt-1.5 px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-900 dark:text-amber-200 text-xs font-extrabold uppercase">
+                                  <i class="fa-solid fa-triangle-exclamation mr-1"></i>Nota: {{ item.notas }}
+                                </div>
+                              }
+                            </div>
+
+                            <button
+                              type="button"
+                              (click)="alternarEntregaItem(p, item)"
+                              class="w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition cursor-pointer mt-0.5"
+                              [class]="item.entregado
+                                ? 'border-emerald-500 bg-emerald-500 text-white'
+                                : 'border-zinc-300 dark:border-surface-borderDark text-zinc-400 hover:border-emerald-500 hover:text-emerald-600'"
+                              [title]="item.entregado ? 'Ya entregado (clic para volver a pendiente)' : 'Marcar este ítem como entregado'"
+                            >
+                              <i class="fa-solid fa-check text-[11px]"></i>
+                            </button>
+                          </div>
                         }
                       </div>
-                    }
-                    @if (item.notas) {
-                      <div class="mt-1.5 px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-900 dark:text-amber-200 text-xs font-extrabold uppercase">
-                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>Nota: {{ item.notas }}
+                    </div>
+                  } @else {
+                    <!-- Ronda ya entregada: línea compacta para referencia sin confundir a cocina -->
+                    <div class="px-3 py-2 rounded-xl border border-emerald-200/80 dark:border-emerald-500/25 bg-emerald-50/50 dark:bg-emerald-500/10 flex items-center justify-between gap-2 text-[11px]">
+                      <div class="min-w-0 truncate text-emerald-800 dark:text-emerald-300 font-bold">
+                        <i class="fa-solid fa-circle-check mr-1"></i>
+                        <span>Ronda #{{ ronda.numero }} entregada ({{ ronda.horaTexto }}):</span>
+                        <span class="font-normal opacity-85 ml-1">
+                          @for (it of ronda.items; track it.id; let u = $last) {
+                            {{ it.cantidad }}× {{ it.nombre }}@if (!u) {, }
+                          }
+                        </span>
                       </div>
-                    }
-                  </div>
+                      <button
+                        type="button"
+                        (click)="alternarEntregaRonda(p, ronda.numero)"
+                        class="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white shrink-0 cursor-pointer"
+                        title="Volver a abrir esta ronda"
+                      >
+                        Deshacer
+                      </button>
+                    </div>
+                  }
                 }
               </div>
 
@@ -1236,12 +1327,12 @@
 
               <button
                 type="button"
-                (click)="imprimirComandaCocina(p)"
+                (click)="imprimirComandaCocina(p, 'pendientes')"
                 class="h-9 px-3 rounded-xl border border-zinc-300 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark hover:border-zinc-900 dark:hover:border-white text-zinc-800 dark:text-zinc-100 text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
-                title="Imprimir comanda exclusiva de cocina (sin precios)"
+                title="Imprimir comanda de cocina (solo ítems pendientes si hubo rondas entregadas)"
               >
                 <i class="fa-solid fa-print"></i>
-                <span>Imprimir Cocina</span>
+                <span>{{ numeroUltimaRonda(p) > 1 ? 'Comandar Pendientes' : 'Imprimir Cocina' }}</span>
               </button>
 
               @if (p.estado === 'pendiente' || p.estado === 'confirmado') {
@@ -1616,186 +1707,282 @@
        ========================================================================= -->
   @if (pedidoDetalle(); as pd) {
     <div
-      class="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+      class="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5"
       (click)="cerrarDetallePedido()"
     >
       <div
-        class="bg-white dark:bg-surface-dark rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-zinc-200 dark:border-surface-borderDark overflow-hidden"
+        class="bg-white dark:bg-surface-dark rounded-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-zinc-200 dark:border-surface-borderDark overflow-hidden transition-[max-width] duration-200"
+        [class]="mostrandoSelectorProductos() ? 'max-w-[1360px]' : 'max-w-4xl'"
         (click)="$event.stopPropagation()"
       >
-        <!-- Cabecera del Modal -->
-        <div class="px-5 py-3.5 border-b border-zinc-200 dark:border-surface-borderDark flex items-center justify-between gap-3 bg-zinc-50/80 dark:bg-surface-cardDark">
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <span class="font-mono text-sm font-black px-2.5 py-1 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
+        <!-- Fila 1 de cabecera: Identidad del pedido + botón cerrar SIEMPRE fijo arriba a la derecha -->
+        <div class="px-5 sm:px-6 py-4 border-b border-zinc-200/80 dark:border-surface-borderDark flex items-center justify-between gap-4 bg-zinc-50/90 dark:bg-surface-cardDark">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="font-mono text-sm font-black px-3 py-1.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shrink-0">
               #{{ formatearNumero(pd.numero) }}
             </span>
-            <div>
-              <h3 class="text-sm font-black text-zinc-900 dark:text-white leading-tight">
-                {{ pd.cliente.nombre }}
-              </h3>
-              <p class="text-[11px] text-zinc-500">{{ formatearFecha(pd.creadoEn) }} · {{ pd.modoEntrega === 'envio' ? 'Envío a domicilio' : 'Retiro en local' }}</p>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base font-black text-zinc-900 dark:text-white leading-tight truncate">
+                  {{ pd.cliente.nombre }}
+                </h3>
+                <span
+                  class="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-md"
+                  [class]="pd.modoEntrega === 'envio'
+                    ? 'bg-brand-50 dark:bg-brand-500/15 text-brand-600'
+                    : 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200'"
+                >
+                  <i class="fa-solid text-[9px]" [class]="pd.modoEntrega === 'envio' ? 'fa-motorcycle' : 'fa-store'"></i>
+                  {{ pd.modoEntrega === 'envio' ? 'Envío a domicilio' : 'Retiro en local' }}
+                </span>
+                @if (pd.prioritario) {
+                  <span class="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-md bg-red-600 text-white">
+                    <i class="fa-solid fa-fire text-[9px]"></i>Prioridad
+                  </span>
+                }
+              </div>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Recibido el {{ formatearFecha(pd.creadoEn) }}
+              </p>
             </div>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap">
-            <select
-              [ngModel]="pd.medioPago"
-              (ngModelChange)="cambiarMedioPagoPedido(pd, $event)"
-              class="h-8 text-xs font-extrabold uppercase px-2.5 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-700 dark:text-zinc-200 focus:outline-none cursor-pointer"
-              title="Cambiar medio de pago del pedido"
-            >
-              <option value="efectivo">💵 Efectivo</option>
-              <option value="transferencia">🏦 Transferencia</option>
-              <option value="debito">💳 Débito</option>
-            </select>
+          <button
+            type="button"
+            (click)="cerrarDetallePedido()"
+            class="w-9 h-9 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-400 flex items-center justify-center shrink-0 transition cursor-pointer"
+            title="Cerrar detalle"
+            aria-label="Cerrar detalle"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Fila 2 de cabecera: Controles rápidos alineados prolijamente (Medio de pago, Cobro, Estado, Prioridad) -->
+        <div class="px-5 sm:px-6 py-2.5 border-b border-zinc-200/80 dark:border-surface-borderDark bg-white dark:bg-surface-dark flex flex-wrap items-center justify-between gap-2.5 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 hidden sm:inline">Pago:</span>
+              <select
+                [ngModel]="pd.medioPago"
+                (ngModelChange)="cambiarMedioPagoPedido(pd, $event)"
+                class="h-8 text-xs font-extrabold uppercase px-2.5 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 focus:outline-none focus:border-brand-500 cursor-pointer"
+                title="Cambiar medio de pago del pedido"
+              >
+                <option value="efectivo">💵 Efectivo</option>
+                <option value="transferencia">🏦 Transferencia</option>
+                <option value="debito">💳 Débito</option>
+              </select>
+            </div>
 
             <button
               type="button"
               (click)="alternarPagoPedido(pd)"
-              class="h-8 px-2.5 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+              class="h-8 px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
               [class]="pd.pagado
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-                : 'border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300'"
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-300'
+                : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-500/15 dark:text-amber-300'"
             >
               <i class="fa-solid" [class]="pd.pagado ? 'fa-circle-check' : 'fa-hand-holding-dollar'"></i>
               <span>{{ pd.pagado ? 'Pagado' : 'Sin pagar' }}</span>
             </button>
 
+            <button
+              type="button"
+              (click)="alternarPrioridadPedido(pd)"
+              class="h-8 px-2.5 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+              [class]="pd.prioritario
+                ? 'border-red-600 bg-red-600 text-white'
+                : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-cardDark text-zinc-500 hover:text-red-600 hover:border-red-300'"
+              title="Marcar o quitar prioridad para cocina"
+            >
+              <i class="fa-solid fa-fire text-[11px]"></i>
+              <span>Prioridad</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 hidden sm:inline">Estado:</span>
             <select
               [ngModel]="pd.estado"
               (ngModelChange)="cambiarEstadoPedido(pd, $event)"
-              class="h-8 text-xs font-bold px-2.5 rounded-xl border focus:outline-none cursor-pointer"
+              class="h-8 text-xs font-bold px-3 rounded-xl border focus:outline-none cursor-pointer"
               [class]="claseEstado(pd.estado)"
             >
               @for (est of estadosDisponibles; track est.valor) {
                 <option [value]="est.valor" class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">{{ est.etiqueta }}</option>
               }
             </select>
-
-            <button
-              type="button"
-              (click)="cerrarDetallePedido()"
-              class="w-8 h-8 rounded-xl border border-zinc-200 dark:border-surface-borderDark text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center cursor-pointer"
-            >
-              <i class="fa-solid fa-xmark"></i>
-            </button>
           </div>
         </div>
 
         <!-- Cuerpo desplazable del Modal -->
-        <div class="p-5 overflow-y-auto space-y-4 text-xs">
+        <div class="p-5 sm:p-6 overflow-y-auto space-y-5 text-xs flex-1">
           <!-- Datos de Contacto, Entrega y Observaciones -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200/80 dark:border-surface-borderDark">
-            <div>
-              <p class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">Cliente y WhatsApp</p>
-              <p class="font-extrabold text-zinc-900 dark:text-white mt-0.5">{{ pd.cliente.nombre }}</p>
-              <a
-                [href]="enlaceWhatsAppCliente(pd.cliente.telefono)"
-                target="_blank"
-                rel="noopener"
-                class="text-emerald-600 font-bold hover:underline inline-flex items-center gap-1 mt-0.5"
-              >
-                <i class="fa-brands fa-whatsapp"></i>{{ pd.cliente.telefono }}
-              </a>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-zinc-50/90 dark:bg-surface-cardDark border border-zinc-200/80 dark:border-surface-borderDark">
+            <div class="space-y-1">
+              <p class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">Cliente y contacto</p>
+              <p class="font-extrabold text-zinc-900 dark:text-white text-sm leading-snug">{{ pd.cliente.nombre }}</p>
+              @if (tieneTelefonoValido(pd.cliente.telefono)) {
+                <a
+                  [href]="enlaceWhatsAppCliente(pd.cliente.telefono)"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-1.5"
+                >
+                  <i class="fa-brands fa-whatsapp text-sm"></i>
+                  <span>{{ pd.cliente.telefono }}</span>
+                </a>
+              } @else {
+                <p class="text-[11px] text-zinc-400 inline-flex items-center gap-1.5">
+                  <i class="fa-brands fa-whatsapp opacity-50"></i>
+                  <span>Sin WhatsApp registrado</span>
+                </p>
+              }
             </div>
 
-            <div>
-              <p class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">Entrega y Medio de Pago</p>
+            <div class="space-y-1">
+              <p class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">Entrega</p>
               @if (pd.modoEntrega === 'envio' && pd.direccion) {
-                <p class="font-bold text-zinc-900 dark:text-white mt-0.5">
-                  <i class="fa-solid fa-location-dot text-brand-600 mr-1"></i>{{ pd.direccion.calle }} {{ pd.direccion.pisoDepto }}
+                <p class="font-bold text-zinc-900 dark:text-white text-sm leading-snug">
+                  <i class="fa-solid fa-location-dot text-brand-600 mr-1.5"></i>{{ pd.direccion.calle }} {{ pd.direccion.pisoDepto }}
                 </p>
                 @if (pd.direccion.referencia) {
                   <p class="text-[11px] text-zinc-500 italic">Ref: {{ pd.direccion.referencia }}</p>
                 }
               } @else {
-                <p class="font-bold text-zinc-900 dark:text-white mt-0.5">
-                  <i class="fa-solid fa-store text-zinc-500 mr-1"></i>Retiro en mostrador
+                <p class="font-bold text-zinc-900 dark:text-white text-sm leading-snug">
+                  <i class="fa-solid fa-store text-zinc-400 mr-1.5"></i>Retiro en mostrador
                 </p>
+                <p class="text-[11px] text-zinc-400">El cliente retira el pedido en el local</p>
               }
-              <p class="text-[11px] font-bold uppercase text-zinc-500 mt-0.5">Pago: {{ pd.medioPago }}</p>
             </div>
 
             @if (pd.comentarios) {
-              <div class="sm:col-span-2 pt-2 border-t border-zinc-200 dark:border-surface-borderDark text-amber-800 dark:text-amber-300 font-bold">
-                <i class="fa-regular fa-comment-dots mr-1"></i>Observación general del pedido: {{ pd.comentarios }}
+              <div class="sm:col-span-2 pt-3 border-t border-zinc-200 dark:border-surface-borderDark text-amber-800 dark:text-amber-300 font-bold flex items-start gap-2">
+                <i class="fa-regular fa-comment-dots mt-0.5"></i>
+                <span>Observación general: {{ pd.comentarios }}</span>
               </div>
             }
           </div>
 
-          <!-- Lista de Productos del Pedido + Botón para abrir la Mini-Carta POS -->
-          <div class="space-y-2.5">
+          <!-- Lista de Productos del Pedido agrupados por Rondas + Constructor de Nueva Ronda -->
+          <div class="space-y-3">
             <div class="flex items-center justify-between gap-2 flex-wrap">
-              <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
-                Productos en el pedido ({{ pd.totales.cantidadTotal }} unidades)
-              </h4>
+              <div class="flex items-center gap-2">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Consumo del pedido ({{ pd.totales.cantidadTotal }} {{ pd.totales.cantidadTotal === 1 ? 'unidad' : 'unidades' }})
+                </h4>
+                @if (numeroUltimaRonda(pd) > 1) {
+                  <span class="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-surface-cardDark text-zinc-600 dark:text-zinc-300 text-[10px] font-extrabold">
+                    {{ rondasDePedido(pd).length }} rondas
+                  </span>
+                }
+              </div>
 
               <button
                 type="button"
                 (click)="mostrandoSelectorProductos() ? cerrarBuscadorProductosPedido() : abrirBuscadorProductosPedido()"
-                class="h-8 px-3 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                class="h-8 px-3.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                 [class]="mostrandoSelectorProductos()
                   ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
                   : 'bg-brand-600 hover:bg-brand-700 text-white'"
               >
                 <i class="fa-solid" [class]="mostrandoSelectorProductos() ? 'fa-chevron-up' : 'fa-plus'"></i>
-                <span>{{ mostrandoSelectorProductos() ? 'Ocultar carta de productos' : 'Agregar más productos' }}</span>
+                <span>{{ mostrandoSelectorProductos() ? 'Cerrar agregado' : 'Agregar Ronda #' + proximaRondaNumero() }}</span>
               </button>
             </div>
 
             <!-- ===============================================================
-                 MINI-CARTA RÁPIDA (ESTILO POS CON VARIANTES, TAMAÑOS Y ADICIONALES)
+                 CONSTRUCTOR RÁPIDO DE NUEVA RONDA (3 COLUMNAS: CARTA | VARIANTES | BORRADOR RONDA #N)
                  =============================================================== -->
             @if (mostrandoSelectorProductos()) {
-              <div class="rounded-2xl border-2 border-brand-500/40 bg-zinc-50/70 dark:bg-surface-cardDark p-3.5 space-y-3">
-                <!-- Buscador + Pestañas de Categorías -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div class="relative flex-1">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-zinc-400 text-xs"></i>
+              <div class="rounded-2xl border border-brand-300 dark:border-brand-500/40 bg-zinc-50/80 dark:bg-surface-cardDark p-4 space-y-3">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-1 rounded-lg bg-brand-600 text-white text-[11px] font-black uppercase">
+                      Nueva Ronda #{{ proximaRondaNumero() }}
+                    </span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
+                      Tocá <strong class="text-emerald-600">+1</strong> para sumar rápido al borrador y al terminar confirmá toda la ronda junta.
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Buscador + Tira desplazable de Categorías con flechas y rueda del mouse -->
+                <div class="space-y-2.5">
+                  <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-zinc-400 text-xs"></i>
                     <input
                       type="text"
                       [ngModel]="busquedaProductoAgregar()"
                       (ngModelChange)="busquedaProductoAgregar.set($event)"
-                      placeholder="Buscar plato o bebida para sumar al pedido..."
-                      class="w-full h-8 pl-8 pr-3 rounded-xl bg-white dark:bg-surface-dark border border-zinc-200 dark:border-surface-borderDark text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+                      placeholder="Buscar plato o bebida para sumar a la Ronda #{{ proximaRondaNumero() }}..."
+                      class="w-full h-9 pl-9 pr-3 rounded-xl bg-white dark:bg-surface-dark border border-zinc-200 dark:border-surface-borderDark text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
                     />
                   </div>
 
-                  <div class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[11px] font-extrabold">
+                  <div class="flex items-center gap-1.5 min-w-0">
                     <button
                       type="button"
-                      (click)="categoriaAgregarId.set('todas')"
-                      class="px-2.5 py-1 rounded-lg border whitespace-nowrap transition cursor-pointer"
-                      [class]="categoriaAgregarId() === 'todas'
-                        ? 'border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                        : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300'"
+                      (click)="desplazarCategorias(catsDetalle, -1)"
+                      class="w-7 h-7 rounded-lg border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center shrink-0 transition cursor-pointer"
+                      title="Categorías anteriores"
+                      aria-label="Categorías anteriores"
                     >
-                      Todas
+                      <i class="fa-solid fa-chevron-left text-[10px]"></i>
                     </button>
-                    @for (cat of catalogo.categorias(); track cat.id) {
+
+                    <div
+                      #catsDetalle
+                      (wheel)="alRuedaCategorias($event, catsDetalle)"
+                      class="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px] font-extrabold scroll-smooth py-0.5"
+                    >
                       <button
                         type="button"
-                        (click)="categoriaAgregarId.set(cat.id)"
-                        class="px-2.5 py-1 rounded-lg border whitespace-nowrap transition cursor-pointer"
-                        [class]="categoriaAgregarId() === cat.id
-                          ? 'border-brand-600 bg-brand-600 text-white'
-                          : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300'"
+                        (click)="categoriaAgregarId.set('todas')"
+                        class="px-3 py-1.5 rounded-xl border whitespace-nowrap shrink-0 transition cursor-pointer"
+                        [class]="categoriaAgregarId() === 'todas'
+                          ? 'border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                          : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 hover:border-zinc-400'"
                       >
-                        {{ cat.nombre }}
+                        Todas
                       </button>
-                    }
+                      @for (cat of catalogo.categorias(); track cat.id) {
+                        <button
+                          type="button"
+                          (click)="categoriaAgregarId.set(cat.id)"
+                          class="px-3 py-1.5 rounded-xl border whitespace-nowrap shrink-0 transition cursor-pointer"
+                          [class]="categoriaAgregarId() === cat.id
+                            ? 'border-brand-600 bg-brand-600 text-white'
+                            : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 hover:border-zinc-400'"
+                        >
+                          {{ cat.nombre }}
+                        </button>
+                      }
+                    </div>
+
+                    <button
+                      type="button"
+                      (click)="desplazarCategorias(catsDetalle, 1)"
+                      class="w-7 h-7 rounded-lg border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center shrink-0 transition cursor-pointer"
+                      title="Más categorías"
+                      aria-label="Más categorías"
+                    >
+                      <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
                   </div>
                 </div>
 
-                <!-- Grilla Maestra: Lista de productos a la izquierda + Variantes/Adicionales a la derecha -->
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                  <!-- Columna Izquierda: Lista compacta de productos de la carta -->
-                  <div class="md:col-span-6 max-h-64 overflow-y-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark divide-y divide-zinc-100 dark:divide-surface-borderDark">
+                <!-- Grilla 3 Columnas: Lista de productos | Variantes | Borrador de la Ronda #N -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+                  <!-- Col 1: Lista de productos de la carta con "+1" instantáneo al borrador -->
+                  <div class="lg:col-span-4 h-[340px] overflow-y-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark divide-y divide-zinc-100 dark:divide-surface-borderDark">
                     @for (prod of productosCatalogoFiltrados(); track prod.id) {
                       @let activo = productoConfigurando()?.id === prod.id;
                       <div
                         (click)="seleccionarProductoParaAgregar(prod)"
-                        class="px-3 py-2 flex items-center justify-between gap-2 cursor-pointer transition"
+                        class="px-3 py-2.5 flex items-center justify-between gap-2 cursor-pointer transition"
                         [class]="activo
                           ? 'bg-brand-50 dark:bg-brand-500/15 border-l-4 border-brand-600'
                           : 'hover:bg-zinc-50 dark:hover:bg-surface-cardDark/50'"
@@ -1803,58 +1990,52 @@
                         <div class="min-w-0 flex-1">
                           <p class="font-extrabold text-zinc-900 dark:text-white truncate text-xs">{{ prod.nombre }}</p>
                           <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="text-[11px] font-black text-brand-600">{{ prod.precio | precio }}</span>
+                            <span class="text-[11px] font-black text-brand-600 tabular-nums">{{ prod.precio | precio }}</span>
                             @if (prod.gruposOpciones && prod.gruposOpciones.length > 0) {
                               <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
-                                {{ prod.gruposOpciones.length }} {{ prod.gruposOpciones.length === 1 ? 'opción' : 'opciones' }}
+                                Variantes
                               </span>
                             }
                           </div>
                         </div>
 
-                        @if (!prod.gruposOpciones || prod.gruposOpciones.length === 0) {
-                          <button
-                            type="button"
-                            [disabled]="guardandoItemPedido()"
-                            (click)="$event.stopPropagation(); agregarProductoAPedido(prod)"
-                            class="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black flex items-center gap-1 shrink-0 cursor-pointer"
-                            title="Sumar 1 unidad directo al pedido"
-                          >
-                            <i class="fa-solid fa-plus text-[9px]"></i>1
-                          </button>
-                        } @else {
-                          <i class="fa-solid fa-sliders text-xs" [class]="activo ? 'text-brand-600' : 'text-zinc-300'"></i>
-                        }
+                        <button
+                          type="button"
+                          (click)="$event.stopPropagation(); sumarProductoABorradorRonda(prod)"
+                          class="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black flex items-center gap-1 shrink-0 cursor-pointer transition"
+                          title="Sumar 1 unidad directo al borrador de la ronda"
+                        >
+                          <i class="fa-solid fa-plus text-[9px]"></i>1
+                        </button>
                       </div>
                     } @empty {
-                      <div class="p-6 text-center text-zinc-400 text-xs">
+                      <div class="p-8 text-center text-zinc-400 text-xs">
                         No se encontraron productos con ese nombre.
                       </div>
                     }
                   </div>
 
-                  <!-- Columna Derecha: Configurador rápido de Variantes, Adicionales, Cantidad y Nota -->
-                  <div class="md:col-span-6 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark p-3 flex flex-col justify-between gap-3">
+                  <!-- Col 2: Configurador rápido de Variantes, Adicionales, Cantidad y Nota -->
+                  <div class="lg:col-span-4 h-[340px] rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark p-3.5 flex flex-col justify-between gap-3">
                     @if (productoConfigurando(); as pc) {
-                      <div class="space-y-2.5 max-h-48 overflow-y-auto pr-1">
-                        <div class="flex items-start justify-between gap-2 pb-1.5 border-b border-zinc-100 dark:border-surface-borderDark">
-                          <div>
-                            <p class="text-xs font-black text-zinc-900 dark:text-white leading-tight">{{ pc.nombre }}</p>
+                      <div class="space-y-2.5 flex-1 overflow-y-auto pr-1 min-h-0">
+                        <div class="flex items-start justify-between gap-2 pb-2 border-b border-zinc-100 dark:border-surface-borderDark">
+                          <div class="min-w-0">
+                            <p class="text-xs font-black text-zinc-900 dark:text-white leading-tight truncate">{{ pc.nombre }}</p>
                             <p class="text-[10px] text-zinc-400">{{ catalogo.nombreCategoria(pc.categoriaId) }}</p>
                           </div>
-                          <span class="text-xs font-black text-brand-600 shrink-0">{{ precioUnitarioConfigurando() | precio }} c/u</span>
+                          <span class="text-xs font-black text-brand-600 shrink-0 tabular-nums">{{ precioUnitarioConfigurando() | precio }} c/u</span>
                         </div>
 
-                        <!-- Grupos de Opciones (Variantes, Tamaños, Sabores, Adicionales) -->
                         @if (pc.gruposOpciones && pc.gruposOpciones.length > 0) {
                           @for (grupo of pc.gruposOpciones; track grupo.id) {
                             <div class="space-y-1">
-                              <div class="flex items-center justify-between">
+                              <div class="flex items-center justify-between gap-2">
                                 <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
                                   {{ grupo.nombre }}
                                 </span>
                                 <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-surface-cardDark text-zinc-500">
-                                  {{ grupo.obligatorio ? 'Obligatorio' : 'Opcional' }} · {{ grupo.tipo === 'unica' ? 'Elegí 1' : 'Múltiple' }}
+                                  {{ grupo.obligatorio ? 'Obligatorio' : 'Opcional' }}
                                 </span>
                               </div>
 
@@ -1871,7 +2052,7 @@
                                   >
                                     <span>{{ op.etiqueta }}</span>
                                     @if (op.precioAdicional > 0 && grupo.modoPrecio !== 'informativo') {
-                                      <span class="text-[10px] opacity-85 font-black">
+                                      <span class="text-[10px] opacity-85 font-black tabular-nums">
                                         {{ grupo.modoPrecio === 'variante' ? (op.precioAdicional | precio) : '+' + (op.precioAdicional | precio) }}
                                       </span>
                                     }
@@ -1882,24 +2063,22 @@
                           }
                         } @else {
                           <p class="text-[11px] text-zinc-400 italic py-1">
-                            Este producto no tiene variantes ni adicionales. Podés elegir cantidad o agregar una nota para cocina.
+                            Sin variantes ni adicionales. Elegí cantidad o nota para cocina.
                           </p>
                         }
 
-                        <!-- Nota rápida para cocina -->
                         <div>
                           <input
                             type="text"
                             [ngModel]="notasAgregar()"
                             (ngModelChange)="notasAgregar.set($event)"
-                            placeholder="Nota cocina (ej: sin aceitunas, bien cocido)..."
-                            class="w-full h-7 px-2.5 rounded-lg bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark text-[11px] font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+                            placeholder="Nota para cocina (ej: sin aceitunas)..."
+                            class="w-full h-8 px-2.5 rounded-lg bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark text-[11px] font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
                           />
                         </div>
                       </div>
 
-                      <!-- Barra inferior: Cantidad (- 1 +) y Botón Sumar al pedido -->
-                      <div class="pt-2 border-t border-zinc-100 dark:border-surface-borderDark flex items-center gap-2">
+                      <div class="pt-2 border-t border-zinc-100 dark:border-surface-borderDark flex items-center gap-2 shrink-0">
                         <div class="inline-flex items-center rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark h-8">
                           <button
                             type="button"
@@ -1908,7 +2087,7 @@
                           >
                             -
                           </button>
-                          <span class="px-2 font-black text-xs text-zinc-900 dark:text-white">{{ cantidadAgregar() }}</span>
+                          <span class="px-2 font-black text-xs text-zinc-900 dark:text-white tabular-nums">{{ cantidadAgregar() }}</span>
                           <button
                             type="button"
                             (click)="cantidadAgregar.set(cantidadAgregar() + 1)"
@@ -1920,81 +2099,275 @@
 
                         <button
                           type="button"
-                          [disabled]="guardandoItemPedido()"
-                          (click)="agregarProductoAPedido()"
-                          class="flex-1 h-8 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition"
+                          (click)="sumarProductoABorradorRonda()"
+                          class="flex-1 h-8 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-[11px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer transition"
                         >
-                          <i class="fa-solid fa-plus"></i>
-                          <span>Sumar · {{ totalProductoConfigurando() | precio }}</span>
+                          <i class="fa-solid fa-arrow-right"></i>
+                          <span class="tabular-nums">A Ronda #{{ proximaRondaNumero() }} · {{ totalProductoConfigurando() | precio }}</span>
                         </button>
                       </div>
                     } @else {
-                      <div class="py-10 text-center text-zinc-400 text-xs">
-                        Seleccioná un producto de la izquierda para elegir sus variantes o adicionales.
+                      <div class="flex-1 flex flex-col items-center justify-center text-center text-zinc-400 text-xs px-4 gap-2">
+                        <i class="fa-solid fa-hand-pointer text-lg opacity-40"></i>
+                        <span>Seleccioná un producto para configurar variantes o notas.</span>
                       </div>
                     }
+                  </div>
+
+                  <!-- Col 3: Borrador de la Nueva Ronda #N listo para guardar/comandar en 1 clic -->
+                  <div class="lg:col-span-4 h-[340px] rounded-xl border-2 border-brand-200 dark:border-brand-500/35 bg-white dark:bg-surface-dark p-3.5 flex flex-col justify-between gap-2.5">
+                    <div class="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-surface-borderDark shrink-0">
+                      <span class="text-[11px] font-black uppercase tracking-wider text-brand-700 dark:text-brand-300">
+                        Borrador Ronda #{{ proximaRondaNumero() }} ({{ borradorRondaUnidades() }} u.)
+                      </span>
+                      @if (borradorRondaItems().length > 0) {
+                        <button
+                          type="button"
+                          (click)="borradorRondaItems.set([])"
+                          class="text-[10px] font-bold text-red-500 hover:underline cursor-pointer"
+                        >
+                          Vaciar
+                        </button>
+                      }
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-surface-borderDark min-h-0">
+                      @for (it of borradorRondaItems(); track it.uid) {
+                        <div class="py-2 flex items-center justify-between gap-2">
+                          <div class="min-w-0 flex-1">
+                            <p class="font-extrabold text-zinc-900 dark:text-white text-xs truncate">
+                              {{ it.cantidad }}× {{ it.nombre }}
+                            </p>
+                            @if (it.opciones.length > 0) {
+                              <p class="text-[10px] text-zinc-500 truncate">
+                                @for (op of it.opciones; track op.etiqueta; let u = $last) {
+                                  <span>{{ op.etiqueta }}@if (!u) { · }</span>
+                                }
+                              </p>
+                            }
+                            @if (it.notas) {
+                              <p class="text-[10px] text-amber-600 font-bold truncate">Nota: {{ it.notas }}</p>
+                            }
+                          </div>
+
+                          <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="font-black text-zinc-900 dark:text-white text-[11px] tabular-nums">{{ it.total | precio }}</span>
+                            <div class="inline-flex items-center rounded-lg border border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark">
+                              <button
+                                type="button"
+                                (click)="cambiarCantidadBorradorRonda(it.uid, -1)"
+                                class="w-5 h-6 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-red-600 cursor-pointer"
+                              >
+                                -
+                              </button>
+                              <span class="px-1 font-black text-[10px] tabular-nums">{{ it.cantidad }}</span>
+                              <button
+                                type="button"
+                                (click)="cambiarCantidadBorradorRonda(it.uid, 1)"
+                                class="w-5 h-6 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      } @empty {
+                        <div class="h-full flex flex-col items-center justify-center text-center text-zinc-400 text-[11px] px-3 gap-1.5">
+                          <i class="fa-solid fa-layer-group text-base opacity-35"></i>
+                          <span>Sumá acá la pizza, gaseosa o cerveza que pidió la mesa ahora.</span>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="pt-2 border-t border-zinc-100 dark:border-surface-borderDark space-y-2 shrink-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            [ngModel]="borradorRondaYaEntregada()"
+                            (ngModelChange)="borradorRondaYaEntregada.set($event)"
+                            class="accent-emerald-600 w-3.5 h-3.5"
+                          />
+                          <span>Ya entregada (ej: bebida)</span>
+                        </label>
+                        <span class="text-xs font-black text-zinc-900 dark:text-white tabular-nums">+{{ borradorRondaTotal() | precio }}</span>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          [disabled]="guardandoItemPedido() || borradorRondaItems().length === 0"
+                          (click)="confirmarNuevaRonda(false)"
+                          class="h-9 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-[11px] font-black flex items-center justify-center gap-1 cursor-pointer transition"
+                        >
+                          <i class="fa-solid fa-check"></i>
+                          <span>Guardar R#{{ proximaRondaNumero() }}</span>
+                        </button>
+                        <button
+                          type="button"
+                          [disabled]="guardandoItemPedido() || borradorRondaItems().length === 0"
+                          (click)="confirmarNuevaRonda(true)"
+                          class="h-9 px-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white text-[11px] font-black flex items-center justify-center gap-1 cursor-pointer transition"
+                          title="Guardar esta ronda e imprimir comanda de cocina SOLO con estos ítems"
+                        >
+                          <i class="fa-solid fa-print"></i>
+                          <span>+ Comandar</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             }
 
-            <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark rounded-xl border border-zinc-200 dark:border-surface-borderDark">
-              @for (item of pd.items; track item.id) {
-                <div class="p-3 flex items-center justify-between gap-3">
-                  <div class="min-w-0 flex-1">
-                    <div class="font-extrabold text-zinc-900 dark:text-white text-[13px]">
-                      {{ item.cantidad }}x {{ item.nombre }}
-                      <span class="text-[11px] font-semibold text-zinc-400 ml-1">({{ item.precioUnitario | precio }} c/u)</span>
+            <!-- Productos del pedido agrupados por Ronda (#1, #2, #3...) con control de entrega por ronda e ítem -->
+            @let rondas = rondasDePedido(pd);
+            <div class="space-y-3">
+              @for (ronda of rondas; track ronda.numero) {
+                <div
+                  class="rounded-xl border overflow-hidden transition"
+                  [class]="ronda.todosEntregados
+                    ? 'border-emerald-200/80 dark:border-emerald-500/25 bg-emerald-50/20 dark:bg-emerald-500/5'
+                    : (ronda.numero > 1
+                        ? 'border-brand-300 dark:border-brand-500/40 bg-white dark:bg-surface-dark'
+                        : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark')"
+                >
+                  <!-- Cabecera de Ronda -->
+                  <div
+                    class="px-4 py-2 border-b flex flex-wrap items-center justify-between gap-2"
+                    [class]="ronda.todosEntregados
+                      ? 'bg-emerald-50/70 dark:bg-emerald-500/10 border-emerald-200/70 dark:border-emerald-500/20'
+                      : (ronda.numero > 1
+                          ? 'bg-brand-50/70 dark:bg-brand-500/10 border-brand-200/70 dark:border-brand-500/25'
+                          : 'bg-zinc-50/90 dark:bg-surface-cardDark border-zinc-200/70 dark:border-surface-borderDark')"
+                  >
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span
+                        class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wide"
+                        [class]="ronda.todosEntregados
+                          ? 'bg-emerald-600 text-white'
+                          : (ronda.numero > 1 ? 'bg-brand-600 text-white' : 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900')"
+                      >
+                        {{ ronda.numero === 1 ? 'Ronda #1 · Inicial' : 'Ronda #' + ronda.numero + ' · Agregado' }}
+                      </span>
+                      @if (ronda.horaTexto) {
+                        <span class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 tabular-nums">
+                          <i class="fa-regular fa-clock mr-0.5 opacity-70"></i>{{ ronda.horaTexto }}
+                        </span>
+                      }
+                      <span class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 tabular-nums">
+                        · {{ ronda.unidades }} u. · {{ ronda.subtotal | precio }}
+                      </span>
+                      @if (ronda.comandada) {
+                        <span class="text-[10px] font-bold text-zinc-400" title="Esta ronda ya fue impresa en cocina">
+                          <i class="fa-solid fa-print mr-0.5"></i>Comandada
+                        </span>
+                      }
                     </div>
-                    @if (item.opciones.length > 0) {
-                      <div class="text-[11px] text-zinc-500 mt-0.5">
-                        @for (op of item.opciones; track op.etiqueta; let uOp = $last) {
-                          <span>+ {{ op.grupoNombre }}: <strong>{{ op.etiqueta }}</strong>@if (!uOp) { · }</span>
-                        }
-                      </div>
-                    }
-                    @if (item.notas) {
-                      <div class="mt-1 inline-block px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-[10px] font-extrabold text-amber-800 dark:text-amber-300">
-                        Nota: "{{ item.notas }}"
-                      </div>
-                    }
+
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        (click)="imprimirComandaCocina(pd, ronda.numero)"
+                        class="h-7 px-2.5 rounded-lg border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark hover:border-zinc-900 dark:hover:border-white text-zinc-700 dark:text-zinc-200 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                        [title]="'Imprimir comanda de cocina SOLO para la Ronda #' + ronda.numero"
+                      >
+                        <i class="fa-solid fa-print text-[10px]"></i>
+                        <span>Cocina R#{{ ronda.numero }}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        [disabled]="guardandoItemPedido()"
+                        (click)="alternarEntregaRonda(pd, ronda.numero)"
+                        class="h-7 px-2.5 rounded-lg border text-[11px] font-extrabold flex items-center gap-1 transition cursor-pointer"
+                        [class]="ronda.todosEntregados
+                          ? 'border-emerald-300 dark:border-emerald-500/40 bg-white dark:bg-surface-dark text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100'
+                          : 'border-emerald-600 bg-emerald-600 hover:bg-emerald-700 text-white'"
+                        [title]="ronda.todosEntregados ? 'Ronda entregada (clic para volver a pendiente)' : 'Marcar todos los ítems de esta ronda como entregados'"
+                      >
+                        <i class="fa-solid" [class]="ronda.todosEntregados ? 'fa-circle-check' : 'fa-check'"></i>
+                        <span>{{ ronda.todosEntregados ? 'Entregada' : 'Marcar entregada' }}</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div class="flex items-center gap-2 shrink-0">
-                    <span class="font-black text-zinc-900 dark:text-white text-xs mr-1">{{ item.total | precio }}</span>
+                  <!-- Ítems de esta Ronda -->
+                  <div class="divide-y divide-zinc-100 dark:divide-surface-borderDark">
+                    @for (item of ronda.items; track item.id) {
+                      <div class="px-4 py-2.5 flex items-center justify-between gap-3" [class.opacity-65]="item.entregado">
+                        <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                          <button
+                            type="button"
+                            [disabled]="guardandoItemPedido()"
+                            (click)="alternarEntregaItem(pd, item)"
+                            class="mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition cursor-pointer"
+                            [class]="item.entregado
+                              ? 'border-emerald-600 bg-emerald-600 text-white'
+                              : 'border-zinc-300 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-transparent hover:border-emerald-500'"
+                            [title]="item.entregado ? 'Entregado (clic para desmarcar)' : 'Marcar este producto como entregado'"
+                          >
+                            <i class="fa-solid fa-check text-[9px]"></i>
+                          </button>
 
-                    <div class="inline-flex items-center rounded-lg border border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark">
-                      <button
-                        type="button"
-                        [disabled]="guardandoItemPedido()"
-                        (click)="cambiarCantidadItemPedido(pd, item, -1)"
-                        class="w-7 h-7 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
-                        title="Restar 1 unidad"
-                      >
-                        -
-                      </button>
-                      <span class="px-2 font-black text-zinc-900 dark:text-white">{{ item.cantidad }}</span>
-                      <button
-                        type="button"
-                        [disabled]="guardandoItemPedido()"
-                        (click)="cambiarCantidadItemPedido(pd, item, 1)"
-                        class="w-7 h-7 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
-                        title="Sumar 1 unidad"
-                      >
-                        +
-                      </button>
-                    </div>
+                          <div class="min-w-0 flex-1">
+                            <div class="font-extrabold text-zinc-900 dark:text-white text-[13px] leading-snug" [class.line-through]="item.entregado">
+                              {{ item.cantidad }}× {{ item.nombre }}
+                              <span class="text-[11px] font-semibold text-zinc-400 ml-1 tabular-nums">({{ item.precioUnitario | precio }} c/u)</span>
+                            </div>
+                            @if (item.opciones.length > 0) {
+                              <div class="text-[11px] text-zinc-500 mt-0.5">
+                                @for (op of item.opciones; track op.etiqueta; let uOp = $last) {
+                                  <span>+ {{ op.grupoNombre }}: <strong>{{ op.etiqueta }}</strong>@if (!uOp) { · }</span>
+                                }
+                              </div>
+                            }
+                            @if (item.notas) {
+                              <div class="mt-1 inline-block px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-[10px] font-extrabold text-amber-800 dark:text-amber-300">
+                                Nota: "{{ item.notas }}"
+                              </div>
+                            }
+                          </div>
+                        </div>
 
-                    @if (pd.items.length > 1) {
-                      <button
-                        type="button"
-                        [disabled]="guardandoItemPedido()"
-                        (click)="eliminarItemDePedido(pd, item)"
-                        class="w-7 h-7 rounded-lg border border-red-200 dark:border-red-500/30 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition cursor-pointer"
-                        title="Quitar producto del pedido"
-                      >
-                        <i class="fa-solid fa-trash-can text-[10px]"></i>
-                      </button>
+                        <div class="flex items-center gap-2.5 shrink-0">
+                          <span class="font-black text-zinc-900 dark:text-white text-sm tabular-nums min-w-[72px] text-right">{{ item.total | precio }}</span>
+
+                          <div class="inline-flex items-center rounded-lg border border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark">
+                            <button
+                              type="button"
+                              [disabled]="guardandoItemPedido()"
+                              (click)="cambiarCantidadItemPedido(pd, item, -1)"
+                              class="w-7 h-7 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
+                              title="Restar 1 unidad"
+                            >
+                              -
+                            </button>
+                            <span class="px-2 font-black text-zinc-900 dark:text-white tabular-nums">{{ item.cantidad }}</span>
+                            <button
+                              type="button"
+                              [disabled]="guardandoItemPedido()"
+                              (click)="cambiarCantidadItemPedido(pd, item, 1)"
+                              class="w-7 h-7 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
+                              title="Sumar 1 unidad"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          @if (pd.items.length > 1) {
+                            <button
+                              type="button"
+                              [disabled]="guardandoItemPedido()"
+                              (click)="eliminarItemDePedido(pd, item)"
+                              class="w-7 h-7 rounded-lg border border-red-200 dark:border-red-500/30 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition cursor-pointer"
+                              title="Quitar producto del pedido"
+                            >
+                              <i class="fa-solid fa-trash-can text-[10px]"></i>
+                            </button>
+                          }
+                        </div>
+                      </div>
                     }
                   </div>
                 </div>
@@ -2003,8 +2376,8 @@
           </div>
 
           <!-- Resumen de Totales -->
-          <div class="p-3.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-4 text-[11px] flex-wrap opacity-85">
+          <div class="px-4 py-3.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-4 text-xs flex-wrap opacity-85 tabular-nums">
               <span>Subtotal: <strong>{{ pd.totales.subtotal | precio }}</strong></span>
               @if (pd.totales.costoEnvio > 0) {
                 <span>Envío: <strong>{{ pd.totales.costoEnvio | precio }}</strong></span>
@@ -2016,18 +2389,18 @@
                 <span>Descuento: <strong>-{{ pd.totales.descuento | precio }}</strong></span>
               }
             </div>
-            <div class="text-base font-black">
+            <div class="text-base sm:text-lg font-black tabular-nums">
               TOTAL: {{ pd.totales.total | precio }}
             </div>
           </div>
         </div>
 
         <!-- Pie del Modal -->
-        <div class="px-5 py-3 border-t border-zinc-200 dark:border-surface-borderDark bg-zinc-50/80 dark:bg-surface-cardDark flex items-center justify-between gap-2">
+        <div class="px-5 sm:px-6 py-3.5 border-t border-zinc-200 dark:border-surface-borderDark bg-zinc-50/80 dark:bg-surface-cardDark flex items-center justify-between gap-2">
           <button
             type="button"
             (click)="abrirSelectorComanda(pd)"
-            class="h-9 px-3.5 rounded-xl border border-zinc-300 dark:border-surface-borderDark bg-white dark:bg-surface-dark hover:border-zinc-900 text-xs font-extrabold text-zinc-800 dark:text-zinc-100 flex items-center gap-1.5 cursor-pointer"
+            class="h-9 px-4 rounded-xl border border-zinc-300 dark:border-surface-borderDark bg-white dark:bg-surface-dark hover:border-zinc-900 dark:hover:border-white text-xs font-extrabold text-zinc-800 dark:text-zinc-100 flex items-center gap-2 transition cursor-pointer"
           >
             <i class="fa-solid fa-print"></i>
             <span>Imprimir Comanda…</span>
@@ -2036,7 +2409,7 @@
           <button
             type="button"
             (click)="cerrarDetallePedido()"
-            class="h-9 px-4 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-extrabold cursor-pointer"
+            class="h-9 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-extrabold transition cursor-pointer"
           >
             Listo / Cerrar
           </button>
@@ -2087,13 +2460,32 @@
               <i class="fa-solid fa-receipt"></i>
             </span>
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-black text-zinc-900 dark:text-white">Ticket para el Cliente / Repartidor</p>
+              <p class="text-xs font-black text-zinc-900 dark:text-white">Ticket Cliente / Cuenta Consolidada</p>
               <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Incluye precios, total ({{ pc.totales.total | precio }}), dirección de entrega y estado de cobro.
+                Agrupa ítems repetidos de todas las rondas, total ({{ pc.totales.total | precio }}) y estado de cobro.
               </p>
             </div>
             <i class="fa-solid fa-chevron-right text-zinc-400 group-hover:translate-x-0.5 transition"></i>
           </button>
+
+          @if (numeroUltimaRonda(pc) > 1 && rondasPendientesDePedido(pc).length > 0) {
+            <button
+              type="button"
+              (click)="elegirEImprimirComanda('cocina_pendientes')"
+              class="w-full p-3.5 rounded-xl border-2 border-brand-400 dark:border-brand-500/50 hover:border-brand-600 bg-brand-50/70 dark:bg-brand-500/10 text-left flex items-center gap-3.5 transition cursor-pointer group"
+            >
+              <span class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-layer-group"></i>
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-black text-zinc-900 dark:text-white">Comanda Cocina · Solo Pendientes (Agregados)</p>
+                <p class="text-[11px] text-zinc-600 dark:text-zinc-300 mt-0.5">
+                  Imprime únicamente lo que falta preparar/entregar sin repetir rondas anteriores.
+                </p>
+              </div>
+              <i class="fa-solid fa-chevron-right text-brand-600 group-hover:translate-x-0.5 transition"></i>
+            </button>
+          }
 
           <button
             type="button"
@@ -2104,13 +2496,503 @@
               <i class="fa-solid fa-fire-burner"></i>
             </span>
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-black text-zinc-900 dark:text-white">Comanda exclusiva para Cocina</p>
+              <p class="text-xs font-black text-zinc-900 dark:text-white">
+                {{ numeroUltimaRonda(pc) > 1 ? 'Comanda Cocina · Pedido Completo' : 'Comanda exclusiva para Cocina' }}
+              </p>
               <p class="text-[11px] text-zinc-600 dark:text-zinc-300 mt-0.5">
                 Sin precios ni importes. Destaca cantidades grandes, adicionales, notas y prioridad.
               </p>
             </div>
             <i class="fa-solid fa-chevron-right text-amber-600 group-hover:translate-x-0.5 transition"></i>
           </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- =========================================================================
+       MODAL 3: TOMA RÁPIDA DE NUEVO PEDIDO (MOSTRADOR / TELÉFONO / WHATSAPP)
+       ========================================================================= -->
+  @if (modalNuevoPedidoAbierto()) {
+    <div
+      class="fixed inset-0 z-50 bg-zinc-950/65 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4"
+      (click)="cerrarModalNuevoPedido()"
+    >
+      <div
+        class="bg-white dark:bg-surface-dark rounded-2xl w-full max-w-[1380px] h-[92vh] max-h-[92vh] flex flex-col shadow-2xl border border-zinc-200 dark:border-surface-borderDark overflow-hidden"
+        (click)="$event.stopPropagation()"
+      >
+        <!-- Cabecera del Modal POS Rápido -->
+        <div class="px-5 sm:px-6 py-3.5 border-b border-zinc-200 dark:border-surface-borderDark flex items-center justify-between gap-4 bg-zinc-50/90 dark:bg-surface-cardDark shrink-0">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center text-sm font-black shadow-xs shrink-0">
+              <i class="fa-solid fa-cash-register"></i>
+            </span>
+            <div class="min-w-0">
+              <h3 class="text-sm sm:text-base font-black text-zinc-900 dark:text-white leading-tight truncate">
+                Nuevo Pedido Rápido · Mostrador / Teléfono
+              </h3>
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                Tocá <strong class="text-emerald-600">+1</strong> para sumar en 1 clic, o elegí un plato para configurar variantes y adicionales.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            (click)="cerrarModalNuevoPedido()"
+            class="w-9 h-9 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-400 flex items-center justify-center shrink-0 transition cursor-pointer"
+            title="Cerrar"
+            aria-label="Cerrar"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Cuerpo Principal en 2 Columnas: Izquierda Catálogo + Configurador | Derecha Ticket + Datos + Cobro -->
+        <div class="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 text-xs">
+          <!-- ===============================================================
+               COLUMNA IZQUIERDA (7 cols): BUSCADOR, CARTA RÁPIDA Y VARIANTES
+               =============================================================== -->
+          <div class="lg:col-span-7 min-w-0 flex flex-col gap-3 lg:min-h-0">
+            <!-- Buscador instantáneo + Tira de Categorías con flechas y rueda del mouse -->
+            <div class="space-y-2.5 shrink-0">
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-zinc-400 text-xs"></i>
+                <input
+                  type="text"
+                  [ngModel]="busquedaProductoAgregar()"
+                  (ngModelChange)="busquedaProductoAgregar.set($event)"
+                  placeholder="Buscar plato o bebida (ej: Muzzarella, Napolitana, Empanadas, Coca)..."
+                  class="w-full h-10 pl-9 pr-3 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600 focus:bg-white dark:focus:bg-surface-dark transition"
+                />
+              </div>
+
+              <div class="flex items-center gap-1.5 min-w-0">
+                <button
+                  type="button"
+                  (click)="desplazarCategorias(catsNuevo, -1)"
+                  class="w-8 h-8 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-cardDark text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-400 flex items-center justify-center shrink-0 transition cursor-pointer"
+                  title="Categorías anteriores"
+                  aria-label="Categorías anteriores"
+                >
+                  <i class="fa-solid fa-chevron-left text-[11px]"></i>
+                </button>
+
+                <div
+                  #catsNuevo
+                  (wheel)="alRuedaCategorias($event, catsNuevo)"
+                  class="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-extrabold scroll-smooth py-0.5"
+                >
+                  <button
+                    type="button"
+                    (click)="categoriaAgregarId.set('todas')"
+                    class="px-3.5 py-1.5 rounded-xl border whitespace-nowrap shrink-0 transition cursor-pointer"
+                    [class]="categoriaAgregarId() === 'todas'
+                      ? 'border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                      : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 hover:border-zinc-400'"
+                  >
+                    Todas
+                  </button>
+                  @for (cat of catalogo.categorias(); track cat.id) {
+                    <button
+                      type="button"
+                      (click)="categoriaAgregarId.set(cat.id)"
+                      class="px-3.5 py-1.5 rounded-xl border whitespace-nowrap shrink-0 transition cursor-pointer"
+                      [class]="categoriaAgregarId() === cat.id
+                        ? 'border-brand-600 bg-brand-600 text-white'
+                        : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 hover:border-zinc-400'"
+                    >
+                      {{ cat.nombre }}
+                    </button>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  (click)="desplazarCategorias(catsNuevo, 1)"
+                  class="w-8 h-8 rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-cardDark text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-400 flex items-center justify-center shrink-0 transition cursor-pointer"
+                  title="Más categorías"
+                  aria-label="Más categorías"
+                >
+                  <i class="fa-solid fa-chevron-right text-[11px]"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Grilla interna: Lista de platos (izq) + Configurador de variantes/adicionales (der) -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 flex-1 min-h-0">
+              <!-- Lista de productos con botón "+1" de carga directa en 1 clic -->
+              <div class="md:col-span-6 h-[320px] lg:h-full overflow-y-auto rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50/40 dark:bg-surface-cardDark/40 divide-y divide-zinc-100 dark:divide-surface-borderDark">
+                @for (prod of productosCatalogoFiltrados(); track prod.id) {
+                  @let activo = productoConfigurando()?.id === prod.id;
+                  <div
+                    (click)="seleccionarProductoParaAgregar(prod)"
+                    class="px-3.5 py-2.5 flex items-center justify-between gap-2.5 cursor-pointer transition"
+                    [class]="activo
+                      ? 'bg-brand-50 dark:bg-brand-500/15 border-l-4 border-brand-600'
+                      : 'hover:bg-white dark:hover:bg-surface-dark'"
+                  >
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-1.5">
+                        <p class="font-extrabold text-zinc-900 dark:text-white truncate text-[13px] leading-snug">{{ prod.nombre }}</p>
+                        @if (!prod.disponible) {
+                          <span class="px-1.5 py-0.5 rounded bg-red-100 text-red-700 text-[9px] font-black shrink-0">AGOTADO</span>
+                        }
+                      </div>
+                      <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-xs font-black text-brand-600 tabular-nums">{{ prod.precio | precio }}</span>
+                        @if (prod.gruposOpciones && prod.gruposOpciones.length > 0) {
+                          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                            Variantes
+                          </span>
+                        }
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      (click)="$event.stopPropagation(); sumarProductoABorrador(prod)"
+                      class="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs transition"
+                      title="Sumar 1 unidad directo con sus opciones por defecto"
+                    >
+                      <i class="fa-solid fa-plus text-[9px]"></i>1
+                    </button>
+                  </div>
+                } @empty {
+                  <div class="p-8 text-center text-zinc-400 text-xs">
+                    No se encontraron productos con ese filtro.
+                  </div>
+                }
+              </div>
+
+              <!-- Configurador de Variantes (8/4 porciones, 12/6/1 empanadas) y Adicionales -->
+              <div class="md:col-span-6 h-[320px] lg:h-full rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark p-4 flex flex-col justify-between gap-3 overflow-hidden">
+                @if (productoConfigurando(); as pc) {
+                  <div class="space-y-3 flex-1 overflow-y-auto pr-1 min-h-0">
+                    <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-zinc-100 dark:border-surface-borderDark">
+                      <div class="min-w-0">
+                        <p class="text-sm font-black text-zinc-900 dark:text-white leading-tight truncate">{{ pc.nombre }}</p>
+                        <p class="text-[11px] text-zinc-400 mt-0.5">{{ catalogo.nombreCategoria(pc.categoriaId) }}</p>
+                      </div>
+                      <span class="text-sm font-black text-brand-600 shrink-0 tabular-nums">{{ precioUnitarioConfigurando() | precio }} c/u</span>
+                    </div>
+
+                    @if (pc.gruposOpciones && pc.gruposOpciones.length > 0) {
+                      @for (grupo of pc.gruposOpciones; track grupo.id) {
+                        <div class="space-y-1.5">
+                          <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+                              {{ grupo.nombre }}
+                            </span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-zinc-100 dark:bg-surface-cardDark text-zinc-500">
+                              {{ grupo.obligatorio ? 'Obligatorio' : 'Opcional' }}
+                            </span>
+                          </div>
+
+                          <div class="flex flex-wrap gap-1.5">
+                            @for (op of grupo.opciones; track op.id) {
+                              @let marcada = estaOpcionSeleccionada(grupo.id, op.id);
+                              <button
+                                type="button"
+                                (click)="alternarOpcionProducto(grupo, op)"
+                                class="px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                                [class]="marcada
+                                  ? 'border-brand-600 bg-brand-600 text-white shadow-2xs'
+                                  : 'border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark text-zinc-700 dark:text-zinc-200 hover:border-brand-400'"
+                              >
+                                <span>{{ op.etiqueta }}</span>
+                                @if (op.precioAdicional > 0 && grupo.modoPrecio !== 'informativo') {
+                                  <span class="text-[11px] opacity-90 font-black tabular-nums">
+                                    {{ grupo.modoPrecio === 'variante' ? (op.precioAdicional | precio) : '+' + (op.precioAdicional | precio) }}
+                                  </span>
+                                }
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      }
+                    } @else {
+                      <p class="text-xs text-zinc-400 italic py-2">
+                        Sin variantes ni adicionales. Podés ajustar cantidad o escribir una nota para cocina.
+                      </p>
+                    }
+
+                    <div>
+                      <input
+                        type="text"
+                        [ngModel]="notasAgregar()"
+                        (ngModelChange)="notasAgregar.set($event)"
+                        placeholder="Nota para cocina (ej: sin aceitunas, bien cocido)..."
+                        class="w-full h-9 px-3 rounded-xl bg-zinc-50 dark:bg-surface-cardDark border border-zinc-200 dark:border-surface-borderDark text-xs font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-brand-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="pt-3 border-t border-zinc-100 dark:border-surface-borderDark flex items-center gap-2 shrink-0">
+                    <div class="inline-flex items-center rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark h-9">
+                      <button
+                        type="button"
+                        (click)="cantidadAgregar.set(cantidadAgregar() > 1 ? cantidadAgregar() - 1 : 1)"
+                        class="w-8 h-9 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <span class="px-2.5 font-black text-xs text-zinc-900 dark:text-white tabular-nums">{{ cantidadAgregar() }}</span>
+                      <button
+                        type="button"
+                        (click)="cantidadAgregar.set(cantidadAgregar() + 1)"
+                        class="w-8 h-9 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      (click)="sumarProductoABorrador()"
+                      class="flex-1 h-9 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition"
+                    >
+                      <i class="fa-solid fa-plus"></i>
+                      <span class="tabular-nums">Sumar · {{ totalProductoConfigurando() | precio }}</span>
+                    </button>
+                  </div>
+                } @else {
+                  <div class="flex-1 flex flex-col items-center justify-center text-center text-zinc-400 text-xs gap-2">
+                    <i class="fa-solid fa-utensils text-lg opacity-40"></i>
+                    <span>Seleccioná un producto de la izquierda.</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               COLUMNA DERECHA (5 cols): COMANDA EN VIVO, MODALIDAD Y COBRO
+               =============================================================== -->
+          <div class="lg:col-span-5 min-w-0 rounded-2xl border border-zinc-200 dark:border-surface-borderDark bg-zinc-50/70 dark:bg-surface-cardDark/50 p-4 flex flex-col justify-between gap-3.5 lg:min-h-0">
+            <div class="flex flex-col gap-3 flex-1 min-h-0">
+              <!-- 1. Modalidad en 1 toque: Mostrador/Retiro vs Envío -->
+              <div class="grid grid-cols-2 gap-2 shrink-0">
+                <button
+                  type="button"
+                  (click)="nuevoModoEntrega.set('retiro')"
+                  class="h-9 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  [class]="nuevoModoEntrega() === 'retiro'
+                    ? 'border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs'
+                    : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300'"
+                >
+                  <i class="fa-solid fa-store"></i>
+                  <span>Mostrador / Retiro</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="nuevoModoEntrega.set('envio')"
+                  class="h-9 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  [class]="nuevoModoEntrega() === 'envio'
+                    ? 'border-brand-600 bg-brand-600 text-white shadow-xs'
+                    : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300'"
+                >
+                  <i class="fa-solid fa-motorcycle"></i>
+                  <span>Envío a domicilio</span>
+                </button>
+              </div>
+
+              <!-- 2. Cliente (opcional en mostrador) y Dirección si es Envío -->
+              <div class="grid grid-cols-2 gap-2 shrink-0">
+                <input
+                  type="text"
+                  [ngModel]="nuevoNombreCliente()"
+                  (ngModelChange)="nuevoNombreCliente.set($event)"
+                  placeholder="Cliente / Mesa (opcional)"
+                  [class]="claseCampo + ' !bg-white dark:!bg-surface-dark !py-2'"
+                />
+                <input
+                  type="text"
+                  [ngModel]="nuevoTelefonoCliente()"
+                  (ngModelChange)="nuevoTelefonoCliente.set($event)"
+                  placeholder="WhatsApp / Tel. (opcional)"
+                  [class]="claseCampo + ' !bg-white dark:!bg-surface-dark !py-2'"
+                />
+              </div>
+
+              @if (nuevoModoEntrega() === 'envio') {
+                <div class="space-y-2 p-3 rounded-xl bg-white dark:bg-surface-dark border border-brand-200 dark:border-brand-500/30 shrink-0">
+                  <input
+                    type="text"
+                    [ngModel]="nuevoCalle()"
+                    (ngModelChange)="nuevoCalle.set($event)"
+                    placeholder="Dirección de entrega (Calle, número, barrio)..."
+                    [class]="claseCampo + ' !py-1.5'"
+                  />
+                  <div class="flex items-center justify-between gap-2">
+                    <input
+                      type="text"
+                      [ngModel]="nuevoReferencia()"
+                      (ngModelChange)="nuevoReferencia.set($event)"
+                      placeholder="Referencia (opcional)"
+                      [class]="claseCampo + ' !py-1 flex-1'"
+                    />
+                    <label class="flex items-center gap-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 shrink-0 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [ngModel]="nuevoIncluirEnvio()"
+                        (ngModelChange)="nuevoIncluirEnvio.set($event)"
+                        class="accent-brand-600 w-3.5 h-3.5"
+                      />
+                      <span>Sumar envío</span>
+                    </label>
+                  </div>
+                </div>
+              }
+
+              <!-- 3. Lista de productos cargados en este nuevo pedido -->
+              <div class="rounded-xl border border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark overflow-hidden flex-1 min-h-[150px] flex flex-col">
+                <div class="px-3.5 py-2 bg-zinc-100/80 dark:bg-surface-cardDark border-b border-zinc-200 dark:border-surface-borderDark flex items-center justify-between shrink-0">
+                  <span class="text-[10px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+                    Comanda ({{ nuevoCantidadUnidades() }} u.)
+                  </span>
+                  @if (nuevoItems().length > 0) {
+                    <button
+                      type="button"
+                      (click)="nuevoItems.set([])"
+                      class="text-[11px] font-bold text-red-500 hover:underline cursor-pointer"
+                    >
+                      Vaciar
+                    </button>
+                  }
+                </div>
+
+                <div class="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-surface-borderDark">
+                  @for (it of nuevoItems(); track it.uid) {
+                    <div class="px-3.5 py-2.5 flex items-center justify-between gap-2">
+                      <div class="min-w-0 flex-1">
+                        <p class="font-extrabold text-zinc-900 dark:text-white text-xs truncate">
+                          {{ it.cantidad }}× {{ it.nombre }}
+                        </p>
+                        @if (it.opciones.length > 0) {
+                          <p class="text-[11px] text-zinc-500 truncate">
+                            @for (op of it.opciones; track op.etiqueta; let u = $last) {
+                              <span>{{ op.etiqueta }}@if (!u) { · }</span>
+                            }
+                          </p>
+                        }
+                        @if (it.notas) {
+                          <p class="text-[11px] text-amber-600 font-bold truncate">Nota: {{ it.notas }}</p>
+                        }
+                      </div>
+
+                      <div class="flex items-center gap-2 shrink-0">
+                        <span class="font-black text-zinc-900 dark:text-white text-xs tabular-nums">{{ it.total | precio }}</span>
+                        <div class="inline-flex items-center rounded-lg border border-zinc-200 dark:border-surface-borderDark bg-zinc-50 dark:bg-surface-cardDark">
+                          <button
+                            type="button"
+                            (click)="cambiarCantidadBorrador(it.uid, -1)"
+                            class="w-6 h-6 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-red-600 cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span class="px-1.5 font-black text-[11px] tabular-nums">{{ it.cantidad }}</span>
+                          <button
+                            type="button"
+                            (click)="cambiarCantidadBorrador(it.uid, 1)"
+                            class="w-6 h-6 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-300 hover:text-brand-600 cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  } @empty {
+                    <div class="h-full min-h-[120px] flex flex-col items-center justify-center text-center text-zinc-400 text-xs px-4 gap-1.5">
+                      <i class="fa-solid fa-receipt text-lg opacity-35"></i>
+                      <span>Tocá <strong class="text-emerald-600">+1</strong> en cualquier producto de la izquierda para empezar.</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Pie de Comanda: Medio de Pago, Estado de Cobro, Total y Botones de Creación en 1 clic -->
+            <div class="space-y-2.5 pt-3 border-t border-zinc-200 dark:border-surface-borderDark shrink-0">
+              <!-- Medio de pago en 1 toque -->
+              <div class="grid grid-cols-3 gap-1.5">
+                @for (mp of [
+                  { valor: 'efectivo', etiqueta: 'Efectivo', icono: 'fa-money-bill-wave' },
+                  { valor: 'transferencia', etiqueta: 'Transf.', icono: 'fa-building-columns' },
+                  { valor: 'debito', etiqueta: 'Débito', icono: 'fa-credit-card' }
+                ]; track mp.valor) {
+                  <button
+                    type="button"
+                    (click)="nuevoMedioPago.set($any(mp.valor))"
+                    class="h-8 rounded-xl border text-[11px] font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                    [class]="nuevoMedioPago() === mp.valor
+                      ? 'border-brand-600 bg-brand-600 text-white'
+                      : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 hover:border-zinc-400'"
+                  >
+                    <i class="fa-solid text-[10px]" [class]="mp.icono"></i>
+                    <span>{{ mp.etiqueta }}</span>
+                  </button>
+                }
+              </div>
+
+              <!-- Interruptor Cobrado ahora vs Sin pagar + Prioridad -->
+              <div class="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  (click)="nuevoPagado.set(!nuevoPagado())"
+                  class="flex-1 h-9 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  [class]="nuevoPagado()
+                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
+                    : 'border-amber-300 bg-amber-50 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300'"
+                >
+                  <i class="fa-solid" [class]="nuevoPagado() ? 'fa-circle-check' : 'fa-clock'"></i>
+                  <span>{{ nuevoPagado() ? 'Ya Pagado (Suma a caja)' : 'Sin pagar (Pendiente)' }}</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="nuevoPrioritario.set(!nuevoPrioritario())"
+                  class="h-9 px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+                  [class]="nuevoPrioritario()
+                    ? 'border-red-600 bg-red-600 text-white'
+                    : 'border-zinc-200 dark:border-surface-borderDark bg-white dark:bg-surface-dark text-zinc-500 hover:text-red-600 hover:border-red-300'"
+                  title="Marcar como pedido prioritario para cocina"
+                >
+                  <i class="fa-solid fa-fire"></i>
+                  <span>Prioridad</span>
+                </button>
+              </div>
+
+              <!-- Total y 2 Botones de Confirmación -->
+              <div class="px-4 py-3 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-between">
+                <span class="text-xs font-bold uppercase opacity-80">Total del Pedido</span>
+                <span class="text-lg font-black tabular-nums">{{ nuevoTotal() | precio }}</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  [disabled]="guardandoNuevoPedido() || nuevoItems().length === 0"
+                  (click)="confirmarNuevoPedido(false)"
+                  class="h-10 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition"
+                >
+                  <i class="fa-solid fa-check"></i>
+                  <span>Crear Pedido</span>
+                </button>
+
+                <button
+                  type="button"
+                  [disabled]="guardandoNuevoPedido() || nuevoItems().length === 0"
+                  (click)="confirmarNuevoPedido(true)"
+                  class="h-10 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition"
+                >
+                  <i class="fa-solid fa-print"></i>
+                  <span>Crear + Imprimir Cocina</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

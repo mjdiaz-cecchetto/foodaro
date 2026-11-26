@@ -1,6 +1,7 @@
 # Foodaro — Definición y Reglas de Planes Comerciales (Gating)
 
-> Última actualización: 02/11/2026
+> Última actualización: 26/11/2026
+> Estado: ✅ **Implementado y validado** en Backend (`VerificarCapacidadPlan`, `Plan`, `Local`, `ProductoController`, `BloqueoPlanesTest`) y Frontend (`requiereCapacidadGuardia`, `BarraLateralAdminComponente`, `PaginaPlanBloqueadoComponente`).
 > Documento oficial de especificación para las capacidades, límites y bloqueo técnico (Gating) por plan de suscripción en Foodaro.
 
 ---

@@ -17,6 +17,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -55,6 +56,115 @@ class PedidoAdminController extends Controller
         $pedidos = $query->latest('id')->paginate(50);
 
         return PedidoResource::collection($pedidos);
+    }
+
+    /**
+     * POST /api/admin/pedidos — Toma rápida de pedido desde el mostrador / teléfono / WhatsApp por el encargado.
+     * No bloquea por horario público del local ni exige teléfono/dirección obligatoria en mostrador.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $datos = $request->validate([
+            'modoEntrega' => ['required', 'string', Rule::in(['retiro', 'envio'])],
+            'nombreCliente' => ['nullable', 'string', 'max:120'],
+            'telefonoCliente' => ['nullable', 'string', 'max:40'],
+            'calle' => ['nullable', 'string', 'max:180'],
+            'referencia' => ['nullable', 'string', 'max:180'],
+            'medioPago' => ['required', 'string', Rule::in(['efectivo', 'transferencia', 'debito'])],
+            'pagado' => ['sometimes', 'boolean'],
+            'prioritario' => ['sometimes', 'boolean'],
+            'estado' => ['sometimes', 'string', Rule::in(['pendiente', 'confirmado', 'en_preparacion', 'listo', 'entregado'])],
+            'incluirCostoEnvio' => ['sometimes', 'boolean'],
+            'comentarios' => ['nullable', 'string', 'max:500'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.productoId' => ['nullable', 'integer'],
+            'items.*.nombre' => ['required', 'string', 'max:150'],
+            'items.*.precioUnitario' => ['required', 'numeric', 'min:0'],
+            'items.*.cantidad' => ['required', 'integer', 'min:1'],
+            'items.*.notas' => ['nullable', 'string', 'max:255'],
+            'items.*.opciones' => ['nullable', 'array'],
+            'items.*.opciones.*.grupoNombre' => ['required_with:items.*.opciones', 'string', 'max:100'],
+            'items.*.opciones.*.etiqueta' => ['required_with:items.*.opciones', 'string', 'max:120'],
+            'items.*.opciones.*.precioAdicional' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $local = $request->user()->local;
+
+        $pedido = DB::transaction(function () use ($local, $datos) {
+            $ultimoNumero = (int) $local->pedidos()->lockForUpdate()->max('numero');
+            $esEnvio = $datos['modoEntrega'] === 'envio';
+            $incluirEnvio = $esEnvio && ($datos['incluirCostoEnvio'] ?? true);
+
+            $subtotal = 0.0;
+            $lineasPreparadas = [];
+
+            foreach ($datos['items'] as $it) {
+                $cant = (int) $it['cantidad'];
+                $precioUnit = round((float) $it['precioUnitario'], 2);
+                $totalLinea = round($precioUnit * $cant, 2);
+                $subtotal += $totalLinea;
+
+                $lineasPreparadas[] = [
+                    'item' => [
+                        'producto_id' => ! empty($it['productoId']) ? (int) $it['productoId'] : null,
+                        'nombre' => trim($it['nombre']),
+                        'precio_unitario' => $precioUnit,
+                        'cantidad' => $cant,
+                        'total' => $totalLinea,
+                        'notas' => ! empty($it['notas']) ? trim($it['notas']) : null,
+                    ],
+                    'opciones' => collect($it['opciones'] ?? [])->map(fn ($op) => [
+                        'grupo_nombre' => trim($op['grupoNombre']),
+                        'etiqueta' => trim($op['etiqueta']),
+                        'precio_adicional' => round((float) ($op['precioAdicional'] ?? 0), 2),
+                    ])->all(),
+                ];
+            }
+
+            $costoEnvio = $incluirEnvio ? (float) ($local->costo_envio ?? 0) : 0.0;
+            $cargoServicio = (float) ($local->cargo_servicio ?? 0);
+            $total = max(0, round($subtotal + $costoEnvio + $cargoServicio, 2));
+            $estaPagado = (bool) ($datos['pagado'] ?? false);
+
+            $nombreCliente = ! empty(trim($datos['nombreCliente'] ?? ''))
+                ? trim($datos['nombreCliente'])
+                : ($esEnvio ? 'Cliente Delivery' : 'Mostrador');
+            $telefonoCliente = ! empty(trim($datos['telefonoCliente'] ?? ''))
+                ? trim($datos['telefonoCliente'])
+                : '-';
+
+            $nuevoPedido = $local->pedidos()->create([
+                'numero' => $ultimoNumero + 1,
+                'estado' => $datos['estado'] ?? 'en_preparacion',
+                'prioritario' => (bool) ($datos['prioritario'] ?? false),
+                'modo_entrega' => $datos['modoEntrega'],
+                'nombre_cliente' => $nombreCliente,
+                'telefono_cliente' => $telefonoCliente,
+                'calle' => $esEnvio ? (trim($datos['calle'] ?? '') ?: 'Sin dirección especificada') : null,
+                'piso_depto' => null,
+                'referencia' => $esEnvio && ! empty($datos['referencia']) ? trim($datos['referencia']) : null,
+                'medio_pago' => $datos['medioPago'],
+                'pagado' => $estaPagado,
+                'pagado_en' => $estaPagado ? now() : null,
+                'comentarios' => ! empty($datos['comentarios']) ? trim($datos['comentarios']) : null,
+                'subtotal' => $subtotal,
+                'descuento' => 0,
+                'cargo_servicio' => $cargoServicio,
+                'costo_envio' => $costoEnvio,
+                'total' => $total,
+            ]);
+
+            foreach ($lineasPreparadas as $linea) {
+                $itemCreado = $nuevoPedido->items()->create($linea['item']);
+                if (! empty($linea['opciones'])) {
+                    $itemCreado->opciones()->createMany($linea['opciones']);
+                }
+            }
+
+            return $nuevoPedido->load('items.opciones');
+        });
+
+        return (new PedidoResource($pedido))->response()->setStatusCode(201);
     }
 
     /**
@@ -392,9 +502,20 @@ class PedidoAdminController extends Controller
     public function cambiarEstado(CambiarEstadoPedidoRequest $request, Pedido $pedido): PedidoResource
     {
         $this->authorize('update', $pedido);
-        $pedido->update(['estado' => $request->validated('estado')]);
+        $nuevoEstado = $request->validated('estado');
+        $pedido->update(['estado' => $nuevoEstado]);
 
-        return new PedidoResource($pedido->load('items.opciones'));
+        // Si el pedido completo se marca como entregado, marcar también como entregados los ítems pendientes.
+        if ($nuevoEstado === EstadoPedido::Entregado->value) {
+            $pedido->items()
+                ->where('entregado', false)
+                ->update([
+                    'entregado' => true,
+                    'entregado_en' => now(),
+                ]);
+        }
+
+        return new PedidoResource($pedido->fresh()->load('items.opciones'));
     }
 
     /** PATCH /api/admin/pedidos/{pedido}/pago — Marca un pedido como Pagado/Sin Pagar o cambia su medio de pago en 1 clic. */
@@ -452,6 +573,7 @@ class PedidoAdminController extends Controller
         $this->authorize('update', $pedido);
 
         $datos = $request->validate([
+            'ronda' => ['nullable', 'integer', 'min:1'],
             'productoId' => ['nullable', 'integer'],
             'nombre' => ['nullable', 'string', 'max:150'],
             'precioUnitario' => ['nullable', 'numeric', 'min:0'],
@@ -483,13 +605,19 @@ class PedidoAdminController extends Controller
         $cantidad = (int) $datos['cantidad'];
         $totalLinea = round($precioUnitarioFinal * $cantidad, 2);
 
+        $rondaAsignada = isset($datos['ronda'])
+            ? max(1, (int) $datos['ronda'])
+            : (((int) ($pedido->items()->max('ronda') ?? 0)) + 1);
+
         $item = $pedido->items()->create([
+            'ronda' => $rondaAsignada,
             'producto_id' => $producto?->id,
             'nombre' => $nombre,
             'precio_unitario' => $precioUnitarioFinal,
             'cantidad' => $cantidad,
             'total' => $totalLinea,
             'notas' => ! empty($datos['notas']) ? trim($datos['notas']) : null,
+            'entregado' => false,
         ]);
 
         if (! empty($opciones)) {
@@ -502,7 +630,166 @@ class PedidoAdminController extends Controller
             );
         }
 
+        if (in_array($pedido->estado->value, [EstadoPedido::Entregado->value, EstadoPedido::Listo->value], true)) {
+            $pedido->update(['estado' => EstadoPedido::EnPreparacion->value]);
+        }
+
         $this->recalcularTotalesPedido($pedido);
+
+        return new PedidoResource($pedido->fresh()->load('items.opciones'));
+    }
+
+    /**
+     * POST /api/admin/pedidos/{pedido}/rondas
+     * Agrega un lote de productos como una nueva Ronda/Marcha (Ronda #2, #3...) en 1 sola operación.
+     */
+    public function agregarRonda(Request $request, Pedido $pedido): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+
+        $datos = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.productoId' => ['nullable', 'integer'],
+            'items.*.nombre' => ['nullable', 'string', 'max:150'],
+            'items.*.precioUnitario' => ['nullable', 'numeric', 'min:0'],
+            'items.*.cantidad' => ['required', 'integer', 'min:1'],
+            'items.*.notas' => ['nullable', 'string', 'max:255'],
+            'items.*.opciones' => ['nullable', 'array'],
+            'items.*.opciones.*.grupoNombre' => ['required_with:items.*.opciones', 'string', 'max:100'],
+            'items.*.opciones.*.etiqueta' => ['required_with:items.*.opciones', 'string', 'max:120'],
+            'items.*.opciones.*.precioAdicional' => ['nullable', 'numeric', 'min:0'],
+            'marcarComandado' => ['sometimes', 'boolean'],
+            'marcarEntregado' => ['sometimes', 'boolean'],
+        ]);
+
+        $local = $request->user()->local;
+        $marcarComandado = (bool) ($datos['marcarComandado'] ?? false);
+        $marcarEntregado = (bool) ($datos['marcarEntregado'] ?? false);
+        $ahora = now();
+
+        $nuevaRonda = DB::transaction(function () use ($pedido, $local, $datos, $marcarComandado, $marcarEntregado, $ahora) {
+            $ronda = ((int) ($pedido->items()->max('ronda') ?? 0)) + 1;
+
+            foreach ($datos['items'] as $fila) {
+                $producto = null;
+                if (! empty($fila['productoId'])) {
+                    $producto = Producto::where('local_id', $local->id)->findOrFail($fila['productoId']);
+                }
+
+                $nombre = $producto ? $producto->nombre : trim($fila['nombre'] ?? 'Producto');
+                $opciones = $fila['opciones'] ?? [];
+
+                if (isset($fila['precioUnitario'])) {
+                    $precioUnitarioFinal = (float) $fila['precioUnitario'];
+                } else {
+                    $precioBase = (float) ($producto?->precio ?? 0);
+                    $extraOpciones = collect($opciones)->sum(fn ($op) => (float) ($op['precioAdicional'] ?? 0));
+                    $precioUnitarioFinal = $precioBase + $extraOpciones;
+                }
+
+                $cantidad = (int) $fila['cantidad'];
+                $totalLinea = round($precioUnitarioFinal * $cantidad, 2);
+
+                $item = $pedido->items()->create([
+                    'ronda' => $ronda,
+                    'producto_id' => $producto?->id,
+                    'nombre' => $nombre,
+                    'precio_unitario' => $precioUnitarioFinal,
+                    'cantidad' => $cantidad,
+                    'total' => $totalLinea,
+                    'notas' => ! empty($fila['notas']) ? trim($fila['notas']) : null,
+                    'entregado' => $marcarEntregado,
+                    'entregado_en' => $marcarEntregado ? $ahora : null,
+                    'comandado_en' => $marcarComandado ? $ahora : null,
+                ]);
+
+                if (! empty($opciones)) {
+                    $item->opciones()->createMany(
+                        collect($opciones)->map(fn ($op) => [
+                            'grupo_nombre' => $op['grupoNombre'],
+                            'etiqueta' => $op['etiqueta'],
+                            'precio_adicional' => (float) ($op['precioAdicional'] ?? 0),
+                        ])->all()
+                    );
+                }
+            }
+
+            // Si la cuenta ya estaba "entregado" o "listo" y llega una ronda nueva sin entregar, vuelve a "en_preparacion".
+            if (! $marcarEntregado && in_array($pedido->estado->value, [EstadoPedido::Entregado->value, EstadoPedido::Listo->value], true)) {
+                $pedido->update(['estado' => EstadoPedido::EnPreparacion->value]);
+            }
+
+            $this->recalcularTotalesPedido($pedido);
+
+            return $ronda;
+        });
+
+        return (new PedidoResource($pedido->fresh()->load('items.opciones')))
+            ->additional(['meta' => ['rondaCreada' => $nuevaRonda]]);
+    }
+
+    /** PATCH /api/admin/pedidos/{pedido}/rondas/{ronda}/entrega — Marca/desmarca toda una ronda como entregada. */
+    public function alternarEntregaRonda(Request $request, Pedido $pedido, int $ronda): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+
+        $itemsRonda = $pedido->items()->where('ronda', $ronda)->get();
+        abort_if($itemsRonda->isEmpty(), 404, 'Ronda no encontrada en este pedido.');
+
+        $nuevoEntregado = $request->has('entregado')
+            ? (bool) $request->boolean('entregado')
+            : ! $itemsRonda->every(fn (PedidoItem $it) => (bool) $it->entregado);
+
+        $pedido->items()->where('ronda', $ronda)->update([
+            'entregado' => $nuevoEntregado,
+            'entregado_en' => $nuevoEntregado ? now() : null,
+        ]);
+
+        if (! $nuevoEntregado && $pedido->estado->value === EstadoPedido::Entregado->value) {
+            $pedido->update(['estado' => EstadoPedido::EnPreparacion->value]);
+        }
+
+        return new PedidoResource($pedido->fresh()->load('items.opciones'));
+    }
+
+    /** PATCH /api/admin/pedidos/{pedido}/items/{item}/entrega — Marca/desmarca un ítem individual como entregado. */
+    public function alternarEntregaItem(Request $request, Pedido $pedido, PedidoItem $item): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+        abort_if($item->pedido_id !== $pedido->id, 404);
+
+        $nuevoEntregado = $request->has('entregado')
+            ? (bool) $request->boolean('entregado')
+            : ! (bool) $item->entregado;
+
+        $item->update([
+            'entregado' => $nuevoEntregado,
+            'entregado_en' => $nuevoEntregado ? now() : null,
+        ]);
+
+        if (! $nuevoEntregado && $pedido->estado->value === EstadoPedido::Entregado->value) {
+            $pedido->update(['estado' => EstadoPedido::EnPreparacion->value]);
+        }
+
+        return new PedidoResource($pedido->fresh()->load('items.opciones'));
+    }
+
+    /** PATCH /api/admin/pedidos/{pedido}/comandar — Registra cuándo fueron comandados a cocina los ítems (ronda o pendientes). */
+    public function marcarComandado(Request $request, Pedido $pedido): PedidoResource
+    {
+        $this->authorize('update', $pedido);
+
+        $datos = $request->validate([
+            'ronda' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $query = $pedido->items();
+        if (! empty($datos['ronda'])) {
+            $query->where('ronda', (int) $datos['ronda']);
+        } else {
+            $query->whereNull('comandado_en');
+        }
+        $query->update(['comandado_en' => now()]);
 
         return new PedidoResource($pedido->fresh()->load('items.opciones'));
     }
